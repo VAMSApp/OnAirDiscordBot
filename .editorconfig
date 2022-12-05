@@ -1,0 +1,20 @@
+
+# top-most EditorConfig file
+root = true
+[*]
+end_of_line = lf
+insert_final_newline = true
+[*.{js,ts}]
+charset = utf-8
+quote_type = single
+
+# 4 space indentation
+[*.ts]
+indent_style = space
+indent_size = 4
+
+
+# Matches the exact files either package.json or .travis.yml
+[{package.json,.travis.yml}]
+indent_style = space
+indent_size = 2

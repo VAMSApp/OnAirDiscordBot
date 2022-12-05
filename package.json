@@ -1,0 +1,45 @@
+{
+  "name": "discordbot-ts",
+  "version": "0.0.1",
+  "description": "Discord.js bot written in TypeScript with OnAir Company interactions",
+  "author": {
+    "name": "Mike DeVita",
+    "email": "mike@devita.co"
+  },
+  "main": "index.ts",
+  "scripts": {
+    "start": "ts-node index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^4.6.1",
+    "@types/node": "^18.11.10",
+    "async": "^3.2.4",
+    "chalk": "^5.1.2",
+    "cron": "^2.1.0",
+    "cronstrue": "^2.20.0",
+    "discord.js": "^14.7.1",
+    "dotenv": "^16.0.3",
+    "easy-table": "^1.2.0",
+    "ioredis": "^5.2.4",
+    "lodash": "^4.17.21",
+    "module-alias": "^2.2.2",
+    "moment": "^2.29.4",
+    "node-cron": "^3.0.2",
+    "onair-api": "file:../../onair-api",
+    "reflect-metadata": "^0.1.13",
+    "typescript": "^4.9.3",
+    "uuid": "^9.0.0",
+    "winston": "^3.8.2"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.191",
+    "@types/uuid": "^9.0.0",
+    "chai": "^4.3.6",
+    "mocha": "^10.0.0",
+    "nodemon": "^2.0.20",
+    "prisma": "^4.7.1"
+  }
+}
