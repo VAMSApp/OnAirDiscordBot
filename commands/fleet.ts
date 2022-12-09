@@ -39,7 +39,7 @@ export default {
         let msg = ''
 
 
-        let x = await app.OnAir.getFleet()
+        let x = await app.OnAir.getVAFleet()
         if (!x) msg = 'No fleet found'
 
         if (x) {

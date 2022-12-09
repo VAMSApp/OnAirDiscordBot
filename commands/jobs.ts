@@ -37,7 +37,7 @@ export default {
 
         let msg = ''     
 
-        let x = await app.OnAir.getJobs()
+        let x = await app.OnAir.getVAJobs()
         if (!x) msg = 'No pending jobs found'
 
         if (x) {

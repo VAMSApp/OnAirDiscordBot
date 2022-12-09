@@ -33,9 +33,9 @@ const config:BotConfig = {
     onair: {
         enabled: true,
         keys: {
-            companyId: new Guid('###_ONAIR_COMPANY_ID_###'),
-            vaId: new Guid('###_ONAIR_VA_ID_###'),
-            apiKey: new Guid('###_ONAIR_APIKEY_ID_###'),
+            companyId: new string('###_ONAIR_COMPANY_ID_###'),
+            vaId: new string('###_ONAIR_VA_ID_###'),
+            apiKey: new string('###_ONAIR_APIKEY_ID_###'),
         },
         events: {
             VADetails: {

@@ -11,4 +11,6 @@ export interface IBot {
     deployCommands(): Promise<void>;
     login(): void;
     onReady(): void;
+    getChannelId(channelName: string): string;
+    getRoleId(roleName: string): string;
 }

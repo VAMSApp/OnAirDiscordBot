@@ -1,102 +1,81 @@
 const SeedData = {
-    roles: [
+    worlds: [
         {
-            name: 'Admin',
-            slug: 'admin',
-        },
-        {
-            name: 'User',
-            slug: 'user',
-        },
-        {
-            name: 'VA Pilot',
-            slug: 'va-pilot'
-        },
-        {
-            name: 'VA Dispatcher',
-            slug: 'va-dispatcher'
-        },
-        {
-            name: 'VA Owner',
-            slug: 'va-owner'
-        },
-        {
-            name: 'VA Shareholder',
-            slug: 'va-shareholder'
+            Id: 'c83eb5d5-9dc5-452f-b261-69b45cb0951b',
+            Name: 'Thunder',
+            ShortName: 'THUNDER',
         },
     ],
-    menus: [
+    aircraftStatuses: [
         {
-            slug: 'main-menu',
-            name: 'Main Menu',
-            order: 0,
-            adminOnly: false,
-            isRemovable: false,
-            isDisabled: false,
-            isAuthRequired: true,
-            items: [
-                {
-                    slug: 'home',
-                    name: 'Home',
-                    href: '/',
-                    label: 'Home',
-                    isAuthRequired: false,
-                    adminOnly: false,
-                },
-                {
-                    slug: 'dashboard',
-                    name: 'Dashboard',
-                    href: '/dashboard',
-                    label: 'Dashboard',
-                    isAuthRequired: true,
-                    adminOnly: false,
-                },
-                {
-                    slug: 'va',
-                    name: 'VA',
-                    href: '/va',
-                    label: 'VA',
-                    isAuthRequired: true,
-                    isDisabled: false,
-                    adminOnly: false,
-                }
-            ]
+            Id: 0,
+            Name: 'Idle',
+            ShortName: 'IDLE',
         },
         {
-            slug: 'admin-menu',
-            name: 'Admin Menu',
-            order: 0,
-            adminOnly: true,
-            isRemovable: false,
-            isDisabled: false,
-            isAuthRequired: true,
-            items: [
-                {
-                    slug: 'manage-users',
-                    name: 'Manage Users',
-                    href: '/admin/users',
-                    label: 'Manage Users',
-                    isAuthRequired: true,
-                    adminOnly: true,
-                },
-                {
-                    slug: 'manage-menus',
-                    name: 'Manage Menus',
-                    href: '/admin/menus',
-                    label: 'Manage Menus',
-                    isAuthRequired: true,
-                    adminOnly: true,
-                },
-                {
-                    slug: 'config',
-                    name: 'Config',
-                    href: '/admin/config',
-                    label: 'Config',
-                    isAuthRequired: true,
-                    adminOnly: true,
-                },
-            ]
-        }
+            Id: 1,
+            Name: 'Maintenance',
+            ShortName: 'MAINT',
+        },
+        {
+            Id: 2,
+            Name: 'ApronWork',
+            ShortName: 'APRON',
+        },
+        {
+            Id: 3,
+            Name: 'InFlight',
+            ShortName: 'INFLT',
+        },
+        {
+            Id: 4,
+            Name: 'Warp',
+            ShortName: 'WARP',
+        },
+        {
+            Id: 5,
+            Name: 'Ferry',
+            ShortName: 'FERRY',
+        },
+    ],
+    fuelTypes: [
+        {
+            Id: 0,
+            Name: '100LL',
+            ShortName: '100LL',
+        },
+        {
+            Id: 1,
+            Name: 'Jet A',
+            ShortName: 'JET',
+        },
+    ],
+    engineTypes: [
+        {
+            Id: 0,
+            Name: 'Piston',
+            ShortName: 'PISTON',
+        },
+        {
+            Id: 1,
+            Name: 'Jet',
+            ShortName: 'JET',
+        },
+        {
+            Id: 2,
+            Name: 'Sailplane',
+            ShortName: 'SAILPLANE',
+        },
+        {
+            Id: 3,
+            Name: 'Helo Turbine',
+            ShortName: 'HELO TURBINE',
+        },
+        {
+            Id: 5,
+            Name: 'Turboprop',
+            ShortName: 'TURBOPROP',
+        },
     ]
 }
 

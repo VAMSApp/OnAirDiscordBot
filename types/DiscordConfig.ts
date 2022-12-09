@@ -11,5 +11,8 @@ export type DiscordConfig = {
     owners: string[];
     channels: {
         [key: string]: string;
-    }
+    };
+    roles: {
+        [key:string]: string;
+    };
 }

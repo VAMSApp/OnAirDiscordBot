@@ -1,13 +1,16 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 import Logger from './utils/Logger'
-import { BotConfig, Command, } from './types'
-import { IBot, IOnAir } from './interfaces'
+import { BotConfig, Command, OnAirPollingConfig, OnAirPollingsConfig, Schedule, } from './types'
+import { IBot, ILogger, IOnAir } from './interfaces'
 import OnAir from './OnAir'
 import { Client, ClientApplication, Channel, Message, Collection, REST, Routes, } from 'discord.js'
 import { OnReadyMessage } from './messages'
 import { readdirSync } from 'fs'
 import path from 'path'
+import BaseRepo from './repos/BaseRepo'
+import cron from 'node-cron'
+import cronstrue from 'cronstrue'
 
 class Bot implements IBot {
     private AppToken:string;
@@ -15,10 +18,10 @@ class Bot implements IBot {
     private GuildId:string;
     public commands: Collection<string, Command>;
 
-    log: Logger;
-    config: BotConfig;
-    OnAir: IOnAir;
-    client: Client;
+    public log: ILogger;
+    public config: BotConfig;
+    public OnAir: IOnAir;
+    public client: Client;
 
     constructor(config:BotConfig) {    
         if (!config) throw new Error('No config provided, exiting.');
@@ -31,10 +34,9 @@ class Bot implements IBot {
         this.GuildId = this.config.discord.guildId;
 
         this.log = new Logger(this.config.log);
-        this.OnAir = new OnAir(this.config.onair, {
-            log: this.log,
-            
-        });
+        new BaseRepo().init(this);
+
+        this.OnAir = new OnAir(this.config.onair, this as IBot);
 
         this.client = new Client({
             intents: [
@@ -50,6 +52,8 @@ class Bot implements IBot {
         this.deployCommands();
         this.login();
         this.onReady();
+        this.loadSchedules();
+        this.getRoleId = this.getRoleId.bind(this);
     }
         
 
@@ -113,7 +117,7 @@ class Bot implements IBot {
             if (!command) continue;
 
             commands.push(command.data.toJSON());
-            this.log.info(`Will deploy command: ${command.data.name}`)
+            this.log.info(`Will deploy slash command: /${command.data.name}`)
         }
         
         const rest = new REST({ version: '10' }).setToken(this.AppToken);
@@ -185,6 +189,60 @@ class Bot implements IBot {
                 })
             }
         });
+    }
+
+    getRoleId(roleName:string):string {
+        if (!this.config.discord) {
+            throw new Error('No Discord config provided, exiting.');
+        }
+
+        const roleId:string = this.config.discord.roles[roleName];
+        return roleId
+    }
+
+    loadSchedules(): void {
+        const self = this;
+        const {
+            polling
+        } = self.config.onair;
+
+        const enabledScheduleKeys = Object.keys(polling).filter((k:any) => {
+            const key = k as keyof typeof polling;
+            return (polling[key].enabled === true)
+        });
+
+        if (enabledScheduleKeys.length === 0 || !enabledScheduleKeys) return;
+
+        // read all files in the 'schedules' directory
+        const schedules = readdirSync(path.join(__dirname, 'schedules')).filter(file => {
+            const isEnabled = enabledScheduleKeys.includes(file.split('.')[0]);
+            return (isEnabled) ? file : false;
+        });
+
+        if (schedules.length === 0 || !schedules) {
+            this.log.debug(`No schedules found in the 'schedules' directory`);
+            return; 
+        }
+
+        // loop through all of the schedules and load them
+        for (const file of schedules) {
+            const schedule:Schedule = require(path.join(__dirname, 'schedules', file)).default;
+            if (!schedule) continue;
+            const taskName:string = file.split('.')[0];
+            const name = taskName as keyof OnAirPollingsConfig;
+            const pollCfg:OnAirPollingConfig = polling[name]; // the schedule config
+            if (!pollCfg || !pollCfg.cron) continue;
+
+            if (!cron.validate(pollCfg.cron)) {
+                this.log.error(`⚠️ Invalid cron expression for '${file}'`);
+                continue;
+            }
+
+            cron.schedule(pollCfg.cron, () => schedule.execute(self), pollCfg.opts);
+            this.log.info(`✅ Schedule::${taskName} - Will ${schedule.description} ${cronstrue.toString(pollCfg.cron)}`);
+        }
+
+        this.log.info(`✅ Scheduled ${enabledScheduleKeys.length} Tasks`);
     }
 }
 

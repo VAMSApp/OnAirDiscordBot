@@ -1,10 +1,9 @@
-import { Guid } from 'onair-api/dist/types/Guid';
 import { OnAirEventConfig, OnAirPollingConfig } from '.';
 
 export interface OnAirApiConfig {
-    apiKey: Guid;
-    companyId: Guid;
-    vaId: Guid;
+    apiKey: string;
+    companyId: string;
+    vaId: string;
 }
 
 export type OnAirApiQueryOptions = {
@@ -17,25 +16,30 @@ export type OnAirApiQueryOptions = {
     sortOrder?: string;
 }
 
+export type OnAirEventsConfig = {
+    VirtualAirline: OnAirEventConfig;
+    VAFleet: OnAirEventConfig;
+    VAJobs: OnAirEventConfig;
+    VANotifications: OnAirEventConfig;
+}
+
+export type OnAirPollingsConfig = {
+    VirtualAirline: OnAirPollingConfig;
+    VAJobs: OnAirPollingConfig;
+    VAFleet: OnAirPollingConfig;
+    VANotifications: OnAirPollingConfig;
+};
+
 export type OnAirConfig = {
     keys: OnAirApiConfig;
     enabled: boolean;
     refreshOnStartup: boolean;
-    events: {
-        VADetails: OnAirEventConfig;
-        VAFleet: OnAirEventConfig;
-        VAJobs: OnAirEventConfig;
-        VANotifications: OnAirEventConfig;
-    };
+    loadOnStartup: boolean;
+    events: OnAirEventsConfig;
     sorting: {
         Members: string[]|boolean;
         Flights: string[]|boolean;
         Jobs: string[]|boolean;
     },
-    polling: {
-        VADetails: OnAirPollingConfig;
-        VAJobs: OnAirPollingConfig;
-        VAFleet: OnAirPollingConfig;
-        VANotifications: OnAirPollingConfig;
-    };
+    polling: OnAirPollingsConfig;
 }

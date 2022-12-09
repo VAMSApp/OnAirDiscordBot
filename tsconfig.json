@@ -20,7 +20,7 @@
     },
     "include": [
         "./**/*.ts"
-    ],
+, "prisma/seed-data.js"    ],
     "exclude": [
         "node_modules",
         "dist"

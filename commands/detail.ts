@@ -22,7 +22,7 @@ export default {
 
         let msg = ''
     
-        const x:VirtualAirlineResponse = await app.OnAir.getVirtualAirlineDetails();
+        const x:VirtualAirlineResponse = await app.OnAir.getVADetail();
         if (!x) msg = 'No VA found'
 
         if (x) {

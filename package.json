@@ -11,6 +11,9 @@
     "start": "ts-node index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "keywords": [],
   "license": "ISC",
   "dependencies": {
@@ -35,7 +38,10 @@
     "winston": "^3.8.2"
   },
   "devDependencies": {
+    "@types/async": "^3.2.16",
+    "@types/cron": "^2.0.0",
     "@types/lodash": "^4.14.191",
+    "@types/node-cron": "^3.0.6",
     "@types/uuid": "^9.0.0",
     "chai": "^4.3.6",
     "mocha": "^10.0.0",

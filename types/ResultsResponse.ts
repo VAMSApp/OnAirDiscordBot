@@ -1,0 +1,3 @@
+import { Aircraft, AircraftClass, AircraftEngine, AircraftType, Airport, Cargo, CargoType, Charter, CharterType, Company, Employee, Flight, Job, JobType, VirtualAirline, VARole, Member, } from "@prisma/client";
+
+export type ResultsResponse = VirtualAirline|Company|Company[]|Notification|Notification[]|Employee|Employee[]|Airport|Airport[]|AircraftEngine|AircraftEngine[]|AircraftClass|AircraftClass[]|AircraftType|AircraftType[]|Aircraft|Aircraft[]|CharterType|CharterType[]|Charter|Charter[]|CargoType|CargoType[]|Cargo|Cargo[]|JobType|JobType[]|Job|Job[]|Flight|Flight[]|VARole|VARole[]|Member|Member[]
