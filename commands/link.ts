@@ -8,7 +8,7 @@ import { CompanyTranslator } from '../translators';
 
 export default {
 	data: new SlashCommandBuilder()
-    .setName('connect')
+    .setName('link')
 	.setDescription('Links your Discord account to your OnAir VA account')
     .addStringOption((option:any) =>
         option.setName('companycode')
@@ -22,7 +22,7 @@ export default {
     )
     .addStringOption((option:any) =>
         option.setName('apikey')
-            .setDescription('Your company Api Key, found in the bottom left of your OnAir Global Settings page')
+            .setDescription('Optionally provide Your company Api Key, found in the bottom left of your OnAir Global Settings page')
             .setRequired(false)
     ),
     async execute(interaction:Interaction, app:IBot) {

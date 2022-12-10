@@ -28,8 +28,8 @@ class Logger implements ILogger {
 
     }
 
-    private consoleFormat = printf(({ level, message, }) => {
-        return `[${level}]: ${message}`;
+    private consoleFormat = printf(({ level, message, timestamp, }) => {
+        return `[${level}] ${timestamp}: ${message}`;
     });
 
     // public colorize(level: string, message: string) {
