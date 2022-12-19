@@ -1,10 +1,19 @@
-import { OnAirConfig, OnAirApiQueryOptions, Processing, RefreshCounts, Member, Flight, Job, OnAirRefreshResults, VirtualAirline, OnAirPollingsConfig, OnAirPollingConfig, PollingKeys, LastUpdated, OnAirAircraftResponse, OnAirFleetResponse, Aircraft, PollingKey, } from './types';
-import OnAirApi, {AirportResponse, FleetResponse, JobsResponse, MembersResponse, OnAirApiConfig, VirtualAirlineResponse, CompanyResponse, Aircraft as OnAirAircraft, AircraftResponse, NotificationResponse,  Notification, } from 'onair-api';
-import { IOnAir, IBotContext, ILogger, IAircraftProcessor, IAircraftClassTranslator, IAircraftEngineTranslator, IAircraftTranslator, IAircraftTypeTranslator, IVirtualAirlineTranslator, IAirportTranslator, ICompanyTranslator } from './interfaces';
-import { AircraftRepo, VirtualAirlineRepo } from './repos';
-import { eachOfSeries, } from 'async';
-import { AircraftProcessor, VirtualAirlineProcessor, } from './processors';
-import { AircraftClassTranslator, AircraftTypeTranslator, AircraftEngineTranslator, AircraftTranslator, VirtualAirlineTranslator, AirportTranslator, CompanyTranslator } from './translators';
+import { eachOfSeries } from 'async';
+import OnAirApi, {
+    Aircraft as OnAirAircraft, Airport as OnAirAirport,
+    Company as OnAirCompany, Flight as OnAirFlight,
+    People as OnAirEmployee,
+    Job as OnAirJob, Member as OnAirMember,
+    Notification as OnAirNotification,
+    VARole as OnAirVARole,
+    VirtualAirline as OnAirVirtualAirline
+} from 'onair-api';
+import { isJobTaken, isJobAbandoned, isJobCompleted, isAircraftCrashed, isAircraftTransporting, HumanizeDate } from './utils';
+import { IAircraftClassTranslator, IAircraftEngineTranslator, IAircraftTranslator, IAircraftTypeTranslator, IAirportTranslator, IBotContext, ICompanyTranslator, ILogger, IMemberTranslator, INotificationTranslator, IOnAir, IVARoleTranslator, IVirtualAirlineTranslator, IFlightTranslator, IBot, IEmployeeTranslator, } from './interfaces';
+import { AircraftProcessor, MemberProcessor, NotificationProcessor, VirtualAirlineProcessor } from './processors';
+import { AircraftClassTranslator, AircraftEngineTranslator, AircraftTranslator, AircraftTypeTranslator, AirportTranslator, CompanyTranslator, MemberTranslator, NotificationTranslator, VARoleTranslator, VirtualAirlineTranslator, FlightTranslator, EmployeeTranslator, } from './translators';
+import { Aircraft, LastUpdated, Member, Notification, OnAirApiConfig, OnAirApiQueryOptions, OnAirConfig, OnAirEvent, OnAirPollingConfig, OnAirPollingsConfig, OnAirRefreshResults, PollingKeys, Processing, RefreshCounts, VirtualAirline } from './types';
+import { APIEmbedField, EmbedBuilder, EmbedFooterOptions, Message, TextChannel } from 'discord.js';
 
 export type ProcessRecordError = {
     error?: Error|string|null;
@@ -12,15 +21,17 @@ export type ProcessRecordError = {
 }
 
 class OnAir implements IOnAir {
-    public App:IBotContext;
+    public App:IBot;
     protected Config:OnAirConfig;
     public Api:OnAirApi;
-    public VirtualAirline:VirtualAirline|null = null;
-    public Notifications:Notification[]|null = null;
-    public Members:Member[]|null = null;
-    public Flights:Flight[]|null = null;
-    public Jobs:Job[]|null = null;
-    public Fleet:Aircraft[] = [];
+    public VirtualAirline:OnAirVirtualAirline|null = null;
+    public Notifications:OnAirNotification[]|null = null;
+    public Members:OnAirMember[]|null = null;
+    public Flights:OnAirFlight[]|null = null;
+    public Jobs:OnAirJob[]|null = null;
+    public Fleet:OnAirAircraft[] = [];
+    public VARoles:OnAirVARole[] = [];
+
     public Log:ILogger;
     public Translators: {
         AircraftClass: IAircraftClassTranslator;
@@ -30,6 +41,11 @@ class OnAir implements IOnAir {
         VirtualAirline: IVirtualAirlineTranslator;
         Airport: IAirportTranslator;
         Company: ICompanyTranslator;
+        Member: IMemberTranslator;
+        VARole: IVARoleTranslator;
+        Notification: INotificationTranslator;
+        Flight: IFlightTranslator;
+        Employee: IEmployeeTranslator;
     }
     
     public Processing:Processing = {
@@ -40,6 +56,7 @@ class OnAir implements IOnAir {
         Notifications: false,
         VirtualAirline: false,
     }
+
     public Loading:Processing = {
         Members: false,
         Flights: false,
@@ -48,6 +65,7 @@ class OnAir implements IOnAir {
         Notifications: false,
         VirtualAirline: false,
     }
+
     public RefreshCounts:RefreshCounts = {
         Members: 0,
         Flights: 0,
@@ -66,7 +84,7 @@ class OnAir implements IOnAir {
         VirtualAirline: null,
     }
 
-    constructor(config:OnAirConfig, app:IBotContext) {
+    constructor(config:OnAirConfig, app:IBot) {
         if (!config) throw new Error('No OnAir config provided, exiting.');
         if (!app) throw new Error('No Bot Context provided, exiting.');
         this.App = app;
@@ -79,6 +97,11 @@ class OnAir implements IOnAir {
             VirtualAirline: new VirtualAirlineTranslator(app),
             Airport: new AirportTranslator(app),
             Company: new CompanyTranslator(app),
+            Member: new MemberTranslator(app),
+            VARole: new VARoleTranslator(app),
+            Notification: new NotificationTranslator(app),
+            Flight: new FlightTranslator(app),
+            Employee: new EmployeeTranslator(app),
         };
 
         this.Config = this.App.config.onair;
@@ -100,21 +123,25 @@ class OnAir implements IOnAir {
         this.increaseRefreshCount = this.increaseRefreshCount.bind(this);
         this.setProcessing = this.setProcessing.bind(this);
         this.setLoading = this.setLoading.bind(this);
+        this.getPollingConfig = this.getPollingConfig.bind(this);
         this.getVADetail = this.getVADetail.bind(this);
-        this.getAirport = this.getAirport.bind(this);
+        this.getAirportByICAO = this.getAirportByICAO.bind(this);
+        this.getAircraftDetail = this.getAircraftDetail.bind(this);
+        this.getFlightDetail = this.getFlightDetail.bind(this);
+        this.getEmployeeDetail = this.getEmployeeDetail.bind(this);
         this.getCompanyFleet = this.getCompanyFleet.bind(this);
         this.getVAJobs = this.getVAJobs.bind(this);
         this.getCompanyDetail = this.getCompanyDetail.bind(this);
         this.getVAFlights = this.getVAFlights.bind(this);
         this.getVAMembers = this.getVAMembers.bind(this);
-        this.loadVirtualAirline = this.loadVirtualAirline.bind(this);
-        this.loadVAFleet = this.loadVAFleet.bind(this);
+        // this.loadVirtualAirline = this.loadVirtualAirline.bind(this);
+        // this.loadVAFleet = this.loadVAFleet.bind(this);
         // this.loadVANotifications = this.loadVANotifications.bind(this);
-        this.loadVAJobs = this.loadVAJobs.bind(this);
-        this.loadAllEnabled = this.loadAllEnabled.bind(this);
+        // this.loadVAJobs = this.loadVAJobs.bind(this);
+        // this.loadAllEnabled = this.loadAllEnabled.bind(this);
         this.getCompanyFlights = this.getCompanyFlights.bind(this);
         this.getVANotifications = this.getVANotifications.bind(this);
-
+        /**
         if (this.Config.loadOnStartup === true) {
             Object.keys(this.Config.polling).forEach((k:string) => {
                 const key = k as keyof OnAirPollingsConfig;
@@ -136,9 +163,9 @@ class OnAir implements IOnAir {
                 }
                 
                 this.Log.error(msg);
-            });
-                
+            });       
         }
+        */
     }
 
     setRefreshCount(type:string, count:number):void  {
@@ -160,11 +187,37 @@ class OnAir implements IOnAir {
         const key = type as keyof Processing;
         this.Loading[key] = loading || !this.Loading[key];
     }
+
+    getPollingConfig(name:string):OnAirPollingConfig {
+        const key = name as keyof OnAirPollingsConfig;
+        return this.Config.polling[key];
+    }
     
-    async getAirport(icao:string): Promise<AirportResponse> {
+    async getAirportByICAO(icao:string): Promise<OnAirAirport> {
         if (!icao) throw 'no ICAO provided'
 
-        const x:AirportResponse = await this.Api.getAirport(icao)
+        const x:OnAirAirport = await this.Api.getAirport(icao) as OnAirAirport;
+        return x
+    }
+
+    async getAircraftDetail(aircraftId: string): Promise<OnAirAircraft> {
+        if (!aircraftId) throw 'no aircraftId provided'
+
+        const x:OnAirAircraft = await this.Api.getAircraft(aircraftId) as OnAirAircraft;
+        return x
+    }
+
+    async getFlightDetail(flightId: string): Promise<OnAirFlight> {
+        if (!flightId) throw 'no flightId provided'
+
+        const x:OnAirFlight = await this.Api.getFlight(flightId) as OnAirFlight;
+        return x
+    }
+
+    async getEmployeeDetail(employeeId: string): Promise<OnAirEmployee> {
+        if (!employeeId) throw 'no employeeId provided'
+
+        const x:OnAirEmployee = await this.Api.getEmployee(employeeId) as OnAirEmployee;
         return x
     }
 
@@ -196,20 +249,20 @@ class OnAir implements IOnAir {
         return x
     }
 
-    async getCompanyJobs():Promise<JobsResponse> {
-        const x:JobsResponse = await this.Api.getCompanyJobs();
+    async getCompanyJobs():Promise<OnAirJob[]> {
+        const x:OnAirJob[] = await this.Api.getCompanyJobs();
         return x
     }
 
-    async getCompanyDetail(companyId:string):Promise<CompanyResponse> {
-        const x:CompanyResponse = await this.Api.getCompany(companyId);
+    async getCompanyDetail(companyId:string):Promise<OnAirCompany> {
+        const x:OnAirCompany = await this.Api.getCompany(companyId) as OnAirCompany;
         return x
     }
 
-    async getCompanyNotifications(vaId?:string): Promise<Notification[]> {
+    async getCompanyNotifications(vaId?:string): Promise<OnAirNotification[]> {
         const id = (vaId) ? vaId : this.Config.keys.vaId
         this.Log.debug(`getCompanyDetails()::prerequest ${id}`)
-        const x:Notification[] = await this.Api.getCompanyNotifications(id);
+        const x:OnAirNotification[] = await this.Api.getCompanyNotifications(id);
         return x
     }
 
@@ -236,13 +289,13 @@ class OnAir implements IOnAir {
         return x
     }
 
-    async getVAJobs():Promise<JobsResponse> {
-        const x:JobsResponse = await this.Api.getVirtualAirlineJobs();
+    async getVAJobs():Promise<OnAirJob[]> {
+        const x:OnAirJob[] = await this.Api.getVirtualAirlineJobs();
         return x
     }
     
-    async getVAMembers(opts:OnAirApiQueryOptions):Promise<MembersResponse> {
-        let x:MembersResponse = await this.Api.getVirtualAirlineMembers();
+    async getVAMembers():Promise<OnAirMember[]> {
+        let x:OnAirMember[] = await this.Api.getVirtualAirlineMembers();
 
         // if (opts?.sortBy) {
         //     switch (opts.sortBy) {
@@ -299,18 +352,55 @@ class OnAir implements IOnAir {
         return x
     }
 
-    async getVADetail(vaId?:string): Promise<VirtualAirlineResponse> {
+    async getVADetail(vaId?:string): Promise<OnAirVirtualAirline> {
         const id = (vaId) ? vaId : this.Config.keys.vaId
         this.Log.debug(`getVADetail()::prerequest ${id}`)
-        const x:VirtualAirlineResponse = await this.Api.getVirtualAirline(id);
+        const x:OnAirVirtualAirline = await this.Api.getVirtualAirline(id) as OnAirVirtualAirline;
         return x
     }
 
-    async getVANotifications(vaId?:string): Promise<Notification[]> {
+    async processVANotification(n:OnAirNotification):Promise<OnAirRefreshResults> {
+        const self = this;
+        return new Promise(async (resolve, reject) => {
+            const processor = new NotificationProcessor(n, self.App);
+
+            const results:OnAirRefreshResults = await processor.process({
+                translate: true,
+                create: true,
+                update: true,
+            });
+
+            if (!results.success) return reject(results);
+            self.increaseRefreshCount('Notifications');
+
+            return resolve(results);
+        })
+    }
+
+    determineNotificationType(n:Notification):string {
+        let type = 'unknown';
+        if (!n.Description) return type;
+
+        if (isJobTaken(n.Description)) {
+            type = 'VAJob-Taken'
+        } else if (isJobAbandoned(n.Description)) {
+            type = 'VAJob-Abandoned'
+        } else if (isJobCompleted(n.Description)) {
+            type = 'VAJob-Completed'
+        } else if (isAircraftCrashed(n.Description)) {
+            type = 'Aircraft-Crashed';
+        } else if (isAircraftTransporting(n.Description)) {
+            type = 'Aircraft-Transporting';
+        }
+
+        return type;
+    }
+
+    async getVANotifications(vaId?:string): Promise<OnAirNotification[]> {
         const self = this;
         const id = (vaId) ? vaId : self.Config.keys.vaId
         self.Log.debug(`getVADetail()::prerequest ${id}`)
-        const x:Notification[] = await self.Api.getVirtualAirlineNotifications(id);
+        const x:OnAirNotification[] = await self.Api.getVirtualAirlineNotifications(id);
         return x
     }
 
@@ -319,7 +409,7 @@ class OnAir implements IOnAir {
         return new Promise(async (resolve, reject) => {
             self.setProcessing('VirtualAirline', true);
             self.setRefreshCount('VirtualAirline', 0);
-            let x:VirtualAirlineResponse = await self.getVADetail();
+            let x:OnAirVirtualAirline = await self.getVADetail();
             if (!x) return reject(new Error('no VA details returned from API'))
     
             this.Log.info(`Processing Virtual Airline '${x.AirlineCode}'`)
@@ -339,97 +429,393 @@ class OnAir implements IOnAir {
             return resolve(results);
         })
     }
-/**
+
     async refreshVANotifications(): Promise<OnAirRefreshResults> {
         const self = this;
-        self.setProcessing('Notifications', true);
-        self.setRefreshCount('Notifications', 0);
-        const x:Notification[] = await self.getVANotifications();
-        const createdAt = new Date();
-        
-        // @todo: upsert the database
-        eachOfSeries(x, async (n:NotificationResponse) => {
-            const processor = new NotificationProcessor(n, self.App);
-            const notification = await processor.process();
-            self.increaseRefreshCount('Notifications');
+        return new Promise(async (resolve, reject) => {
+            self.setProcessing('Notifications', true);
+            self.setRefreshCount('Notifications', 0);
+            const RefreshStartedAt:Date = new Date();
+            let RefreshFinishedAt:Date|undefined = undefined;
 
-        }, async (err) => {
-            if (err) {
-                this.Log.debug(err.message);
-            }
-            self.setProcessing('Fleet', false);
+            const x:OnAirNotification[] = await self.getVANotifications();
+            let CreatedRecords:OnAirRefreshResults[] = [];
+            let UpdatedRecords:OnAirRefreshResults[] = [];
+
+            const totalRecords:number = x.length;
+            if (!x) return reject(new Error('no VA notifications returned from API'))
+
+            const createdAt = new Date();
+
+            // @todo: upsert the database
+            eachOfSeries(x, async function loopVANotification(n:OnAirNotification) {
+                const refreshResults:OnAirRefreshResults = await self.processVANotification(n)
+                if (!refreshResults) throw new Error('no results returned from processVANotification()');
+
+                if (refreshResults.created === true) {
+                    CreatedRecords.push(refreshResults.results);
+
+                    const event:OnAirEvent = {
+                        id: refreshResults.results.Id,
+                        type: self.determineNotificationType(refreshResults.results.Description),
+                        data: refreshResults.results,
+                        createdAt: createdAt,
+                    }
+
+                    await self.App.EventHandler.publish('onair-notifications', event);
+
+                } else if (refreshResults.updated === true) {
+                    UpdatedRecords.push(refreshResults.results);
+                }
+            })
+            .then(():void => {
+                self.setProcessing('Notifications', false);
+                self.Log.info(`✅ Finished Refreshing the OnAir VA Notifications.`);
+                self.Log.info(`${totalRecords} total, ${CreatedRecords.length} created, ${UpdatedRecords.length} updated`);
+                RefreshFinishedAt = new Date();
+                
+            })
+            .then(() => {
+                self.App.client.channels.fetch(self.App.getChannelId('discord'))
+                .then((channel:TextChannel) => {
+                    const fieldsArray:APIEmbedField[] = [
+                        {
+                            name: 'Total',
+                            value: `${totalRecords}`,
+                            inline: true,
+                        },
+                        {
+                            name: 'Created',
+                            value: `${CreatedRecords.length}`,
+                            inline: true,
+                        },
+                        {
+                            name: 'Updated',
+                            value: `${UpdatedRecords.length}`,
+                            inline: true,
+                        },
+                    ];
+
+                    let footerText:string = 'OnAir VA Notifications';
+                    
+                    if (RefreshFinishedAt) {
+                        footerText = ` refreshed ${HumanizeDate(RefreshFinishedAt)}`;
+                    }
+
+                    const footer:EmbedFooterOptions = {
+                        text: footerText,
+                    };
+
+                    const embed = new EmbedBuilder()
+                        .setColor('#0099ff')
+                        .setTitle('OnAir VA Notifications Refreshed')
+                        .setURL('https://va.imperiumsim.club/notifications')
+                        .setDescription(`✅ Finished Refreshing the OnAir VA Notifications.`)
+                        .addFields(fieldsArray)
+                        .setTimestamp(RefreshFinishedAt)
+                        .setFooter(footer);
+
+                    channel.send({
+                        embeds: [embed],
+                    })
+                    .then((message:Message):void => {
+                        const pollingConfig:OnAirPollingConfig = self.getPollingConfig('VANotification');
+                        if (!pollingConfig) return;
+                        
+                        if (pollingConfig.autoDelete === true) {
+                            setTimeout(() => {
+                                message.delete();
+                                self.Log.debug(`Deleted VANotification refresh message after ${pollingConfig.autoDeleteInterval}ms.`)
+                                return;
+                            }, pollingConfig.autoDeleteInterval || 10000);
+                        };
+
+                        return;
+                    });
+                })
+                .catch((err:any):void => {
+                    if (err) {
+                        this.Log.debug(err.message);
+                    }
+                });
+                
+                const results:OnAirRefreshResults = {
+                    results: [
+                        ...CreatedRecords,
+                        ...UpdatedRecords,
+                    ],
+                    success: true,
+                    createdAt: createdAt,
+                    count: x.length,
+                    createdCount: CreatedRecords.length,
+                    updatedCount: UpdatedRecords.length,
+                }
+    
+                return resolve(results);
+            })
+            .catch((err):void => {
+                if (err) {
+                    this.Log.debug(err.message);
+                }
+
+                self.setProcessing('Notifications', false);
+            });
         });
-
-        // @todo: send a notification to the discord channel? if enabled
-        
-        const results:OnAirRefreshResults = {
-            results: x,
-            success: true,
-            createdAt: createdAt,
-            count: x.length,
-        }
-
-
-        return results;
     }
- */
+
     async refreshVAFleet(): Promise<OnAirRefreshResults> {
         const self = this
-        self.setProcessing('Fleet', true);
-        self.setRefreshCount('Fleet', 0);
+        return new Promise(async (resolve, reject) => {
+            if (self.Processing.Fleet === true || self.Loading.Fleet === true) return reject('currently processing/loading the VA Fleet');
+            self.setProcessing('Fleet', true);
+            self.setRefreshCount('Fleet', 0);
 
-        const x:OnAirAircraft[] = await self.getVAFleet();
-        const createdAt = new Date();
-        if (!self.Fleet || self.Fleet === null) self.Fleet = [];
-        
-        // @todo: upsert the database
-        eachOfSeries(x, async (aircraft: OnAirAircraft) => {
-            try {
-                if (!aircraft) return;
-                this.Log.debug(`Processing aircraft ${aircraft.Identifier}`)
-                const processor = new AircraftProcessor(aircraft, this.App);
-                const processedAircraft:Aircraft = await processor.process();
+            const RefreshStartedAt:Date = new Date();
+            let RefreshFinishedAt:Date|undefined = undefined;
 
-                if (!processedAircraft) throw {
-                    err: new Error('Aircraft could not be processed'), aircraft: aircraft
-                };
+            const x:OnAirAircraft[] = await self.getVAFleet();
+            let CreatedRecords:OnAirRefreshResults[] = [];
+            let UpdatedRecords:OnAirRefreshResults[] = [];
 
+            const totalRecords:number = x.length;
+            const createdAt = new Date();
+            if (!self.Fleet || self.Fleet === null) self.Fleet = [];
+            
+            // @todo: upsert the database
+            eachOfSeries(x, async function loopVAFleet(aircraft: OnAirAircraft) {
+                if (!aircraft) return reject(new Error('no aircraft provided to process'));
+                self.Log.debug(`Processing aircraft ${aircraft.Identifier}`)
+                const processor = new AircraftProcessor(aircraft, self.App);
+                const refreshResults:OnAirRefreshResults = await processor.process();
+                if (!refreshResults) return reject(new Error(`Unable to process Aircraft ${aircraft.Identifier}`));
                 self.increaseRefreshCount('Fleet');
+                self.Log.debug(`Finished processing aircraft ${aircraft.Identifier}`);
 
-                this.Log.debug(`Finished processing aircraft ${aircraft.Identifier}`);
+                if (refreshResults.created === true) {
+                    CreatedRecords.push(refreshResults.results);
 
-                return;
-            } catch (err:any) {
-                let msg = `Error processing aircraft`
-                if (err) {
-                    const { error, record } = err;
-                    const errorMessage = error instanceof Error ? error.message : error;
-                    msg += `'${record.Identifier}' err: ${errorMessage}`;
+                    const event:OnAirEvent = {
+                        id: refreshResults.results.Id,
+                        type: 'VAFleet-Added',
+                        data: refreshResults.results,
+                        createdAt: createdAt,
+                    }
+
+                    await self.App.EventHandler.publish('onair-notifications', event);
+
+                } else if (refreshResults.updated === true) {
+                    UpdatedRecords.push(refreshResults.results);
                 }
-                
-                this.Log.error(msg);
-            }
-        }, async (err) => {
-            if (err) {
-                this.Log.error(`Error processing the VA Fleet: ${err.message}`);
-            }
-            self.setProcessing('Fleet', false);
+            })
+            .then(() => {
+                self.App.client.channels.fetch(self.App.getChannelId('discord'))
+                .then((channel:TextChannel) => {
+                    const fieldsArray:APIEmbedField[] = [
+                        {
+                            name: 'Total',
+                            value: `${totalRecords}`,
+                            inline: true,
+                        },
+                        {
+                            name: 'Created',
+                            value: `${CreatedRecords.length}`,
+                            inline: true,
+                        },
+                        {
+                            name: 'Updated',
+                            value: `${UpdatedRecords.length}`,
+                            inline: true,
+                        },
+                    ];
 
-            self.Log.info(`✅Finished processing the VA Fleet, processed ${self.RefreshCounts.Fleet} records`);
+                    let footerText:string = 'OnAir VA Fleet';
+                    
+                    if (RefreshFinishedAt) {
+                        footerText = ` refreshed ${HumanizeDate(RefreshFinishedAt)}`;
+                    }
+
+                    const footer:EmbedFooterOptions = {
+                        text: footerText,
+                    };
+
+                    const embed = new EmbedBuilder()
+                    .setColor('#0099ff')
+                    .setTitle('Imperium OnAir VA Fleet Refreshed')
+                    .setURL('https://va.imperiumsim.club/fleet')
+                    .setDescription(`✅ Finished Refreshing the Imperium OnAir VA Fleet.`)
+                    .addFields(fieldsArray)
+                    .setTimestamp(RefreshFinishedAt)
+                    .setFooter(footer);
+
+                    channel.send({
+                        embeds: [embed],
+                    })
+                    .then((message:Message):void => {
+                        const pollingConfig:OnAirPollingConfig = self.getPollingConfig('VAFleet');
+                        if (!pollingConfig) return;
+                        
+                        if (pollingConfig.autoDelete === true) {
+                            setTimeout(() => {
+                                message.delete();
+                                self.Log.debug(`Deleted VAFleet refresh message after ${pollingConfig.autoDeleteInterval}ms.`)
+                                return;
+                            }, pollingConfig.autoDeleteInterval || 10000);
+                        };
+
+                        return;
+                    });
+
+                    const results:OnAirRefreshResults = {
+                        results: [
+                            ...CreatedRecords,
+                            ...UpdatedRecords,
+                        ],
+                        success: true,
+                        createdAt: createdAt,
+                        count: x.length,
+                        createdCount: CreatedRecords.length,
+                        updatedCount: UpdatedRecords.length,
+                    }
         
+                    return resolve(results);
+                });
+            })
         });
-        // @todo: send a notification to the discord channel? if enabled
-        
-        const results:OnAirRefreshResults = {
-            results: x,
-            success: true,
-            createdAt: createdAt,
-            count: x.length,
-        }
-
-        return results;
     }
+
+    async refreshVAMembers(): Promise<OnAirRefreshResults> {
+        const self = this;
+        return new Promise(async (resolve, reject) => {
+            if (self.Processing.Members === true || self.Loading.Members === true) return reject('currently processing/loading the VA Members');
+            self.setProcessing('Members', true);
+            self.setRefreshCount('Members', 0);
+
+            const RefreshStartedAt:Date = new Date();
+            let RefreshFinishedAt:Date|undefined = undefined;
+
+            const x:OnAirMember[] = await self.getVAMembers();
+            let CreatedRecords:OnAirRefreshResults[] = [];
+            let UpdatedRecords:OnAirRefreshResults[] = [];
+            const totalRecords:number = x.length;
+
+            const createdAt = new Date();
+            if (!self.Members || self.Members === null) self.Members = [];
+
+            eachOfSeries(x, async function loopVAMember(member: OnAirMember) {
+                if (!member) return reject(new Error('no member provided to process'));
+                self.Log.debug(`Processing Member ${member.Id}`)
+                const processor = new MemberProcessor(member, self.App);
+                const refreshResults:OnAirRefreshResults = await processor.process();
+                if (!refreshResults) return reject (new Error('Member could not be processed'));
+                self.increaseRefreshCount('Members');
+
+                self.Log.debug(`Finished processing member ${member.Id}`);
+
+                if (refreshResults.created === true) {
+                    CreatedRecords.push(refreshResults.results);
+
+                    const event:OnAirEvent = {
+                        id: refreshResults.results.Id,
+                        type: 'VAMember-Added',
+                        data: refreshResults.results,
+                        createdAt: createdAt,
+                    }
+
+                    await self.App.EventHandler.publish('onair-notifications', event);
+
+                } else if (refreshResults.updated === true) {
+                    UpdatedRecords.push(refreshResults.results);
+                }
+            })
+            .then(() => {
+                self.setProcessing('Members', false);
+
+                self.Log.info(`✅Finished processing the VA Members, processed ${self.RefreshCounts.Members} records`);
+                
+                self.App.client.channels.fetch(self.App.getChannelId('discord'))
+                .then((channel:TextChannel) => {
+                    const fieldsArray:APIEmbedField[] = [
+                        {
+                            name: 'Total',
+                            value: `${totalRecords}`,
+                            inline: true,
+                        },
+                        {
+                            name: 'Created',
+                            value: `${CreatedRecords.length}`,
+                            inline: true,
+                        },
+                        {
+                            name: 'Updated',
+                            value: `${UpdatedRecords.length}`,
+                            inline: true,
+                        },
+                    ];
+
+                    let footerText:string = 'OnAir VA Members';
+                    
+                    if (RefreshFinishedAt) {
+                        footerText = ` refreshed ${HumanizeDate(RefreshFinishedAt)}`;
+                    }
+
+                    const footer:EmbedFooterOptions = {
+                        text: footerText,
+                    };
+
+                    const embed = new EmbedBuilder()
+                    .setColor('#0099ff')
+                    .setTitle('OnAir VA Members Refreshed')
+                    .setURL('https://va.imperiumsim.club/members')
+                    .setDescription(`✅ Finished Refreshing the OnAir VA Members.`)
+                    .addFields(fieldsArray)
+                    .setTimestamp(RefreshFinishedAt)
+                    .setFooter(footer);
+
+                    channel.send({
+                        embeds: [embed],
+                    })
+                    .then((message:Message):void => {
+                        const pollingConfig:OnAirPollingConfig = self.getPollingConfig('VAMembers');
+                        if (!pollingConfig) return;
+                        
+                        if (pollingConfig.autoDelete === true) {
+                            setTimeout(() => {
+                                message.delete();
+                                self.Log.debug(`Deleted VAMembers refresh message after ${pollingConfig.autoDeleteInterval}ms.`)
+                                return;
+                            }, pollingConfig.autoDeleteInterval || 10000);
+                        };
+
+                        return;
+                    });
+
+                    const results:OnAirRefreshResults = {
+                        results: [
+                            ...CreatedRecords,
+                            ...UpdatedRecords,
+                        ],
+                        success: true,
+                        createdAt: createdAt,
+                        count: x.length,
+                        createdCount: CreatedRecords.length,
+                        updatedCount: UpdatedRecords.length,
+                    }
+        
+                    return resolve(results);
+                });
+                
+                const results:OnAirRefreshResults = {
+                    results: x,
+                    success: true,
+                    createdAt: createdAt,
+                    count: x.length,
+                }
     
+                return resolve(results);
+            });
+        });
+    }
+/**
     loadVirtualAirline():Promise<void> {
         const self = this;
         return new Promise(async (resolve, reject) => {
@@ -457,7 +843,8 @@ class OnAir implements IOnAir {
             return resolve();        
         });
     }
-
+ */    
+/**
     loadVAFleet():Promise<void> {
         const self = this;
         return new Promise(async (resolve, reject) => {
@@ -491,6 +878,7 @@ class OnAir implements IOnAir {
             return resolve();
         });
     }
+*/
 /**
     loadVANotifications():Promise<void> {
         const self = this;
@@ -518,13 +906,15 @@ class OnAir implements IOnAir {
         });
     }
 */ 
+/**
     loadVAJobs():Promise<void> {
         return new Promise((resolve, reject) => {
             this.Log.warn('This method is not implemented yet.')
             return resolve()
         })
     }
-
+ */
+/**
     loadAllEnabled():Promise<void> {
         const self = this;
         return new Promise(async (resolve, reject) => {
@@ -573,7 +963,6 @@ class OnAir implements IOnAir {
                             }
                         })
                     break;
-                    /**
                     case 'loadVANotifications':
                         self.loadVANotifications()
                         .then(() => {
@@ -590,7 +979,6 @@ class OnAir implements IOnAir {
                             }
                         })
                     break;
-                     */
                     case 'loadVAJobs':
                         self.loadVAJobs()
                         .then(() => {
@@ -620,6 +1008,7 @@ class OnAir implements IOnAir {
             });
         });
     }
+*/
 }
 
 export default OnAir

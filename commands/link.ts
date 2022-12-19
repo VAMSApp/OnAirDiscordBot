@@ -5,6 +5,7 @@ import { Account, Company, NewAccount, NewCompany, TranslatedCompany, VirtualAir
 import { IBot } from '../interfaces';
 import { CompanyResponse } from 'onair-api';
 import { CompanyTranslator } from '../translators';
+import { Prisma } from '@prisma/client';
 
 export default {
 	data: new SlashCommandBuilder()
@@ -111,7 +112,27 @@ export default {
         // if the company doesn't exist, then create it
         if (!company) {
             // then create the company
-            const newCompany:NewCompany = {
+            const newCompany:TranslatedCompany = {
+                ...translatedCompany,
+                OnAirSyncedAt: new Date(),
+                ApiKey: apiKey || null,
+                Owner: { 
+                    connect: {
+                        Id: account.Id
+                    }
+                },
+                VirtualAirline: {
+                    connect: {
+                        Id: virtualAirline.Id,
+                    },
+                },
+            }
+
+            delete newCompany.WorldId;
+
+            company = await CompanyRepo.create(newCompany)
+        } else {
+            const updatedCompany:TranslatedCompany = {
                 ...translatedCompany,
                 OnAirSyncedAt: new Date(),
                 ApiKey: apiKey || null,
@@ -130,10 +151,9 @@ export default {
                         Id: virtualAirline.Id,
                     },
                 },
-            }
+            };
 
-            delete newCompany.WorldId;
-            company = await CompanyRepo.create(newCompany)
+            company = await CompanyRepo.update(company.Id, updatedCompany)
         }
 
         // if the company is still null something else happened, return

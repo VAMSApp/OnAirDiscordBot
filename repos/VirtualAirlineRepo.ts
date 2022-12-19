@@ -1,6 +1,16 @@
+import { QueryOptions, VirtualAirline } from '../types';
 import BaseRepo from './BaseRepo'
 
-class VirtualAirlineRepoClass extends BaseRepo {
+export interface IVirtualAirlineRepo {
+    create(newX:any, opts?:QueryOptions): Promise<VirtualAirline>;
+    update(Id:any, x:any, opts?:QueryOptions): Promise<VirtualAirline>;
+    upsert(Id:any, payload:any, opts?:QueryOptions): Promise<VirtualAirline>;
+    findAll(opts?:QueryOptions): Promise<VirtualAirline[]>;
+    findById(Id:any, opts?:QueryOptions): Promise<VirtualAirline>;
+    findFirst(opts?:QueryOptions): Promise<VirtualAirline>;
+}
+
+class VirtualAirlineRepoClass extends BaseRepo implements IVirtualAirlineRepo {
     IsSyncable = true;
     
     constructor() {

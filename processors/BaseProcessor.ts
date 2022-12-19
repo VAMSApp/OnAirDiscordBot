@@ -1,4 +1,4 @@
-import { IBotContext, ILogger, IAircraftClassTranslator, IAircraftTypeTranslator, IAircraftEngineTranslator, IAircraftTranslator, IProcessor, IVirtualAirlineTranslator, ITranslator, } from "../interfaces";
+import { IBotContext, ILogger, IAircraftClassTranslator, IVARoleTranslator, IAircraftTypeTranslator, IAircraftEngineTranslator, IAircraftTranslator, IProcessor, IVirtualAirlineTranslator, ITranslator, IMemberTranslator, ICompanyTranslator, IAirportTranslator, INotificationTranslator, IFlightTranslator, IEmployeeTranslator, } from "../interfaces";
 import { AircraftClassTranslator, AircraftTypeTranslator, AircraftEngineTranslator, AircraftTranslator, VirtualAirlineTranslator } from "../translators";
 import { TranslatedResponse, InputResponse, } from "../types";
 
@@ -13,12 +13,19 @@ export class BaseProcessor implements IProcessor {
         AircraftEngine: IAircraftEngineTranslator;
         Aircraft: IAircraftTranslator;
         VirtualAirline: IVirtualAirlineTranslator;
+        Member: IMemberTranslator;
+        Company: ICompanyTranslator;
+        VARole: IVARoleTranslator;
+        Airport: IAirportTranslator;
+        Notification: INotificationTranslator;
+        Flight: IFlightTranslator;
+        Employee: IEmployeeTranslator;
     };
-    
+
     constructor(app: IBotContext) {
         this.App = app;
         this.Translators = this.App.OnAir.Translators;
-
+        
         const {
             log,
             OnAir: {

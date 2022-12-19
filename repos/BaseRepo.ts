@@ -210,28 +210,26 @@ class BaseRepo {
             include: (opts?.include) ? opts.include : undefined,
         }
 
-        return this.Model.findMany(query)
+        return await this.Model.findMany(query)
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
             .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
     }
 
-    async findById(Id:any, opts?:QueryOptions) {
+    async findById(Id:string, opts?:QueryOptions) {
         const self = this;
         if  (!Id) throw new Error('Id is required');
         
         const query = {
             where: {
-                Id: (typeof Id !== 'string') ? Id.toString() : Id,
+                Id: Id,
             },
-            orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
             include: (opts?.include) ? opts.include : undefined,
         }
+        
+        const x = await this.Model.findUnique(query)
 
-        return this.Model.findUnique(query)
-            .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
-            .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+        return x
     }
 
     async findFirst(opts?:QueryOptions) {

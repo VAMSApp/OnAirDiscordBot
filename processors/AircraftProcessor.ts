@@ -13,6 +13,8 @@ export class AircraftProcessor extends BaseProcessor implements IAircraftProcess
     Aircraft: Aircraft|undefined;
     declare Translated: TranslatedAircraft|undefined;
     declare Input: OnAirAircraft|undefined;
+    declare Created: boolean|undefined;
+    declare Updated: boolean|undefined;
 
     constructor(input:OnAirAircraft, app: IBotContext) {
         super(app);
@@ -23,7 +25,7 @@ export class AircraftProcessor extends BaseProcessor implements IAircraftProcess
         this.process = this.process.bind(this);
     }
 
-    process(): Promise<Aircraft> {
+    process(): Promise<OnAirRefreshResults> {
         const self = this;
         return new Promise(async (resolve, reject) => {
             if (!self.Input) return reject(new Error('No input provided'));
@@ -76,7 +78,13 @@ export class AircraftProcessor extends BaseProcessor implements IAircraftProcess
                 if (!aircraft) throw new Error('Aircraft wasn\'t able to be found');
                 self.Aircraft = aircraft;
 
-                return resolve(self.Aircraft)
+                const results:OnAirRefreshResults = {
+                    results: self.Aircraft,
+                    created: self.Created,
+                    updated: self.Updated,
+                    success: true,
+                }
+                return resolve(results)
             })
             .catch((err:any) => {
                 let msg = `Error processing aircraft`
@@ -183,9 +191,11 @@ export class AircraftProcessor extends BaseProcessor implements IAircraftProcess
                 
                 if (!aircraft) {
                     aircraft = await AircraftRepo.create(translated);
+                    self.Created = true;
                 } else {
                     aircraft.OnAirSyncedAt = new Date();
                     aircraft = await AircraftRepo.update(translated.Id, translated);
+                    self.Updated = true;
                 }
                 if (!aircraft) return reject(new Error('Aircraft isn\'t able to be processed'));
 

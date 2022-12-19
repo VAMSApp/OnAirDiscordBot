@@ -1,5 +1,5 @@
 import { IBot } from "../interfaces";
-import { Processing, Schedule } from "../types";
+import { OnAirRefreshResults, Processing, Schedule } from "../types";
 import { FormatDate } from "../utils";
 
 const schedule:Schedule = {
@@ -10,10 +10,20 @@ const schedule:Schedule = {
         if (OnAir.Processing[key] === true) return;
 
         log.info(`Schedule::execute - ${this.description}`);
-        const results = await OnAir.refreshVANotifications();
-        const formattedDate = FormatDate(results.createdAt)
+
+        const {
+            results,
+            updated,
+            created,
+            error,
+            success,
+            count,
+        }:OnAirRefreshResults = await OnAir.refreshVANotifications();
+        const formattedDate = FormatDate(new Date())
         const description = this.description.replace('refresh', 'refreshed');
-        log.info(`Schedule::execute - ${description} has completed at ${formattedDate}`);
+
+        log.info(`Schedule::execute - ${description} has completed refreshing ${count} records at ${formattedDate}`);
+        
     }
 }
 

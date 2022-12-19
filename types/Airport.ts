@@ -48,7 +48,7 @@
     LastLongHaulRequestDate: Date | null
     UTCTimeOpenInHoursSinceMidnight: number | null
     UTCTimeCloseInHoursSinceMidnight: number | null
-    OnAirSyncedAt: Date | null
+    OnAirSyncedAt?: Date | null
     UpdatedAt: Date | null
     CreatedAt: Date
   }

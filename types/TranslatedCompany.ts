@@ -2,6 +2,7 @@ export type TranslatedCompany = {
     Id: string;
     WorldId?: string;
     Name: string;
+    ApiKey?: string|null;
     AirlineCode: string;
     LastConnection?: Date|null;
     LastReportDate?: Date|null;
@@ -34,5 +35,8 @@ export type TranslatedCompany = {
     CurrentBadgeUrl: string;
     CurrentBadgeName: string;
     LastWeeklyManagementsPaymentDate: Date|null;
+    OnAirSyncedAt?: Date|null;
     World?: any;
+    Owner?: any;
+    VirtualAirline?: any;
 }

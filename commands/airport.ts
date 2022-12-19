@@ -31,7 +31,7 @@ export default {
         let msg = ''
 
 
-        const x:AirportResponse = await app.OnAir.getAirport(icao);
+        const x:AirportResponse = await app.OnAir.getAirportByICAO(icao);
 
         if (!x) msg = 'No airport found'
         

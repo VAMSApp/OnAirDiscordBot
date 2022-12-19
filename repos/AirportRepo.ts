@@ -1,22 +1,106 @@
 import { Prisma } from '@prisma/client';
-import { IBot } from '../interfaces';
-import OnAir from 'OnAir';
-import { AirportTranslator } from '../translators';
-import { Airport, TranslatedAirport } from 'types';
+import { IBot } from 'interfaces';
+import { Airport, QueryOptions, TranslatedAirport } from '../types';
+import { Airport as OnAirAirport } from 'onair-api';
 import BaseRepo from './BaseRepo'
 
-class AirportRepoClass extends BaseRepo {
+export interface IAirportRepo {
+    findByICAO(icao:string, opts:any): Promise<Airport>;
+    create(newX:TranslatedAirport|Airport, opts?:QueryOptions): Promise<Airport>;
+    update(Id:string, x:Prisma.AirportUpdateInput|Airport, opts?:QueryOptions): Promise<Airport>;
+    updateByICAO(icao:string, x:Prisma.AirportUpdateInput|Airport, opts?:QueryOptions): Promise<Airport>;
+    upsert(Id:string, payload:TranslatedAirport|Airport, opts?:QueryOptions): Promise<Airport>;
+    findAll(opts?:QueryOptions): Promise<Airport[]>;
+    findById(Id:string, opts?:QueryOptions): Promise<Airport>;
+    findFirst(opts?:QueryOptions): Promise<Airport>;
+}
+
+class AirportRepoClass extends BaseRepo implements IAirportRepo {
     IsSyncable = true;
     
     constructor() {
         super();
         this.Model = this.prisma.airport
         this.bot?.log.info('AirportRepo initialized');
-        this.findByCode = this.findByCode.bind(this)
-        this.findOrUpsertByCode = this.findOrUpsertByCode.bind(this)
+        this.findByICAO = this.findByICAO.bind(this)
     }
 
-    async findByCode(icao:string, opts:any) {
+    async create(newX:TranslatedAirport|Airport, opts?:QueryOptions) {
+        const self = this;
+        if (!newX) throw new Error('New Record is required');
+
+
+        if (self.IsSyncable === true && newX.OnAirSyncedAt === undefined) {
+            newX = {
+                ...newX,
+                OnAirSyncedAt: new Date(),
+            }
+        }
+
+        const query:Prisma.AirportCreateArgs = {
+            data: newX as Prisma.AirportCreateInput,
+            include: (opts?.include) ? opts.include : undefined,
+        }
+
+        return await this.Model.create(query)
+            .then((x:Airport) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
+            .then((x:Airport) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
+            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x)
+    }
+
+    async update(Id:string, x:Prisma.AirportUpdateInput|Airport, opts?:QueryOptions) {
+        const self = this;
+        if (!Id) throw new Error('Id is required');
+        if (!x) throw new Error('New Record is required');
+
+        if (self.IsSyncable === true) {
+            x = {
+                ...x,
+                OnAirSyncedAt: new Date(),
+            }
+        }
+
+        const query:Prisma.AirportUpdateArgs = {
+            where: {
+                Id: Id,
+            },
+            data: x as Prisma.AirportUpdateInput,
+            include: (opts?.include) ? opts.include : undefined,
+        }
+
+        return await this.Model.update(query)
+            .then((x:Airport) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
+            .then((x:Airport) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
+            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x)
+    }
+
+    async updateByICAO(icao:string, x:Prisma.AirportUpdateInput|Airport, opts?:QueryOptions) {
+        const self = this;
+        if (!icao) throw new Error('ICAO is required');
+        if (!x) throw new Error('Updated Record is required');
+
+        if (self.IsSyncable === true) {
+            x = {
+                ...x,
+                OnAirSyncedAt: new Date(),
+            }
+        }
+
+        const query:Prisma.AirportUpdateArgs = {
+            where: {
+                ICAO: icao,
+            },
+            data: x as Prisma.AirportUpdateInput,
+            include: (opts?.include) ? opts.include : undefined,
+        }
+
+        return await this.Model.update(query)
+            .then((x:Airport) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
+            .then((x:Airport) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
+            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x)
+    }
+
+    async findByICAO(icao:string, opts?:QueryOptions):Promise<Airport> {
         const self = this;
         if (!icao) throw new Error('ICAO is required');
 
@@ -29,32 +113,11 @@ class AirportRepoClass extends BaseRepo {
         }
 
         return await this.Model.findUnique(query)
-            .then((x:any) => self.determineCanSync(x))
-            .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
-            .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Airport) => self.determineCanSync(x))
+            .then((x:Airport) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
+            .then((x:Airport) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
+            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x)
     }
-
-    async findOrUpsertByCode(icao:string, opts:any, app:IBot):Promise<Airport> {
-        const self = this;
-        if (!icao) throw new Error('ICAO is required');
-
-        let x:Airport = await self.findByCode(icao, opts)
-
-        if (!x) {
-            // airport not found, so we need to look it up in OnAir
-            const oaAirport = await app.OnAir.getAirport(icao);
-            if (!oaAirport) throw new Error(`Airport with ICAO ${icao} not found in OnAir`);
-            // translate the OnAir airport to a DB Airport
-            const translatedAirport:TranslatedAirport = new AirportTranslator(app).translate(oaAirport)
-            // create the airport in the DB
-            x = await self.create(translatedAirport, opts);
-        }
-
-        // return the airport
-        return x;
-    }
-
 }
 
 export const AirportRepo = new AirportRepoClass();

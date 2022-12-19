@@ -42,4 +42,5 @@ export type TranslatedAirport = {
     LastLongHaulRequestDate?:            Date
     UTCTimeOpenInHoursSinceMidnight?:    number
     UTCTimeCloseInHoursSinceMidnight?:   number
+    OnAirSyncedAt?:                      Date
 }

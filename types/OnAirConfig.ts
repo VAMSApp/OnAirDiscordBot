@@ -19,8 +19,9 @@ export type OnAirApiQueryOptions = {
 export type OnAirEventsConfig = {
     VirtualAirline: OnAirEventConfig;
     VAFleet: OnAirEventConfig;
-    VAJobs: OnAirEventConfig;
-    VANotifications: OnAirEventConfig;
+    VAJob: OnAirEventConfig;
+    VANotification: OnAirEventConfig;
+    VAMember: OnAirEventConfig;
 }
 
 export type OnAirPollingsConfig = {
@@ -28,6 +29,7 @@ export type OnAirPollingsConfig = {
     VAJobs: OnAirPollingConfig;
     VAFleet: OnAirPollingConfig;
     VANotifications: OnAirPollingConfig;
+    VAMembers: OnAirPollingConfig;
 };
 
 export type OnAirConfig = {

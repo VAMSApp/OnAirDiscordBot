@@ -1,6 +1,16 @@
+import { AircraftClass, QueryOptions } from '../types';
 import BaseRepo from './BaseRepo'
 
-class AircraftClassRepoClass extends BaseRepo {
+export interface IAircraftClassRepo {
+    create(newX:any, opts?:QueryOptions): Promise<AircraftClass>;
+    update(Id:any, x:any, opts?:QueryOptions): Promise<AircraftClass>;
+    upsert(Id:any, payload:any, opts?:QueryOptions): Promise<AircraftClass>;
+    findAll(opts?:QueryOptions): Promise<AircraftClass[]>;
+    findById(Id:any, opts?:QueryOptions): Promise<AircraftClass>;
+    findFirst(opts?:QueryOptions): Promise<AircraftClass>;
+}
+
+class AircraftClassRepoClass extends BaseRepo implements IAircraftClassRepo {
     IsSyncable = true;
     
     constructor() {

@@ -7,16 +7,13 @@ const { combine, timestamp, printf, } = winston.format;
 class Logger implements ILogger {
     private logger: winston.Logger | undefined;
 
-    private Config = {
-        logLevel: 'info',
-        logToConsole: false,
-    }
+    private Config: LoggerConfig;
 
     constructor(cfg?:LoggerConfig) {
         this.Config = {
-            ...this.Config,
-            ...cfg
-        };
+            logLevel: cfg?.logLevel || 'info',
+            logToConsole: cfg?.logToConsole || false,
+        }
 
         this.initialize();
 
@@ -24,6 +21,7 @@ class Logger implements ILogger {
         this.info = this.info.bind(this);
         this.notice = this.notice.bind(this);
         this.warn = this.warn.bind(this);
+        this.warning = this.warning.bind(this);
         this.error = this.error.bind(this);
 
     }
@@ -135,14 +133,18 @@ class Logger implements ILogger {
         }
     }
 
-    public warn(message: string, ...meta: any[]) {
+    public warning(message: string, ...meta: any[]) {
         if (this.logger === undefined) {
             this.initialize();
-            this.warn(message, meta);
+            this.warning(message, meta);
         } else {
             if (this.Config.logToConsole === false) return;
-            this.logger.warn(message, meta);
+            this.logger.warning(message, meta);
         }
+    }
+
+    public warn(message: string, ...meta: any[]) {
+        this.warning(message, meta);
     }
 
     public notice(message: string, ...meta: any[]) {

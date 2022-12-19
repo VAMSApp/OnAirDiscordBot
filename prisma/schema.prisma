@@ -11,14 +11,14 @@ datasource db {
 }
 
 model AppConfig {
-  Id        String    @id @default(uuid())
+  Id        String    @id
   AppTitle  String
   CreatedAt DateTime  @default(now())
   UpdatedAt DateTime? @updatedAt
 }
 
 model Account {
-  Id               String           @id @default(uuid())
+  Id               String           @id
   DiscordId        String           @unique
   Username         String
   Discriminator    String
@@ -42,11 +42,11 @@ model Account {
   Company          Company?
   VaInvitations    VAInvitation[]
   VirtualAirline   VirtualAirline[]
-  Ferry            Ferry[]
+  Ferries          Ferry[]
 }
 
 model VirtualAirline {
-  Id                                     String    @id @default(uuid())
+  Id                                     String    @id
   Name                                   String
   AirlineCode                            String    @unique
   ApiKey                                 String    @unique
@@ -101,7 +101,7 @@ model VirtualAirline {
 }
 
 model VAInvitation {
-  Id         String    @id @default(uuid())
+  Id         String    @id
   VaId       String
   CompanyId  String
   AccountId  String
@@ -120,60 +120,61 @@ model VAInvitation {
 }
 
 model Company {
-  Id                                 String          @id @default(uuid())
+  Id                                 String         @id
   Name                               String
-  AirlineCode                        String          @unique
-  ApiKey                             String?         @unique
-  VirtualAirlineId                   String?
-  OwnerId                            String?         @unique
+  AirlineCode                        String         @unique
+  ApiKey                             String?        @unique
+  VirtualAirlineId                   String
+  OwnerId                            String?        @unique
   LastConnection                     DateTime?
   LastReportDate                     DateTime?
   Reputation                         Float?
   CreationDate                       DateTime?
-  DifficultyLevel                    Int?            @default(1)
-  UTCOffsetinHours                   Int?            @default(0)
-  Paused                             Boolean?        @default(false)
+  DifficultyLevel                    Int?           @default(1)
+  UTCOffsetinHours                   Int?           @default(0)
+  Paused                             Boolean?       @default(false)
   PausedDate                         DateTime?
-  Level                              Int?            @default(1)
-  LevelXP                            Int?            @default(1000)
-  TransportEmployeeInstant           Boolean?        @default(false)
-  TransportPlayerInstant             Boolean?        @default(false)
-  ForceTimeInSimulator               Boolean?        @default(false)
-  UseSmallAirports                   Boolean?        @default(false)
-  UseOnlyVanillaAirports             Boolean?        @default(false)
-  EnableSkillTree                    Boolean?        @default(false)
-  CheckrideLevel                     Int?            @default(0)
-  EnableLandingPenalities            Boolean?        @default(false)
-  EnableEmployeesFlightDutyAndSleep  Boolean?        @default(false)
-  AircraftRentLevel                  Int?            @default(0)
-  EnableCargosAndChartersLoadingTime Boolean?        @default(false)
-  InSurvival                         Boolean?        @default(false)
-  PayBonusFactor                     Int?            @default(0)
-  EnableSimFailures                  Boolean?        @default(false)
-  DisableSeatsConfigCheck            Boolean?        @default(false)
-  RealisticSimProcedures             Boolean?        @default(false)
-  TravelTokens                       Int?            @default(0)
+  Level                              Int?           @default(1)
+  LevelXP                            Int?           @default(1000)
+  TransportEmployeeInstant           Boolean?       @default(false)
+  TransportPlayerInstant             Boolean?       @default(false)
+  ForceTimeInSimulator               Boolean?       @default(false)
+  UseSmallAirports                   Boolean?       @default(false)
+  UseOnlyVanillaAirports             Boolean?       @default(false)
+  EnableSkillTree                    Boolean?       @default(false)
+  CheckrideLevel                     Int?           @default(0)
+  EnableLandingPenalities            Boolean?       @default(false)
+  EnableEmployeesFlightDutyAndSleep  Boolean?       @default(false)
+  AircraftRentLevel                  Int?           @default(0)
+  EnableCargosAndChartersLoadingTime Boolean?       @default(false)
+  InSurvival                         Boolean?       @default(false)
+  PayBonusFactor                     Int?           @default(0)
+  EnableSimFailures                  Boolean?       @default(false)
+  DisableSeatsConfigCheck            Boolean?       @default(false)
+  RealisticSimProcedures             Boolean?       @default(false)
+  TravelTokens                       Int?           @default(0)
   CurrentBadgeId                     String?
   CurrentBadgeUrl                    String?
   CurrentBadgeName                   String?
   WorldId                            String?
   LastWeeklyManagementsPaymentDate   DateTime?
   OnAirSyncedAt                      DateTime?
-  CreatedAt                          DateTime        @default(now())
-  UpdatedAt                          DateTime?       @updatedAt
-  Owner                              Account?        @relation(fields: [OwnerId], references: [Id])
-  VirtualAirline                     VirtualAirline? @relation(fields: [VirtualAirlineId], references: [Id])
+  CreatedAt                          DateTime       @default(now())
+  UpdatedAt                          DateTime?      @updatedAt
+  Owner                              Account?       @relation(fields: [OwnerId], references: [Id])
+  VirtualAirline                     VirtualAirline @relation(fields: [VirtualAirlineId], references: [Id])
   Invitations                        VAInvitation[]
   Employees                          Employee[]
   Notifications                      Notification[]
-  RentalAircraft                     Aircraft[]      @relation("AircraftRentalCompany")
-  OwnedAircraft                      Aircraft[]      @relation("AircraftOwnerCompany")
-  CurrentAicraft                     Aircraft[]      @relation("AircraftCurrentCompany")
-  AssignedCharterJobs                Charter[]       @relation("CharterAssignedToVAMember")
-  AssignedCargoJobs                  Cargo[]         @relation("CargoAssignedToVAMember")
+  RentalAircraft                     Aircraft[]     @relation("AircraftRentalCompany")
+  OwnedAircraft                      Aircraft[]     @relation("AircraftOwnerCompany")
+  CurrentAicraft                     Aircraft[]     @relation("AircraftCurrentCompany")
+  AssignedCharterJobs                Charter[]      @relation("CharterAssignedToVAMember")
+  AssignedCargoJobs                  Cargo[]        @relation("CargoAssignedToVAMember")
   Jobs                               Job[]
   Member                             Member[]
-  World                              World?          @relation(fields: [WorldId], references: [Id])
+  World                              World?         @relation(fields: [WorldId], references: [Id])
+  Flight                             Flight[]
 }
 
 model World {
@@ -241,7 +242,7 @@ model Email {
 }
 
 model Notification {
-  Id             String   @id @default(uuid())
+  Id             String   @id
   VaId           String
   CompanyId      String?
   AircraftId     String?
@@ -250,8 +251,8 @@ model Notification {
   IsRead         Boolean  @default(false)
   IsNotification Boolean  @default(false)
   ZuluEventTime  DateTime
-  CategoryId     Int
-  ActionId       Int
+  CategoryId     Int?
+  ActionId       Int?
   Description    String
   Amount         Float    @default(0)
 
@@ -259,20 +260,25 @@ model Notification {
   UpdatedAt     DateTime? @updatedAt
   CreatedAt     DateTime  @default(now())
 
-  Va       VirtualAirline @relation(fields: [VaId], references: [Id])
-  Company  Company?       @relation(fields: [CompanyId], references: [Id])
-  Employee Employee?      @relation(fields: [EmployeeId], references: [Id])
+  VirtualAirline VirtualAirline @relation(fields: [VaId], references: [Id])
+  Company        Company?       @relation(fields: [CompanyId], references: [Id])
+  Employee       Employee?      @relation(fields: [EmployeeId], references: [Id])
+  Aircraft       Aircraft?      @relation(fields: [AircraftId], references: [Id])
+  Flight         Flight?        @relation(fields: [FlightId], references: [Id])
 }
 
 model Employee {
-  Id                           String         @id @default(uuid())
+  Id                           String         @id
   Pseudo                       String
   CompanyId                    String
+  CurrentAirportId             String?
+  HomeAirportId                String?
   FlightHoursTotalBeforeHiring Float?
   FlightHoursInCompany         Float?
   Category                     Int
   Status                       Int
-  LastStatusChange             DateTime
+  LastStatusChange             DateTime?
+  BirthDate                    DateTime?
   IsOnline                     Boolean        @default(false)
   FlightHoursGrandTotal        Float?
   OnAirSyncedAt                DateTime?
@@ -281,10 +287,12 @@ model Employee {
   Company                      Company        @relation(fields: [CompanyId], references: [Id])
   Notifications                Notification[]
   Account                      Account?
+  CurrentAirport               Airport?       @relation("EmployeeCurrentAirport", fields: [CurrentAirportId], references: [Id])
+  HomeAirport                  Airport?       @relation("EmployeeHomeAirport", fields: [HomeAirportId], references: [Id])
 }
 
 model Airport {
-  Id                                 String     @id @default(uuid())
+  Id                                 String     @id
   ICAO                               String     @unique
   IATA                               String?
   DisplayName                        String
@@ -332,6 +340,10 @@ model Airport {
   CreatedAt                          DateTime   @default(now())
   CurrentAircraft                    Aircraft[] @relation("AircraftCurrentAirport")
   HomeAircraft                       Aircraft[] @relation("AircraftHomeAirport")
+  DepartingFlights                   Flight[]   @relation("FlightDepartureAirport")
+  ArrivalIntendedFlights             Flight[]   @relation("FlightArrivalIntendedAirport")
+  ArrivalAlternateFlights            Flight[]   @relation("FlightArrivalAlternateAirport")
+  ArrivalActualFlights               Flight[]   @relation("FlightArrivalActualAirport")
   CurrentCharters                    Charter[]  @relation("CharterCurrentAirport")
   DepartingCharters                  Charter[]  @relation("CharterDepartureAirport")
   ArrivingCharters                   Charter[]  @relation("CharterDestinationAirport")
@@ -340,12 +352,14 @@ model Airport {
   ArrivingCargo                      Cargo[]    @relation("CargoDestinationAirport")
   MainJobs                           Job[]      @relation("JobMainAirport")
   BaseJobs                           Job[]      @relation("JobBaseAirport")
-  ArrivingFerries                    Ferry[]    @relation("FerryArrivalAirport")
-  DepartingFerries                   Ferry[]    @relation("FerryDepartureAirport")
+  FerryDepartures                    Ferry[]    @relation("FerryDepartureAirport")
+  FerryArrivals                      Ferry[]    @relation("FerryArrivalAirport")
+  EmployeesAtAirport  Employee[] @relation("EmployeeCurrentAirport")
+  EmployeesHomeAirport Employee[] @relation("EmployeeHomeAirport")
 }
 
 model AircraftEngine {
-  Id            String    @id @default(uuid())
+  Id            String    @id
   AircraftId    String
   Number        Int
   Condition     Float
@@ -359,7 +373,7 @@ model AircraftEngine {
 }
 
 model AircraftClass {
-  Id            String         @id @default(uuid())
+  Id            String         @id
   ShortName     String         @unique
   Name          String
   Order         Int
@@ -371,8 +385,8 @@ model AircraftClass {
 
 model AircraftStatus {
   Id            Int        @id
-  Name        String
-  ShortName String @unique
+  Name          String
+  ShortName     String     @unique
   OnAirSyncedAt DateTime?
   UpdatedAt     DateTime?  @updatedAt
   CreatedAt     DateTime   @default(now())
@@ -400,7 +414,7 @@ model EngineType {
 }
 
 model AircraftType {
-  Id                         String        @id @default(uuid())
+  Id                         String        @id
   AircraftClassId            String
   CreationDate               DateTime
   LastModerationDate         DateTime
@@ -440,7 +454,7 @@ model AircraftType {
 }
 
 model Aircraft {
-  Id                             String           @id @default(uuid())
+  Id                             String           @id
   RentalAirportId                String?
   RentalCompanyId                String?
   OwnerCompanyId                 String?
@@ -503,10 +517,12 @@ model Aircraft {
   CurrentCompany                 Company?         @relation("AircraftCurrentCompany", fields: [CurrentCompanyId], references: [Id])
   Ferry                          Ferry[]
   World                          World            @relation(fields: [WorldId], references: [Id])
+  Notification                   Notification[]
+  Flight                         Flight[]
 }
 
 model CharterType {
-  Id                  String    @id @default(uuid())
+  Id                  String    @id
   Name                String
   CharterTypeCategory Int
   MinPAX              Int
@@ -518,7 +534,7 @@ model CharterType {
 }
 
 model Charter {
-  Id                   String      @id @default(uuid())
+  Id                   String      @id
   JobId                String
   CharterTypeId        String
   CurrentAirportId     String?
@@ -549,7 +565,7 @@ model Charter {
 }
 
 model CargoType {
-  Id                String    @id @default(uuid())
+  Id                String    @id
   Guid              String    @unique
   Name              String
   CargoTypeCategory Int
@@ -562,7 +578,7 @@ model CargoType {
 }
 
 model Cargo {
-  Id                   String    @id @default(uuid())
+  Id                   String    @id
   JobId                String
   CargoTypeId          String
   CurrentAirportId     String
@@ -593,7 +609,7 @@ model Cargo {
 }
 
 model JobType {
-  Id                   String    @id @default(uuid())
+  Id                   String    @id
   Guid                 String    @unique
   Name                 String
   ShortName            String
@@ -608,7 +624,7 @@ model JobType {
 }
 
 model Job {
-  Id                     String    @id @default(uuid())
+  Id                     String    @id
   JobTypeId              String
   CompanyId              String
   MainAirportId          String?
@@ -651,15 +667,80 @@ model Job {
 }
 
 model Flight {
-  Id String @id @default(uuid())
-
-  OnAirSyncedAt DateTime?
-  UpdatedAt     DateTime? @updatedAt
-  CreatedAt     DateTime  @default(now())
+  Id                                         String         @id
+  Registered                                 Boolean        @default(true)
+  Category                                   Int
+  ResultComments                             String?
+  StartTime                                  DateTime?
+  EndTime                                    DateTime?
+  EngineOnTime                               DateTime?
+  EngineOffTime                              DateTime?
+  AirborneTime                               DateTime?
+  LandedTime                                 DateTime?
+  IntendedFlightLevel                        Int?
+  Passengers                                 Int?
+  Cargo                                      Int?
+  AddedFuelQty                               Int?
+  IsAI                                       Boolean?
+  VerticalSpeedAtTouchdownMpS                Float?
+  MaxGForce                                  Float?
+  MinGForce                                  Float?
+  MaxBank                                    Float?
+  MaxPitch                                   Float?
+  HasStalled                                 Boolean?
+  HasOverspeeded                             Boolean?
+  Engine1Status                              Int?
+  Engine2Status                              Int?
+  Engine3Status                              Int?
+  Engine4Status                              Int?
+  Engine5Status                              Int?
+  Engine6Status                              Int?
+  XPFlight                                   Int?
+  XPFlightBonus                              Float?
+  XPMissions                                 Int?
+  CargosTotalWeight                          Float?
+  PAXCount                                   Int?
+  AircraftCurrentFOB                         Float?
+  AircraftCurrentAltitude                    Float?
+  ActualCruiseAltitude                       Float?
+  ActualConsumptionAtCruiseLevelInLbsPerHour Float?
+  ActualTotalFuelConsumptionInLbs            Float?
+  ActualConsumptionAtCruiseLevelInGalPerHour Float?
+  ActualTASAtCruiseLevel                     Float?
+  ActualCruiseTimeInMinutes                  Float?
+  ActualPressureAltitude                     Float?
+  RegisterState                              Int?
+  WrongFuelDetected                          Boolean?
+  WrongWeightDetected                        Boolean?
+  TimeOffset                                 Float?
+  StartLatitude                              Float?
+  StartLongitude                             Float?
+  StartHeading                               Float?
+  CanResumeOrAbort                           Boolean?
+  EngineOnRealTime                           DateTime?
+  EngineOffRealTime                          DateTime?
+  LandedRealTime                             DateTime?
+  AirborneRealTime                           DateTime?
+  AircraftId                                 String?
+  CompanyId                                  String?
+  DepartureAirportId                         String?
+  ArrivalIntendedAirportId                   String?
+  ArrivalAlternateAirportId                  String?
+  ArrivalActualAirportId                     String?
+  OnAirSyncedAt                              DateTime?
+  UpdatedAt                                  DateTime?      @updatedAt
+  CreatedAt                                  DateTime       @default(now())
+  Notification                               Notification[]
+  Aircraft                                   Aircraft?      @relation(fields: [AircraftId], references: [Id])
+  Company                                    Company?       @relation(fields: [CompanyId], references: [Id])
+  DepartureAirport                           Airport?       @relation("FlightDepartureAirport", fields: [DepartureAirportId], references: [Id])
+  ArrivalIntendedAirport                     Airport?       @relation("FlightArrivalIntendedAirport", fields: [ArrivalIntendedAirportId], references: [Id])
+  ArrivalAlternateAirport                    Airport?       @relation("FlightArrivalAlternateAirport", fields: [ArrivalAlternateAirportId], references: [Id])
+  ArrivalActualAirport                       Airport?       @relation("FlightArrivalActualAirport", fields: [ArrivalActualAirportId], references: [Id])
 }
 
 model VARole {
-  Id                                     String    @id @default(uuid())
+  Id                                     String    @id
   VAId                                   String
   Name                                   String
   Permission                             Int
@@ -678,7 +759,7 @@ model VARole {
 }
 
 model Member {
-  Id                        String         @id @default(uuid())
+  Id                        String         @id
   VaId                      String
   CompanyId                 String
   VARoleId                  String
@@ -694,17 +775,17 @@ model Member {
   LastWeeklyPay             DateTime
   OnAirSyncedAt             DateTime?
   UpdatedAt                 DateTime?      @updatedAt
-  CreatedAt                 DateTime       @default(now())
+  CreatedAt                 DateTime?      @default(now())
   Company                   Company        @relation(fields: [CompanyId], references: [Id])
   VARole                    VARole         @relation(fields: [VARoleId], references: [Id])
   VirtualAirline            VirtualAirline @relation(fields: [VaId], references: [Id])
 }
 
 model Ferry {
-  Id                 String    @id @default(uuid())
+  Id                 String    @id
   AccountId          String
   AircraftId         String
-  DepartureAirportId String
+  DepartureAirportId String?
   ArrivalAirportId   String
   IsCompleted        Boolean   @default(false)
   CompletedBy        String?
@@ -716,6 +797,6 @@ model Ferry {
   Account          Account  @relation(fields: [AccountId], references: [Id])
   CompletedByUser  Account? @relation("FerryCompletedByAccount", fields: [CompletedBy], references: [Id])
   Aircraft         Aircraft @relation(fields: [AircraftId], references: [Id])
-  DepartureAirport Airport  @relation("FerryDepartureAirport", fields: [DepartureAirportId], references: [Id])
+  DepartureAirport Airport? @relation("FerryDepartureAirport", fields: [DepartureAirportId], references: [Id])
   ArrivalAirport   Airport  @relation("FerryArrivalAirport", fields: [ArrivalAirportId], references: [Id])
 }

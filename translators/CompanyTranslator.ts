@@ -27,7 +27,7 @@ export class CompanyTranslator extends BaseTranslator implements ICompanyTransla
             DifficultyLevel: this.Input.DifficultyLevel, // number;
             UTCOffsetinHours: this.Input.UTCOffsetinHours, // number;
             Paused: this.Input.Paused, // boolean;
-            PausedDate: this.Input.PausedDate, // string;
+            PausedDate: (this.Input.PausedDate) ? new Date(this.Input.PausedDate) : null, // string;
             Level: this.Input.Level, // number;
             LevelXP: this.Input.LevelXP, // number;
             TransportEmployeeInstant: this.Input.TransportEmployeeInstant, // boolean;
@@ -51,11 +51,7 @@ export class CompanyTranslator extends BaseTranslator implements ICompanyTransla
             CurrentBadgeUrl: this.Input.CurrentBadgeUrl, // string;
             CurrentBadgeName: this.Input.CurrentBadgeName, // string;
             LastWeeklyManagementsPaymentDate: (this.Input.LastWeeklyManagementsPaymentDate) ? new Date(this.Input.LastWeeklyManagementsPaymentDate) : null, // Date|null;
-            World: {
-                connect: {
-                    Id: this.Input.WorldId
-                }
-            }
+            WorldId: this.Input.WorldId,
         };
         
         return translated;

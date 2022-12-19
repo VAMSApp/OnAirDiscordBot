@@ -1,5 +1,5 @@
 import { Company, Prisma } from '@prisma/client';
-import { Aircraft, QueryOptions, TranslatedAircraft } from 'types';
+import { Aircraft, QueryOptions, TranslatedAircraft } from '../types';
 import BaseRepo from './BaseRepo'
 
 export interface IAircraftRepo {

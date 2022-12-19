@@ -28,7 +28,7 @@ export type Account = {
     Employee?:         Employee 
     Approvals?:        Account[]
     FerriesCompleted?: Ferry[]
-    Companies?:        Company[]
+    Company?:        Company
     VirtualAirlines?:  VirtualAirline[]
     Ferry?:            Ferry[]
 }

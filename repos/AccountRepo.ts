@@ -2,9 +2,19 @@ import { Prisma } from '@prisma/client'
 import { Account, QueryOptions } from '../types'
 import BaseRepo from './BaseRepo'
 
+export interface IAccountRepo {
+    findByDiscordId(DiscordId:string, opts:any): Promise<Account>;
+    toggleField(Id: string, fieldKey:string, opts?:QueryOptions): Promise<Account>;
+    create(newX:any, opts?:QueryOptions): Promise<Account>;
+    update(Id:any, x:any, opts?:QueryOptions): Promise<Account>;
+    upsert(Id:any, payload:any, opts?:QueryOptions): Promise<Account>;
+    findAll(opts?:QueryOptions): Promise<Account[]>;
+    findById(Id:any, opts?:QueryOptions): Promise<Account>;
+    findFirst(opts?:QueryOptions): Promise<Account>;
+}
 
-class AccountRepoClass extends BaseRepo {
-    IsSyncable = true;
+class AccountRepoClass extends BaseRepo implements IAccountRepo {
+    IsSyncable = false;
     
     constructor() {
         super();

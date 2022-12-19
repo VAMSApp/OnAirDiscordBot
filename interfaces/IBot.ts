@@ -1,3 +1,4 @@
+import { IEventService } from '../utils';
 import { ILogger, IOnAir } from '.'
 import { BotConfig } from '../types'
 
@@ -6,6 +7,7 @@ export interface IBot {
     log: ILogger;
     client: any;
     OnAir: IOnAir;
+    EventHandler: IEventService;
 
     loadCommands(): Promise<void>;
     deployCommands(): Promise<void>;

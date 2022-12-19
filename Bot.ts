@@ -1,8 +1,8 @@
 import * as dotenv from 'dotenv'
 dotenv.config()
 import Logger from './utils/Logger'
-import { BotConfig, Command, OnAirPollingConfig, OnAirPollingsConfig, Schedule, } from './types'
-import { IBot, ILogger, IOnAir } from './interfaces'
+import { BotConfig, Command, OnAirEvent, OnAirEventConfig, OnAirEventsConfig, OnAirPollingConfig, OnAirPollingsConfig, Schedule, } from './types'
+import { IBot, ILogger, IOnAir, IOnAirEvent } from './interfaces'
 import OnAir from './OnAir'
 import { Client, ClientApplication, Channel, Message, Collection, REST, Routes, } from 'discord.js'
 import { OnReadyMessage } from './messages'
@@ -11,6 +11,7 @@ import path from 'path'
 import BaseRepo from './repos/BaseRepo'
 import cron from 'node-cron'
 import cronstrue from 'cronstrue'
+import { EventService, IEventService } from './utils'
 
 class Bot implements IBot {
     private AppToken:string;
@@ -22,6 +23,7 @@ class Bot implements IBot {
     public config: BotConfig;
     public OnAir: IOnAir;
     public client: Client;
+    public EventHandler: IEventService;
 
     constructor(config:BotConfig) {    
         if (!config) throw new Error('No config provided, exiting.');
@@ -37,6 +39,7 @@ class Bot implements IBot {
         new BaseRepo().init(this);
 
         this.OnAir = new OnAir(this.config.onair, this as IBot);
+        this.EventHandler = new EventService(this.config.redis, this as IBot);
 
         this.client = new Client({
             intents: [
@@ -52,6 +55,7 @@ class Bot implements IBot {
         this.deployCommands();
         this.login();
         this.onReady();
+        this.loadEvents();
         this.loadSchedules();
         this.getRoleId = this.getRoleId.bind(this);
     }
@@ -200,6 +204,50 @@ class Bot implements IBot {
         return roleId
     }
 
+    loadEvents(): void {
+        const self = this;
+        const {
+            events
+        } = self.config.onair;
+
+        const enabledEventKeys = Object.keys(events).filter((k:any) => {
+            const key = k as keyof typeof events;
+            const enabled:boolean = events[key].enabled;
+
+            return (enabled === true)
+        });
+
+        if (enabledEventKeys.length === 0 || !enabledEventKeys) return;
+
+        // read all files in the 'events' directory
+        const _events = readdirSync(path.join(__dirname, 'events')).filter(file => {
+            const isEnabled = enabledEventKeys.includes(file.split('.')[0]);
+            return (isEnabled) ? file : false;
+        });
+
+        if (_events.length === 0 || !_events) {
+            this.log.debug(`No events found in the 'events' directory`);
+            return; 
+        }
+
+        // loop through all of the events and load them
+        for (const file of _events) {
+            const event:IOnAirEvent = require(path.join(__dirname, 'events', file)).default;
+            if (!event) continue;
+
+            const name = event.name as keyof OnAirEventsConfig;
+            
+            self.EventHandler.subscribe(name, (data:OnAirEvent) => {
+                self.log.debug(`Event triggered: ${name}`);
+                event.execute(name, data, self as IBot);
+                self.log.info(`✅ Executed event: ${name} (${file})`);
+            });
+        }
+
+        self.log.info(`✅ Subscribed to ${enabledEventKeys.length} Events`);
+
+    }
+
     loadSchedules(): void {
         const self = this;
         const {
@@ -239,7 +287,7 @@ class Bot implements IBot {
             }
 
             cron.schedule(pollCfg.cron, () => schedule.execute(self), pollCfg.opts);
-            this.log.info(`✅ Schedule::${taskName} - Will ${schedule.description} ${cronstrue.toString(pollCfg.cron)}`);
+            this.log.info(`✅ Schedule::${taskName} - Will ${schedule.description} ${cronstrue.toString(pollCfg.cron).toLowerCase()}`);
         }
 
         this.log.info(`✅ Scheduled ${enabledScheduleKeys.length} Tasks`);

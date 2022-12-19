@@ -10,6 +10,7 @@ export class AircraftTranslator extends BaseTranslator implements IAircraftTrans
         super(app);
 
         this.translate = this.translate.bind(this);
+        this.translateByOnAirId = this.translateByOnAirId.bind(this);
     }
 
     translate(input:OnAirAircraft, opts?:TranslatorOptions): TranslatedAircraft {
@@ -116,5 +117,10 @@ export class AircraftTranslator extends BaseTranslator implements IAircraftTrans
         }
         
         return translated;
+    }
+
+    public async translateByOnAirId(Id:string, opts?:TranslatorOptions): Promise<TranslatedAircraft> {
+        const input = await this.App.OnAir.getAircraftDetail(Id);
+        return this.translate(input, opts);
     }
 }

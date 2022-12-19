@@ -1,3 +1,4 @@
+import { Account } from "types"
 
 export type Ferry = {
   Id: string
@@ -10,4 +11,6 @@ export type Ferry = {
   CompletedAt: Date | null
   UpdatedAt: Date | null
   CreatedAt: Date
+  Account?: Account
+  
 }
