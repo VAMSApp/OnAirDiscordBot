@@ -1,5 +1,5 @@
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js'
-import { FleetResponse } from 'onair-api';
+import { Job as OnAirJob } from 'onair-api';
 import { IBot } from '../interfaces';
 import { JobsList } from '../messages'
 

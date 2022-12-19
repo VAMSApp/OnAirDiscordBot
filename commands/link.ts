@@ -3,7 +3,7 @@ import { APIUser, GuildMember, GuildMemberRoleManager, Interaction, InteractionR
 import { AccountRepo, CompanyRepo, VirtualAirlineRepo } from '../repos';
 import { Account, Company, NewAccount, NewCompany, TranslatedCompany, VirtualAirline } from '../types';
 import { IBot } from '../interfaces';
-import { CompanyResponse } from 'onair-api';
+import { Company as OnAirCompany } from 'onair-api';
 import { CompanyTranslator } from '../translators';
 import { Prisma } from '@prisma/client';
 
@@ -94,7 +94,7 @@ export default {
         let company:Company = await CompanyRepo.findById(companyId);
 
         // get all of the company latest details from OnAir
-        const oaCompany:CompanyResponse = await app.OnAir.getCompanyDetail(companyId);
+        const oaCompany:OnAirCompany = await app.OnAir.getCompanyDetail(companyId);
 
         // if the OnAir company does not exist, return
         if (!oaCompany) {

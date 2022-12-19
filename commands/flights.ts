@@ -1,6 +1,6 @@
 import { OnAirApiQueryOptions } from '../types';
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js'
-import { FlightsResponse } from 'onair-api';
+import { Flight as OnAirFlight } from 'onair-api';
 import { IBot } from '../interfaces';
 import { FlightsList } from '../messages'
 

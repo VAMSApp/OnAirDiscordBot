@@ -1,6 +1,6 @@
 import { matches } from 'lodash'
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js'
-import { MembersResponse } from 'onair-api';
+import { Member as OnAirMember } from 'onair-api';
 import { IBot } from '../interfaces';
 import { MembersList } from '../messages'
 
@@ -48,7 +48,7 @@ export default {
 
         let msg:string = ''
 
-        const x:MembersResponse = await app.OnAir.getVAMembers({
+        const x:OnAirMember[] = await app.OnAir.getVAMembers({
             sortBy: sortBy,
             sortOrder: sortOrder,
         });

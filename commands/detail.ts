@@ -1,5 +1,5 @@
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js'
-import { VirtualAirlineResponse } from 'onair-api';
+import { VirtualAirline as OnAirVirtualAirline } from 'onair-api';
 import { IBot } from '../interfaces';
 import { VADetail } from '../messages'
 
@@ -22,7 +22,7 @@ export default {
 
         let msg = ''
     
-        const x:VirtualAirlineResponse = await app.OnAir.getVADetail();
+        const x:OnAirVirtualAirline = await app.OnAir.getVADetail();
         if (!x) msg = 'No VA found'
 
         if (x) {

@@ -1,5 +1,5 @@
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js'
-import { AirportResponse } from 'onair-api';
+import { Airport as OnAirAirport } from 'onair-api';
 import { IBot } from '../interfaces';
 import { AirportDetail } from '../messages'
 
@@ -31,7 +31,7 @@ export default {
         let msg = ''
 
 
-        const x:AirportResponse = await app.OnAir.getAirportByICAO(icao);
+        const x:OnAirAirport = await app.OnAir.getAirportByICAO(icao);
 
         if (!x) msg = 'No airport found'
         

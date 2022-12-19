@@ -1,8 +1,6 @@
 
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder, TextBasedChannel, TextBasedChannelFields, } from 'discord.js'
-import { AirportResponse } from 'onair-api';
 import { IBot } from '../interfaces';
-import { AirportDetail } from '../messages'
 
 export default {
 	data: new SlashCommandBuilder()
