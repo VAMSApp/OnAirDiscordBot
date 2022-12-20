@@ -108,7 +108,7 @@ export default {
         
         // translate the OnAir company to a TranslatedCompany)
         const translatedCompany:TranslatedCompany = new CompanyTranslator(app).translate(oaCompany);
-
+        
         // if the company doesn't exist, then create it
         if (!company) {
             // then create the company
@@ -132,6 +132,7 @@ export default {
 
             company = await CompanyRepo.create(newCompany)
         } else {
+            delete translatedCompany.WorldId;
             const updatedCompany:TranslatedCompany = {
                 ...translatedCompany,
                 OnAirSyncedAt: new Date(),
@@ -140,16 +141,6 @@ export default {
                     connect: {
                         Id: account.Id
                     }
-                },
-                World: {
-                    connect: {
-                        Id: translatedCompany.WorldId
-                    }
-                },
-                VirtualAirline: {
-                    connect: {
-                        Id: virtualAirline.Id,
-                    },
                 },
             };
 

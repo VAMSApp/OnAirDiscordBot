@@ -1,12 +1,12 @@
 import { HumanizeDate } from '../utils';
 import Table from 'easy-table'
-import { Member, MembersResponse } from 'onair-api';
+import { Member as OnAirMember } from 'onair-api';
 
-export function MembersList (x:MembersResponse) {
+export function MembersList (x:OnAirMember[]) {
     if (!x || x.length <= 0) return;
 
     let t = new Table
-    x.forEach(function (e:Member, i:number) {
+    x.forEach(function (e:OnAirMember, i:number) {
         const companyName = `${e.Company.Name} (${e.Company.AirlineCode})`
         const role  = `${e.VARole.Name} (${e.VARole.Permission})`
         const paxCargo = `${e.TotalPAXsTransported}/${e.TotalCargosTransportedLbs}`

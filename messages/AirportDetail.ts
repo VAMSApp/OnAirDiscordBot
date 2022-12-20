@@ -1,5 +1,8 @@
 import Table from 'easy-table';
-import { Airport, Job } from 'onair-api';
+import {
+    Airport as OnAirAirport,
+    Job as OnAirJob,
+} from 'onair-api';
 
 export function DetermineRunwaySurface (x:number):string {
     let surface:string = ''
@@ -41,19 +44,19 @@ export function DetermineAirportSize (x:number):string {
     return size
 }
 
-export function ArrivalsJobsTable(jobs:Job[]):string {
+export function ArrivalsJobsTable(jobs:OnAirJob[]):string {
     if (!jobs) return ''
     if (jobs.length === 0) return `    No Scheduled Arrivals\n`
     return ''
 }
 
-export function DeparturesJobsTable(jobs:Job[]):string {
+export function DeparturesJobsTable(jobs:OnAirJob[]):string {
     if (!jobs) return ''
     if (jobs.length === 0) return `    No Scheduled Departures\n`
     return ''
 }
 
-export function AirportDetail(x:Airport):string|undefined {
+export function AirportDetail(x:OnAirAirport):string|undefined {
     if (!x) return;
     
     const Name = (x.Name) ? x.Name : ''

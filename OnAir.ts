@@ -475,70 +475,72 @@ class OnAir implements IOnAir {
                 RefreshFinishedAt = new Date();
                 
             })
-            .then(() => {
-                self.App.client.channels.fetch(self.App.getChannelId('discord'))
-                .then((channel:TextChannel) => {
-                    const fieldsArray:APIEmbedField[] = [
-                        {
-                            name: 'Total',
-                            value: `${totalRecords}`,
-                            inline: true,
-                        },
-                        {
-                            name: 'Created',
-                            value: `${CreatedRecords.length}`,
-                            inline: true,
-                        },
-                        {
-                            name: 'Updated',
-                            value: `${UpdatedRecords.length}`,
-                            inline: true,
-                        },
-                    ];
+            .then(() => {                
+                if (self.Config.polling.VANotifications.notify === true) {
+                    self.App.client.channels.fetch(self.App.getChannelId('discord'))
+                    .then((channel:TextChannel) => {
+                        const fieldsArray:APIEmbedField[] = [
+                            {
+                                name: 'Total',
+                                value: `${totalRecords}`,
+                                inline: true,
+                            },
+                            {
+                                name: 'Created',
+                                value: `${CreatedRecords.length}`,
+                                inline: true,
+                            },
+                            {
+                                name: 'Updated',
+                                value: `${UpdatedRecords.length}`,
+                                inline: true,
+                            },
+                        ];
 
-                    let footerText:string = 'OnAir VA Notifications';
-                    
-                    if (RefreshFinishedAt) {
-                        footerText = ` refreshed ${HumanizeDate(RefreshFinishedAt)}`;
-                    }
-
-                    const footer:EmbedFooterOptions = {
-                        text: footerText,
-                    };
-
-                    const embed = new EmbedBuilder()
-                        .setColor('#0099ff')
-                        .setTitle('OnAir VA Notifications Refreshed')
-                        .setURL('https://va.imperiumsim.club/notifications')
-                        .setDescription(`✅ Finished Refreshing the OnAir VA Notifications.`)
-                        .addFields(fieldsArray)
-                        .setTimestamp(RefreshFinishedAt)
-                        .setFooter(footer);
-
-                    channel.send({
-                        embeds: [embed],
-                    })
-                    .then((message:Message):void => {
-                        const pollingConfig:OnAirPollingConfig = self.getPollingConfig('VANotification');
-                        if (!pollingConfig) return;
+                        let footerText:string = 'OnAir VA Notifications';
                         
-                        if (pollingConfig.autoDelete === true) {
-                            setTimeout(() => {
-                                message.delete();
-                                self.Log.debug(`Deleted VANotification refresh message after ${pollingConfig.autoDeleteInterval}ms.`)
-                                return;
-                            }, pollingConfig.autoDeleteInterval || 10000);
+                        if (RefreshFinishedAt) {
+                            footerText = ` refreshed ${HumanizeDate(RefreshFinishedAt)}`;
+                        }
+
+                        const footer:EmbedFooterOptions = {
+                            text: footerText,
                         };
 
-                        return;
+                        const embed = new EmbedBuilder()
+                            .setColor('#0099ff')
+                            .setTitle('OnAir VA Notifications Refreshed')
+                            .setURL('https://va.imperiumsim.club/notifications')
+                            .setDescription(`✅ Finished Refreshing the OnAir VA Notifications.`)
+                            .addFields(fieldsArray)
+                            .setTimestamp(RefreshFinishedAt)
+                            .setFooter(footer);
+
+                        channel.send({
+                            embeds: [embed],
+                        })
+                        .then((message:Message):void => {
+                            const pollingConfig:OnAirPollingConfig = self.getPollingConfig('VANotification');
+                            if (!pollingConfig) return;
+                            
+                            if (pollingConfig.autoDelete === true) {
+                                setTimeout(() => {
+                                    message.delete();
+                                    self.Log.debug(`Deleted VANotification refresh message after ${pollingConfig.autoDeleteInterval}ms.`)
+                                    return;
+                                }, pollingConfig.autoDeleteInterval || 10000);
+                            };
+
+                            return;
+                        });
+                    })
+                    .catch((err:any):void => {
+                        if (err) {
+                            this.Log.debug(err.message);
+                        }
                     });
-                })
-                .catch((err:any):void => {
-                    if (err) {
-                        this.Log.debug(err.message);
-                    }
-                });
-                
+                }
+
                 const results:OnAirRefreshResults = {
                     results: [
                         ...CreatedRecords,
@@ -602,83 +604,85 @@ class OnAir implements IOnAir {
                     }
 
                     await self.App.EventHandler.publish('onair-notifications', event);
-
+            
                 } else if (refreshResults.updated === true) {
                     UpdatedRecords.push(refreshResults.results);
                 }
             })
             .then(() => {
-                self.App.client.channels.fetch(self.App.getChannelId('discord'))
-                .then((channel:TextChannel) => {
-                    const fieldsArray:APIEmbedField[] = [
-                        {
-                            name: 'Total',
-                            value: `${totalRecords}`,
-                            inline: true,
-                        },
-                        {
-                            name: 'Created',
-                            value: `${CreatedRecords.length}`,
-                            inline: true,
-                        },
-                        {
-                            name: 'Updated',
-                            value: `${UpdatedRecords.length}`,
-                            inline: true,
-                        },
-                    ];
+                if (self.Config.polling.VAFleet.notify === true) {
+                    self.App.client.channels.fetch(self.App.getChannelId('discord'))
+                    .then((channel:TextChannel) => {
+                        const fieldsArray:APIEmbedField[] = [
+                            {
+                                name: 'Total',
+                                value: `${totalRecords}`,
+                                inline: true,
+                            },
+                            {
+                                name: 'Created',
+                                value: `${CreatedRecords.length}`,
+                                inline: true,
+                            },
+                            {
+                                name: 'Updated',
+                                value: `${UpdatedRecords.length}`,
+                                inline: true,
+                            },
+                        ];
 
-                    let footerText:string = 'OnAir VA Fleet';
-                    
-                    if (RefreshFinishedAt) {
-                        footerText = ` refreshed ${HumanizeDate(RefreshFinishedAt)}`;
-                    }
-
-                    const footer:EmbedFooterOptions = {
-                        text: footerText,
-                    };
-
-                    const embed = new EmbedBuilder()
-                    .setColor('#0099ff')
-                    .setTitle('Imperium OnAir VA Fleet Refreshed')
-                    .setURL('https://va.imperiumsim.club/fleet')
-                    .setDescription(`✅ Finished Refreshing the Imperium OnAir VA Fleet.`)
-                    .addFields(fieldsArray)
-                    .setTimestamp(RefreshFinishedAt)
-                    .setFooter(footer);
-
-                    channel.send({
-                        embeds: [embed],
-                    })
-                    .then((message:Message):void => {
-                        const pollingConfig:OnAirPollingConfig = self.getPollingConfig('VAFleet');
-                        if (!pollingConfig) return;
+                        let footerText:string = 'OnAir VA Fleet';
                         
-                        if (pollingConfig.autoDelete === true) {
-                            setTimeout(() => {
-                                message.delete();
-                                self.Log.debug(`Deleted VAFleet refresh message after ${pollingConfig.autoDeleteInterval}ms.`)
-                                return;
-                            }, pollingConfig.autoDeleteInterval || 10000);
+                        if (RefreshFinishedAt) {
+                            footerText = ` refreshed ${HumanizeDate(RefreshFinishedAt)}`;
+                        }
+
+                        const footer:EmbedFooterOptions = {
+                            text: footerText,
                         };
 
-                        return;
-                    });
+                        const embed = new EmbedBuilder()
+                        .setColor('#0099ff')
+                        .setTitle('Imperium OnAir VA Fleet Refreshed')
+                        .setURL('https://va.imperiumsim.club/fleet')
+                        .setDescription(`✅ Finished Refreshing the Imperium OnAir VA Fleet.`)
+                        .addFields(fieldsArray)
+                        .setTimestamp(RefreshFinishedAt)
+                        .setFooter(footer);
 
-                    const results:OnAirRefreshResults = {
-                        results: [
-                            ...CreatedRecords,
-                            ...UpdatedRecords,
-                        ],
-                        success: true,
-                        createdAt: createdAt,
-                        count: x.length,
-                        createdCount: CreatedRecords.length,
-                        updatedCount: UpdatedRecords.length,
-                    }
-        
-                    return resolve(results);
-                });
+                        channel.send({
+                            embeds: [embed],
+                        })
+                        .then((message:Message):void => {
+                            const pollingConfig:OnAirPollingConfig = self.getPollingConfig('VAFleet');
+                            if (!pollingConfig) return;
+                            
+                            if (pollingConfig.autoDelete === true) {
+                                setTimeout(() => {
+                                    message.delete();
+                                    self.Log.debug(`Deleted VAFleet refresh message after ${pollingConfig.autoDeleteInterval}ms.`)
+                                    return;
+                                }, pollingConfig.autoDeleteInterval || 10000);
+                            };
+
+                            return;
+                        });
+
+                        const results:OnAirRefreshResults = {
+                            results: [
+                                ...CreatedRecords,
+                                ...UpdatedRecords,
+                            ],
+                            success: true,
+                            createdAt: createdAt,
+                            count: x.length,
+                            createdCount: CreatedRecords.length,
+                            updatedCount: UpdatedRecords.length,
+                        }
+            
+                        return resolve(results);
+                    });
+                }
             })
         });
     }
@@ -722,7 +726,7 @@ class OnAir implements IOnAir {
                     }
 
                     await self.App.EventHandler.publish('onair-notifications', event);
-
+                
                 } else if (refreshResults.updated === true) {
                     UpdatedRecords.push(refreshResults.results);
                 }
@@ -731,79 +735,81 @@ class OnAir implements IOnAir {
                 self.setProcessing('Members', false);
 
                 self.Log.info(`✅Finished processing the VA Members, processed ${self.RefreshCounts.Members} records`);
-                
-                self.App.client.channels.fetch(self.App.getChannelId('discord'))
-                .then((channel:TextChannel) => {
-                    const fieldsArray:APIEmbedField[] = [
-                        {
-                            name: 'Total',
-                            value: `${totalRecords}`,
-                            inline: true,
-                        },
-                        {
-                            name: 'Created',
-                            value: `${CreatedRecords.length}`,
-                            inline: true,
-                        },
-                        {
-                            name: 'Updated',
-                            value: `${UpdatedRecords.length}`,
-                            inline: true,
-                        },
-                    ];
 
-                    let footerText:string = 'OnAir VA Members';
-                    
-                    if (RefreshFinishedAt) {
-                        footerText = ` refreshed ${HumanizeDate(RefreshFinishedAt)}`;
-                    }
+                if (self.Config.polling.VAMembers.notify === true) {
+                    self.App.client.channels.fetch(self.App.getChannelId('discord'))
+                    .then((channel:TextChannel) => {
+                        const fieldsArray:APIEmbedField[] = [
+                            {
+                                name: 'Total',
+                                value: `${totalRecords}`,
+                                inline: true,
+                            },
+                            {
+                                name: 'Created',
+                                value: `${CreatedRecords.length}`,
+                                inline: true,
+                            },
+                            {
+                                name: 'Updated',
+                                value: `${UpdatedRecords.length}`,
+                                inline: true,
+                            },
+                        ];
 
-                    const footer:EmbedFooterOptions = {
-                        text: footerText,
-                    };
-
-                    const embed = new EmbedBuilder()
-                    .setColor('#0099ff')
-                    .setTitle('OnAir VA Members Refreshed')
-                    .setURL('https://va.imperiumsim.club/members')
-                    .setDescription(`✅ Finished Refreshing the OnAir VA Members.`)
-                    .addFields(fieldsArray)
-                    .setTimestamp(RefreshFinishedAt)
-                    .setFooter(footer);
-
-                    channel.send({
-                        embeds: [embed],
-                    })
-                    .then((message:Message):void => {
-                        const pollingConfig:OnAirPollingConfig = self.getPollingConfig('VAMembers');
-                        if (!pollingConfig) return;
+                        let footerText:string = 'OnAir VA Members';
                         
-                        if (pollingConfig.autoDelete === true) {
-                            setTimeout(() => {
-                                message.delete();
-                                self.Log.debug(`Deleted VAMembers refresh message after ${pollingConfig.autoDeleteInterval}ms.`)
-                                return;
-                            }, pollingConfig.autoDeleteInterval || 10000);
+                        if (RefreshFinishedAt) {
+                            footerText = ` refreshed ${HumanizeDate(RefreshFinishedAt)}`;
+                        }
+
+                        const footer:EmbedFooterOptions = {
+                            text: footerText,
                         };
 
-                        return;
-                    });
+                        const embed = new EmbedBuilder()
+                        .setColor('#0099ff')
+                        .setTitle('OnAir VA Members Refreshed')
+                        .setURL('https://va.imperiumsim.club/members')
+                        .setDescription(`✅ Finished Refreshing the OnAir VA Members.`)
+                        .addFields(fieldsArray)
+                        .setTimestamp(RefreshFinishedAt)
+                        .setFooter(footer);
 
-                    const results:OnAirRefreshResults = {
-                        results: [
-                            ...CreatedRecords,
-                            ...UpdatedRecords,
-                        ],
-                        success: true,
-                        createdAt: createdAt,
-                        count: x.length,
-                        createdCount: CreatedRecords.length,
-                        updatedCount: UpdatedRecords.length,
-                    }
-        
-                    return resolve(results);
-                });
-                
+                        channel.send({
+                            embeds: [embed],
+                        })
+                        .then((message:Message):void => {
+                            const pollingConfig:OnAirPollingConfig = self.getPollingConfig('VAMembers');
+                            if (!pollingConfig) return;
+                            
+                            if (pollingConfig.autoDelete === true) {
+                                setTimeout(() => {
+                                    message.delete();
+                                    self.Log.debug(`Deleted VAMembers refresh message after ${pollingConfig.autoDeleteInterval}ms.`)
+                                    return;
+                                }, pollingConfig.autoDeleteInterval || 10000);
+                            };
+
+                            return;
+                        });
+
+                        const results:OnAirRefreshResults = {
+                            results: [
+                                ...CreatedRecords,
+                                ...UpdatedRecords,
+                            ],
+                            success: true,
+                            createdAt: createdAt,
+                            count: x.length,
+                            createdCount: CreatedRecords.length,
+                            updatedCount: UpdatedRecords.length,
+                        }
+            
+                        return resolve(results);
+                    });
+                }
+
                 const results:OnAirRefreshResults = {
                     results: x,
                     success: true,
@@ -815,200 +821,6 @@ class OnAir implements IOnAir {
             });
         });
     }
-/**
-    loadVirtualAirline():Promise<void> {
-        const self = this;
-        return new Promise(async (resolve, reject) => {
-            let vaId:string = self.Config.keys.vaId;
-            if (self.Processing.VirtualAirline === true || self.Loading.VirtualAirline === true) return;
-
-            self.setLoading('VirtualAirline', true);
-            if (!vaId) return reject('no VAId found! Double check the config.ts file');
-
-            let virtualAirline:VirtualAirline = await VirtualAirlineRepo.findById(vaId);
-
-            if (!virtualAirline) return reject('no VA Details found in the database yet, please ensure the "VirtualAirline" schedule is configured and enabled.');
-            self.VirtualAirline = virtualAirline;
-                
-            if (self.Config.refreshOnStartup === true) {
-                const vaDetails:OnAirRefreshResults = await self.refreshVirtualAirline();
-                if (!vaDetails) return reject('No VA Details found');
-                self.Log.info(`Loaded VA Details from OnAir`);
-                self.VirtualAirline = vaDetails.results;
-                self.LastUpdated.VirtualAirline = vaDetails.createdAt;
-            }
-
-            self.setLoading('VirtualAirline', false);
-
-            return resolve();        
-        });
-    }
- */    
-/**
-    loadVAFleet():Promise<void> {
-        const self = this;
-        return new Promise(async (resolve, reject) => {
-            if (self.Processing.Fleet === true || self.Loading.Fleet === true) return reject('currently processing/loading the VA Fleet');
-            
-            if (self.VirtualAirline === null) {
-                self.loadVirtualAirline()
-                .then(() => {
-                    self.loadVAFleet();
-                    return;
-                })
-
-                return reject('no VA Details found in the database yet, please ensure the "VirtualAirline" schedule is configured and enabled.');
-            }
-
-            // try to find the fleet in the database by looking for the VAId
-            const fleet:Aircraft[] = await AircraftRepo.findByVirtualAirlineId(self.VirtualAirline.Id);
-            if (!fleet) return reject('no VA Fleet found');
-            self.Log.info(`Loaded VA Fleet, consisting of ${fleet.length} Aircraft, from the database.`);
-            self.Fleet = fleet;
-                
-            if (self.Config.refreshOnStartup === true) {
-                const vaFleet:OnAirRefreshResults = await self.refreshVAFleet();
-                if (!vaFleet) return reject('No VA Fleet found');
-                self.Log.info(`Refreshed the latest VA Fleet from OnAir.`);
-
-                self.VirtualAirline = vaFleet.results;
-                self.LastUpdated.VirtualAirline = vaFleet.createdAt;
-            }
-
-            return resolve();
-        });
-    }
-*/
-/**
-    loadVANotifications():Promise<void> {
-        const self = this;
-        return new Promise(async (resolve, reject) => {
-            if (self.Processing.Notifications === true) return reject('currently processing the VA Notifications');
-            if ((!self.VirtualAirline || self.VirtualAirline === null)) return reject('VA is not loaded');
-            if (self.VirtualAirline === null) return reject('VA is not loaded, please ensure the "VirtualAirline" schedule is configured and enabled.');
-
-            // try to find the fleet in the database by looking for the VAId
-            const notifications:Notification[] = await AircraftRepo.findByVirtualAirlineId(self.VirtualAirline.Id);
-            if (!fleet) return reject('no VA Notifications found');
-            self.Log.info(`Loaded VA Notifications, consisting of ${fleet.length} Aircraft, from the database.`);
-            self.Notifications = fleet;
-                
-            if (self.Config.refreshOnStartup === true) {
-                const vaNotifications:OnAirRefreshResults = await self.refreshVANotifications();
-                if (!vaNotifications) return reject('No VA Notifications found');
-                self.Log.info(`Refreshed the latest VA Notifications from OnAir.`);
-
-                self.VirtualAirline = vaNotifications.results;
-                self.LastUpdated.VirtualAirline = vaNotifications.createdAt;
-            }
-
-            return resolve();
-        });
-    }
-*/ 
-/**
-    loadVAJobs():Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.Log.warn('This method is not implemented yet.')
-            return resolve()
-        })
-    }
- */
-/**
-    loadAllEnabled():Promise<void> {
-        const self = this;
-        return new Promise(async (resolve, reject) => {
-            if (self.Polling.length === 0) {
-                self.Log.debug('No polling enabled, exiting');
-                return reject('No polling enabled, exiting');
-            }
-
-            eachOfSeries(self.Polling, async (polling:PollingKey, k:string|number) => {
-                const methodName = `load${polling}` as keyof typeof self;
-                let func = self[methodName] as Function;
-                if (typeof func !== 'function') throw new Error(`Method ${polling} does not exist`);
-                self.Log.info(`Trying to run load${polling}...`);
-
-                switch (methodName) {
-                    case 'loadVirtualAirline':
-                        self.loadVirtualAirline()
-                            .then(() => {
-                                self.Log.info(`✅ VA Details successfully loaded from the database!`)
-                                self.loadVAFleet();
-                                return;
-                            })
-                            .catch((err) => {
-                                if (err) {
-                                    self.Log.error(`Error loading VA Details: ${err}`)
-                                    throw new Error(`Error loading VA Details: ${err}`)
-                                } else {
-                                    self.Log.error('Error loading VA Details')
-                                    throw new Error(`Error loading VA Details`)
-                                }
-                            })
-                    break;
-                    case 'loadVAFleet':
-                        self.loadVAFleet()
-                        .then(() => {
-                            self.Log.info(`✅ VA Fleet loaded from the database successfully!`)
-                            return;
-                        })
-                        .catch((err) => {
-                            if (err) {
-                                self.Log.error(`Error loading VA Fleet: ${err}`)
-                                throw new Error(`Error loading VA Fleet: ${err}`)
-                            } else {
-                                self.Log.error('Error loading VA Fleet')
-                                throw new Error(`Error loading VA Fleet`)
-                            }
-                        })
-                    break;
-                    case 'loadVANotifications':
-                        self.loadVANotifications()
-                        .then(() => {
-                            self.Log.info(`✅ VA Notifications loaded from the database successfully!`)
-                            return;
-                        })
-                        .catch((err) => {
-                            if (err) {
-                                self.Log.error(`Error loading VA Notifications: ${err}`)
-                                throw new Error(`Error loading VA Notifications: ${err}`)
-                            } else {
-                                self.Log.error('Error loading VA Notifications')
-                                throw new Error(`Error loading VA Notifications`)
-                            }
-                        })
-                    break;
-                    case 'loadVAJobs':
-                        self.loadVAJobs()
-                        .then(() => {
-                            self.Log.info(`✅ VA Jobs loaded from the database successfully!`)
-                            return;
-                        })
-                        .catch((err) => {
-                            if (err) {
-                                self.Log.error(`Error loading VA Jobs: ${err}`)
-                                throw new Error(`Error loading VA Jobs: ${err}`)
-                            } else {
-                                self.Log.error('Error loading VA Jobs')
-                                throw new Error(`Error loading VA Jobs`)
-                            }
-                        })
-                    break;
-                    default:
-                        break;
-                }
-            }, (err?:Error|null) => {
-                if (err) {
-                    const errorMessage = err instanceof Error ? err.message : err;
-                    self.Log.error(`Error during loading Model. error: ${errorMessage}`);
-                }
-
-                return reject(err);
-            });
-        });
-    }
-*/
 }
 
 export default OnAir

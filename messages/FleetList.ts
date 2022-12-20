@@ -1,8 +1,8 @@
 import Table from 'easy-table'
-import { FleetResponse } from 'onair-api';
+import { Aircraft as OnAirAircraft } from 'onair-api';
 import { DetermineAircraftStatus, } from '../lib'
 
-export function FleetList (x:FleetResponse) {
+export function FleetList (x:OnAirAircraft[]) {
     if (!x) return;
     if (x.length <= 0) return 'No aircraft in fleet'
 

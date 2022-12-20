@@ -1,8 +1,8 @@
 import Table from 'easy-table'
-import { VirtualAirlineResponse } from 'onair-api'
+import { VirtualAirline as OnAirVirtualAirline } from 'onair-api'
 import { DetermineWorld } from '../lib'
 
-export function VADetail(x:VirtualAirlineResponse) {
+export function VADetail(x:OnAirVirtualAirline) {
     if (!x) return;
 
     let detail = ''

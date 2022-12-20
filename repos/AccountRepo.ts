@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client'
-import { Account, QueryOptions } from '../types'
+import { Account, NewAccount, QueryOptions } from '../types'
 import BaseRepo from './BaseRepo'
 
 export interface IAccountRepo {
@@ -54,6 +54,27 @@ class AccountRepoClass extends BaseRepo implements IAccountRepo {
         x[fieldKey] = !x[fieldKey];
 
         return await this.update(x.Id, x)
+    }
+
+    async create(newX:NewAccount, opts?:QueryOptions) {
+        const self = this;
+        if (!newX) throw new Error('New Record is required');
+
+        if (self.IsSyncable === true) {
+            newX = {
+                ...newX,
+            }
+        }
+
+        const query:Prisma.AccountCreateArgs = {
+            data: newX as Prisma.AccountCreateInput,
+            include: (opts?.include) ? opts.include : undefined,
+        }
+
+        return await this.Model.create(query)
+            .then((x:Account) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
+            .then((x:Account) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
+            .then((x:Account) => (x && opts?.serialize) ? self.serialize(x) : x)
     }
 
     async upsert(DiscordId:string, payload:Account, opts?:QueryOptions) {

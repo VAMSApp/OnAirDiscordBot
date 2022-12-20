@@ -1,5 +1,5 @@
 import Table from 'easy-table'
-import { Cargo, Charter, Job, JobsResponse } from 'onair-api'
+import { Cargo, Charter, Job as OnAirJob } from 'onair-api'
 import { DetermineJobStatus, DetermineAircraftStatus, } from '../lib'
 import moment from 'moment'
 import { HumanizeDate } from '../utils'
@@ -14,11 +14,11 @@ function humanizeExpirationDate(dateStr:string) {
     return humanizedDateStr;
 }
 
-export function JobsList(x:JobsResponse, limit?:number) {
+export function JobsList(x:OnAirJob[], limit?:number) {
     if (!x) return;
     let t = new Table;
 
-    x.forEach(function (j:Job) {
+    x.forEach(function (j:OnAirJob) {
         const missionType = j.MissionType.Name;
         t.cell('Type', missionType)
         t.cell('Pay', `$${j.Pay.toLocaleString()}`)

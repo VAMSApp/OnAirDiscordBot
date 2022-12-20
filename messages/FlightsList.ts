@@ -1,13 +1,13 @@
 import Table from 'easy-table'
-import { Flight, FlightsResponse } from 'onair-api';
+import { Flight as OnAirFlight } from 'onair-api';
 import { DetermineFlightStatus, } from '../lib'
 
-export function FlightsList (x:FlightsResponse) {
+export function FlightsList (x:OnAirFlight[]) {
     if (!x) return;
     if (x.length <= 0) return 'No flights'
     let t = new Table;
 
-    x.forEach(function (f:Flight, i) {
+    x.forEach(function (f:OnAirFlight, i) {
         const identifier = f.Aircraft.Identifier
         const departureAirport = (f.DepartureAirport) ? f.DepartureAirport.ICAO : '    '
         const arrivalIntendedAirport = (f.ArrivalIntendedAirport) ? f.ArrivalIntendedAirport.ICAO : '    '

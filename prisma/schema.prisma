@@ -18,7 +18,7 @@ model AppConfig {
 }
 
 model Account {
-  Id               String           @id
+  Id               String           @id @default(uuid())
   DiscordId        String           @unique
   Username         String
   Discriminator    String
