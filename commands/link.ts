@@ -5,7 +5,7 @@ import { Account, Company, NewAccount, NewCompany, TranslatedCompany, VirtualAir
 import { IBot } from '../interfaces';
 import { Company as OnAirCompany } from 'onair-api';
 import { CompanyTranslator } from '../translators';
-import { Prisma } from '@prisma/client';
+import Logger from 'utils/Logger';
 
 export default {
 	data: new SlashCommandBuilder()
@@ -42,9 +42,10 @@ export default {
             return;
         }
 
-        let connectedRoleExists = memberRoles.some((value:Role, key:string) => key === app.getRoleId("connected"));
-        if (interaction.member !== null && connectedRoleExists) {
-            await interaction.reply('Your OnAir Company is already connected! Contact an admin if you need to change your company or for further assistance.');
+        // ensure the account isn't already linked
+        let linkedRoleExists = memberRoles.some((value:Role, key:string) => key === app.getRoleId("linked"));
+        if (interaction.member !== null && linkedRoleExists) {
+            await interaction.reply('Your OnAir Company is already linked! Contact an admin if you need to change your company or for further assistance.');
             return;
         }
 
@@ -53,7 +54,6 @@ export default {
 
         await interaction.deferReply({ ephemeral: true })
         
-        // ensure the account isn't already linked
         const discordUser:User = interaction.user;
         const {
             id,
@@ -62,11 +62,14 @@ export default {
         } = discordUser;
 
         const virtualAirline:VirtualAirline = await VirtualAirlineRepo.findFirst();
-        
+        app.log.info(`Virtual Airline '${virtualAirline.AirlineCode}' found`)
+
         // ensure the account exists
+        app.log.info(`Checking if account ${username} by id '${id}'exists...`)
         let account:Account = await AccountRepo.findByDiscordId(id);
         // if the account doesn't exist, create it
         if (!account) {
+            app.log.info(`Account ${username} by id '${id}' does not exist, creating...`)
             const newAccount:NewAccount = {
                 DiscordId: id,
                 Username: username,
@@ -78,10 +81,12 @@ export default {
             }
 
             account = await AccountRepo.create(newAccount);
+            app.log.info(`Account ${account.Username} by id '${account.Id}' created`)
         }
 
-        // otherwise if the account exists, and the account is already linked, return
+        // otherwise if the account exists, and the account is already linked in the database, return
         if (account !== null && account.IsOnAirLinked === true) {
+            app.log.info(`Account ${account.Username} by id '${account.Id}' is already linked`)
             const reply:InteractionReplyOptions = {
                 content: `Hmm, Your account is already linked!`,
                 ephemeral: true
@@ -92,25 +97,25 @@ export default {
 
         // Try to find the Company by its Id in the database
         let company:Company = await CompanyRepo.findById(companyId);
-
-        // get all of the company latest details from OnAir
-        const oaCompany:OnAirCompany = await app.OnAir.getCompanyDetail(companyId);
-
-        // if the OnAir company does not exist, return
-        if (!oaCompany) {
-            const reply:InteractionReplyOptions = {
-                content: `The OnAir Company not found, check your company ID and try again or contact an admin for further assistance.`,
-                ephemeral: true
-            };
-            
-            return await interaction.editReply(reply);
-        }
-        
-        // translate the OnAir company to a TranslatedCompany)
-        const translatedCompany:TranslatedCompany = new CompanyTranslator(app).translate(oaCompany);
         
         // if the company doesn't exist, then create it
         if (!company) {
+            app.log.info(`User's OnAir Company ${companyId} not found in database, pulling from OnAir and creating...`);
+            // get all of the company latest details from OnAir
+            const oaCompany:OnAirCompany = await app.OnAir.getCompanyDetail(companyId);
+    
+            // if the OnAir company does not exist, return
+            if (!oaCompany) {
+                const reply:InteractionReplyOptions = {
+                    content: `The OnAir Company not found, check your company ID and try again or contact an admin for further assistance.`,
+                    ephemeral: true
+                };
+                
+                return await interaction.editReply(reply);
+            }
+            
+            // translate the OnAir company to a TranslatedCompany)
+            const translatedCompany:TranslatedCompany = new CompanyTranslator(app).translate(oaCompany);
             // then create the company
             const newCompany:TranslatedCompany = {
                 ...translatedCompany,
@@ -131,20 +136,22 @@ export default {
             delete newCompany.WorldId;
 
             company = await CompanyRepo.create(newCompany)
+            app.log.info(`User's OnAir Company ${company.AirlineCode} created in database`);
         } else {
-            delete translatedCompany.WorldId;
-            const updatedCompany:TranslatedCompany = {
-                ...translatedCompany,
-                OnAirSyncedAt: new Date(),
-                ApiKey: apiKey || null,
-                Owner: { 
-                    connect: {
-                        Id: account.Id
-                    }
-                },
-            };
+            app.log.info(`User's OnAir Company ${company.AirlineCode} found in database`)
+            // delete translatedCompany.WorldId;
+            // const updatedCompany:TranslatedCompany = {
+            //     ...translatedCompany,
+            //     OnAirSyncedAt: new Date(),
+            //     ApiKey: apiKey || null,
+            //     Owner: { 
+            //         connect: {
+            //             Id: account.Id
+            //         }
+            //     },
+            // };
 
-            company = await CompanyRepo.update(company.Id, updatedCompany)
+            // company = await CompanyRepo.update(company.Id, updatedCompany)
         }
 
         // if the company is still null something else happened, return
@@ -157,6 +164,7 @@ export default {
             return await interaction.editReply(reply);
         }
 
+        app.log.info(`Linking Account ${account.Username} by id '${account.Id}' to Company ${company.AirlineCode} by id '${company.Id}'`);
         // otherwise Update the Account, connecting the Company and VirtualAirline to the Account
         account = await AccountRepo.update(account.Id, {
             ...account,
@@ -177,24 +185,58 @@ export default {
             }
         });
         
-        let member:GuildMember = interaction.member as GuildMember;
-        member.roles.add(app.getRoleId("connected")).catch(console.error);
-        let msg = `Your OnAir Company has been linked with Your discord Account.\n\n`;
-        msg += `\`\`\`\n`;
-        msg += `Company Code: ${company.AirlineCode}\n`;
-        msg += `Company Name: ${company.Name}\n`;
-        msg += `Level: ${company.Level}\n`;
-        msg += `Reputation: ${(company.Reputation*100).toFixed(2) + ' %'}\n`;
-        msg += `Checkride Level: ${company.CheckrideLevel}\n`;
-        msg += `Last Connection: ${company.LastConnection?.toDateString()}\n`;
-        msg += `\`\`\`\n`;
+        try {
+            const linkedRole:string = app.getRoleId("linked");
+            app.log.info(`Trying to add 'linked' role with id '${linkedRole}' to ${account.Username} by id '${account.Id}'`)
 
-        const reply:InteractionReplyOptions = {
-            content: msg,
-            ephemeral: true
-        };
-        
-        await interaction.editReply(reply);
-        
+            let member:GuildMember = interaction.member as GuildMember;
+            member.roles.add(linkedRole)
+            .then(async () => {
+                app.log.info(`Successfully added 'linked' role to ${account.Username} by id '${account.Id}'`);
+                let msg = `Your OnAir Company has been linked with Your discord Account.\n\n`;
+                msg += `\`\`\`\n`;
+                msg += `Company Code: ${company.AirlineCode}\n`;
+                msg += `Company Name: ${company.Name}\n`;
+                msg += `Level: ${company.Level}\n`;
+                msg += `Reputation: ${(company.Reputation*100).toFixed(2) + ' %'}\n`;
+                msg += `Checkride Level: ${company.CheckrideLevel}\n`;
+                msg += `Last Connection: ${company.LastConnection?.toDateString()}\n`;
+                msg += `\`\`\`\n`;
+
+                const reply:InteractionReplyOptions = {
+                    content: msg,
+                    ephemeral: true
+                };
+                
+                return await interaction.editReply(reply);
+            })
+            .catch(async (e) => {
+                app.log.error(`Error adding 'linked' role to ${account.Username} by id '${account.Id}'.\n Error given: ${e}`);
+                
+                let msg = `Error adding 'linked' role to ${account.Username} by id '${account.Id}'.\n Error given:\n`;
+                msg += `\`\`\`\n`;
+                msg += `${e}\n`;
+                msg += `\`\`\`\n`;
+
+
+                const reply:InteractionReplyOptions = {
+                    content: msg,
+                    ephemeral: true
+                };
+                
+                return await interaction.editReply(reply);
+            });
+        }
+        catch (e) {
+            console.log(e);
+            let msg = 'Error adding the linked role to your account. Please contact an admin for further assistance providing the following message.';
+            msg += `\`\`\`\n`;
+            msg += `${e}\n`;
+            msg += `\`\`\`\n`;
+
+            return await interaction.editReply({
+                content: msg,
+            })
+        }        
     }
 }

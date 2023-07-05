@@ -14,6 +14,7 @@ import { AircraftProcessor, MemberProcessor, NotificationProcessor, VirtualAirli
 import { AircraftClassTranslator, AircraftEngineTranslator, AircraftTranslator, AircraftTypeTranslator, AirportTranslator, CompanyTranslator, MemberTranslator, NotificationTranslator, VARoleTranslator, VirtualAirlineTranslator, FlightTranslator, EmployeeTranslator, } from './translators';
 import { Aircraft, LastUpdated, Member, Notification, OnAirApiConfig, OnAirApiQueryOptions, OnAirConfig, OnAirEvent, OnAirPollingConfig, OnAirPollingsConfig, OnAirRefreshResults, PollingKeys, Processing, RefreshCounts, VirtualAirline } from './types';
 import { APIEmbedField, EmbedBuilder, EmbedFooterOptions, Message, TextChannel } from 'discord.js';
+import { VirtualAirlineRepo } from './repos';
 
 export type ProcessRecordError = {
     error?: Error|string|null;
@@ -25,6 +26,7 @@ class OnAir implements IOnAir {
     protected Config:OnAirConfig;
     public Api:OnAirApi;
     public VirtualAirline:OnAirVirtualAirline|null = null;
+    public _VirtualAirline:VirtualAirline|null = null;
     public Notifications:OnAirNotification[]|null = null;
     public Members:OnAirMember[]|null = null;
     public Flights:OnAirFlight[]|null = null;
@@ -166,6 +168,8 @@ class OnAir implements IOnAir {
             });       
         }
         */
+        
+        this.loadVirtualAirline();
     }
 
     setRefreshCount(type:string, count:number):void  {
@@ -359,6 +363,26 @@ class OnAir implements IOnAir {
         return x
     }
 
+    async loadVirtualAirline(): Promise<void> {
+        const self = this;
+        return new Promise(async (resolve, reject) => {
+            try {
+                const vaId:string = self.Config.keys.vaId;
+                let va:VirtualAirline = await VirtualAirlineRepo.findById(vaId) as VirtualAirline;
+                if (!va) {
+                    await self.refreshVirtualAirline();
+                }
+
+                self._VirtualAirline = va;
+                self.increaseRefreshCount('VirtualAirline');
+
+                return resolve();
+            } catch (error) {
+                return reject(error);
+            }
+        });
+    }
+
     async processVANotification(n:OnAirNotification):Promise<OnAirRefreshResults> {
         const self = this;
         return new Promise(async (resolve, reject) => {
@@ -399,7 +423,7 @@ class OnAir implements IOnAir {
     async getVANotifications(vaId?:string): Promise<OnAirNotification[]> {
         const self = this;
         const id = (vaId) ? vaId : self.Config.keys.vaId
-        self.Log.debug(`getVADetail()::prerequest ${id}`)
+        self.Log.debug(`getVANotifications()::prerequest ${id}`)
         const x:OnAirNotification[] = await self.Api.getVirtualAirlineNotifications(id);
         return x
     }

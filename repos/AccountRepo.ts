@@ -119,6 +119,7 @@ class AccountRepoClass extends BaseRepo implements IAccountRepo {
 
         return x;
     }
+
 }
 
 export const AccountRepo = new AccountRepoClass();

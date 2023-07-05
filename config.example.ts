@@ -18,7 +18,7 @@ const config:BotConfig = {
             member: '###_DISCORD_MEMBER-GROUP-ID_###',
             owner: '###_DISCORD_OWNER-GROUP-ID_###',
             verified: '###_DISCORD_VERIFIED-GROUP-ID_###',
-            connected: '###_DISCORD_CONNECTED-GROUP-ID_###',
+            linked: '###_DISCORD_LINKED-GROUP-ID_###',
         },
         owners: [
             '###_DISCORD_OWNERID_###',
