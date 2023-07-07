@@ -5,7 +5,6 @@ import { Account, Company, NewAccount, NewCompany, TranslatedCompany, VirtualAir
 import { IBot } from '../interfaces';
 import { Company as OnAirCompany } from 'onair-api';
 import { CompanyTranslator } from '../translators';
-import Logger from 'utils/Logger';
 
 export default {
 	data: new SlashCommandBuilder()
