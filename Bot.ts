@@ -1,3 +1,8 @@
+/**
+ * Bot.ts
+ * Primary Class for interacting with Discord
+ * @author Mike DeVita <mike@devita.co>
+ */
 import * as dotenv from 'dotenv'
 dotenv.config()
 import Logger from './utils/Logger'
@@ -59,8 +64,15 @@ class Bot implements IBot {
         this.loadSchedules();
         this.getRoleId = this.getRoleId.bind(this);
     }
-        
-
+    
+    /**
+     * loadCommands()
+     * Loads all commands from the commands folder
+     * 
+     * @returns Promise<void>
+     * @throws Error
+     * @todo Add sub-folder handling so commands can be split up into sub-folders
+     */
     loadCommands(): Promise<void> {
         return new Promise(async (resolve, reject) => {
             if (!this.config.discord) {
@@ -111,6 +123,14 @@ class Bot implements IBot {
         })
     }
 
+    /**
+     * deployCommands()
+     * Deploys all commands from the commands folder to the Discord server
+     * 
+     * @returns Promise<void>
+     * @throws Error
+     * @todo Add sub-folder handling so commands can be split up into sub-folders
+     */
     async deployCommands(): Promise<void> {
         const commands = [];
         const commandFiles = readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith(".ts"));
@@ -140,6 +160,12 @@ class Bot implements IBot {
         }
     }
 
+    /**
+     * login()
+     * Logs the bot into the Discord server
+     * 
+     * @returns Promise<void>
+     */
     login(): Promise<void> {
         return new Promise(async (resolve, reject) => {
             this.log.debug('Logging into the discord server')
@@ -148,6 +174,14 @@ class Bot implements IBot {
         })
     }
 
+    /**
+     * getChannelId()
+     * Gets the channel ID from the config file
+     * 
+     * by a given channel name.
+     * @param channelName string | The name of the channel to get the ID for
+     * @returns string
+     */
     getChannelId(channelName:string):string {
         if (!this.config.discord) {
             throw new Error('No Discord config provided, exiting.');
@@ -157,6 +191,13 @@ class Bot implements IBot {
         return channelId
     }
 
+    /**
+     * onReady()
+     * Handles the onReady event for the Discord client
+     * 
+     * @returns void
+     * @throws Error
+     */
     onReady(): void {
         if (!this.config.discord) {
             throw new Error('No Discord config provided, exiting.');
@@ -194,6 +235,15 @@ class Bot implements IBot {
         });
     }
 
+    /**
+     * getRoleId()
+     * Gets the role ID from the config file
+     * 
+     * by a given role name.
+     * @param roleName string | The name of the role to get the ID for
+     * @returns string
+     * @throws Error
+     */
     getRoleId(roleName:string):string {
         if (!this.config.discord) {
             throw new Error('No Discord config provided, exiting.');
@@ -203,6 +253,14 @@ class Bot implements IBot {
         return roleId
     }
 
+    /**
+     * loadEvents()
+     * Loads all events from the events folder
+     * 
+     * @returns void
+     * @throws Error
+     * @todo Add sub-folder handling so events can be split up into sub-folders
+     */
     loadEvents(): void {
         const self = this;
         const {
@@ -247,6 +305,14 @@ class Bot implements IBot {
 
     }
 
+    /**
+     * loadSchedules()
+     * Loads all schedules from the schedules folder
+     * 
+     * @returns void
+     * @throws Error
+     * @todo Add sub-folder handling so schedules can be split up into sub-folders
+     */
     loadSchedules(): void {
         const self = this;
         const {

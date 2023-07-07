@@ -1,3 +1,8 @@
+/**
+ * OnAir.ts
+ * OnAir API Wrapper, Processor, and Translator for Discord Bot
+ * @author Mike DeVita <mike@devita.co>
+ */
 import { eachOfSeries } from 'async';
 import OnAirApi, {
     Aircraft as OnAirAircraft, Airport as OnAirAirport,
@@ -172,31 +177,110 @@ class OnAir implements IOnAir {
         this.loadVirtualAirline();
     }
 
+    /**
+     * setRefreshCount()
+     * Sets the refresh count for a given type
+
+    @author Mike DeVita <mike@devita.co>
+     * @param type string | the type of refresh count to set
+     * @param count number | the number to set the refresh count to
+     * @returns void
+     */
     setRefreshCount(type:string, count:number):void  {
         const key = type as keyof RefreshCounts;
         this.RefreshCounts[key] = count;
     }
 
+    /**
+     * increaseRefreshCount()
+     * Increases the refresh count for a given type
+
+    @author Mike DeVita <mike@devita.co>
+     * @param type string | the type of refresh count to increase
+     * @param count number | the number to increase the refresh count by
+     * @returns void
+     */
     increaseRefreshCount(type:string, count:number = 1):void  {
         const key = type as keyof RefreshCounts;
         this.RefreshCounts[key] = this.RefreshCounts[key] + count;
     }
 
+    /**
+     * setProcessing()
+     * Sets the processing state for a given type
+
+    @author Mike DeVita <mike@devita.co>
+     * @param type string | the type of processing to set
+     * @param processing boolean | the processing state to set
+     * @returns void
+     */
     setProcessing(type:string, processing?:boolean):void {
         const key = type as keyof Processing;
         this.Processing[key] = processing || !this.Processing[key];
     }
 
+    /**
+     * setLoading()
+     * Sets the loading state for a given type, if no loading state
+
+    @author Mike DeVita <mike@devita.co>
+     * is provided it will toggle the current state
+     * @param type string | the type of loading to set
+     * @param loading boolean | the loading state to set
+     * @returns void
+     */
     setLoading(type:string, loading?:boolean):void {
         const key = type as keyof Processing;
         this.Loading[key] = loading || !this.Loading[key];
     }
 
+    /**
+     * getPollingConfig()
+     * Gets the polling config for a given type
+
+    @author Mike DeVita <mike@devita.co>
+     * @param name string | the name of the polling config to get
+     * @returns OnAirPollingConfig
+     */
     getPollingConfig(name:string):OnAirPollingConfig {
         const key = name as keyof OnAirPollingsConfig;
         return this.Config.polling[key];
     }
+
+    /**
+     * determineNotificationType()
+     * Determines the type of notification based on the description
+
+    @author Mike DeVita <mike@devita.co>
+     * @param n Notification | the notification to determine the type of
+     * @returns string
+     */
+    determineNotificationType(n:Notification):string {
+        let type = 'unknown';
+        if (!n.Description) return type;
+
+        if (isJobTaken(n.Description)) {
+            type = 'VAJob-Taken'
+        } else if (isJobAbandoned(n.Description)) {
+            type = 'VAJob-Abandoned'
+        } else if (isJobCompleted(n.Description)) {
+            type = 'VAJob-Completed'
+        } else if (isAircraftCrashed(n.Description)) {
+            type = 'Aircraft-Crashed';
+        } else if (isAircraftTransporting(n.Description)) {
+            type = 'Aircraft-Transporting';
+        }
+
+        return type;
+    }
     
+    /**
+     * getAirportByICAO
+     * Queries the OnAir Api for an airport's details by ICAO
+     * @param icao string | the ICAO of the airport to get
+     * @returns Promise<OnAirAirport>
+     * @throws string
+     */
     async getAirportByICAO(icao:string): Promise<OnAirAirport> {
         if (!icao) throw 'no ICAO provided'
 
@@ -204,6 +288,15 @@ class OnAir implements IOnAir {
         return x
     }
 
+    /**
+     * getAircraftDetail()
+     * Queries the OnAir Api for an aircraft's details by Id
+
+    @author Mike DeVita <mike@devita.co>
+     * @param aircraftId string | the Id of the aircraft to get
+     * @returns Promise<OnAirAircraft>
+     * @throws string
+     */
     async getAircraftDetail(aircraftId: string): Promise<OnAirAircraft> {
         if (!aircraftId) throw 'no aircraftId provided'
 
@@ -211,6 +304,15 @@ class OnAir implements IOnAir {
         return x
     }
 
+    /**
+     * getFlightDetail()
+     * Queries the OnAir Api for a flight's details by Id
+
+    @author Mike DeVita <mike@devita.co>
+     * @param flightId string | the Id of the flight to get
+     * @returns Promise<OnAirFlight>
+     * @throws string
+     */
     async getFlightDetail(flightId: string): Promise<OnAirFlight> {
         if (!flightId) throw 'no flightId provided'
 
@@ -218,6 +320,15 @@ class OnAir implements IOnAir {
         return x
     }
 
+    /**
+     * getEmployeeDetail()
+     * Queries the OnAir Api for an employee's details by Id
+
+    @author Mike DeVita <mike@devita.co>
+     * @param employeeId string | the Id of the employee to get
+     * @returns Promise<OnAirEmployee>
+     * @throws string
+     */
     async getEmployeeDetail(employeeId: string): Promise<OnAirEmployee> {
         if (!employeeId) throw 'no employeeId provided'
 
@@ -225,12 +336,29 @@ class OnAir implements IOnAir {
         return x
     }
 
-    async getCompanyFleet():Promise<OnAirAircraft[]> {
-        const x:OnAirAircraft[] = await this.Api.getCompanyFleet();
+    /**
+     * getCompanyFleet()
+     * Queries the OnAir Api for the instantiated company or a specific company's fleet
+
+    @author Mike DeVita <mike@devita.co>
+     * @param companyId string |? the Id of the company to get the fleet for
+     * @returns Promise<OnAirAircraft[]>
+     * @throws string
+     */
+    async getCompanyFleet(companyId?:string):Promise<OnAirAircraft[]> {
+        const x:OnAirAircraft[] = await this.Api.getCompanyFleet(companyId);
         return x
     }
 
-    async getCompanyFlights(opts?:OnAirApiQueryOptions) {
+    /**
+     * getCompanyFlights()
+     * Queries the OnAir Api for the instantiated company or a specific company's flights
+
+    @author Mike DeVita <mike@devita.co>
+     * @param opts OnAirApiQueryOptions |? the options to use when querying the api
+     * @returns Promise<OnAirFlight[]>
+     */
+    async getCompanyFlights(opts?:OnAirApiQueryOptions):Promise<OnAirFlight[]> {
         let x = await this.Api.getVirtualAirlineFlights();
         if (opts?.filter) {
             const aircraftCode:string = opts.filter.aircraftCode as string;
@@ -253,25 +381,58 @@ class OnAir implements IOnAir {
         return x
     }
 
-    async getCompanyJobs():Promise<OnAirJob[]> {
-        const x:OnAirJob[] = await this.Api.getCompanyJobs();
+    /**
+     * getCompanyJobs()
+     * Queries the OnAir Api for the instantiated company or a specific company's jobs
+
+    @author Mike DeVita <mike@devita.co>
+     * @param companyId string |? the Id of the company to get the jobs for
+     * @returns 
+     */
+    async getCompanyJobs(companyId?:string):Promise<OnAirJob[]> {
+        const x:OnAirJob[] = await this.Api.getCompanyJobs(companyId);
         return x
     }
 
-    async getCompanyDetail(companyId:string):Promise<OnAirCompany> {
+    /**
+     * getCompanyDetail()
+     * Queries the OnAir Api for the instantiated company or a specific company's details
+
+    @author Mike DeVita <mike@devita.co>
+     * @param companyId string |? the Id of the company to get the details for
+     * @returns Promise<OnAirCompany>
+     */
+    async getCompanyDetail(companyId?:string):Promise<OnAirCompany> {
         const x:OnAirCompany = await this.Api.getCompany(companyId) as OnAirCompany;
         return x
     }
 
-    async getCompanyNotifications(vaId?:string): Promise<OnAirNotification[]> {
-        const id = (vaId) ? vaId : this.Config.keys.vaId
-        this.Log.debug(`getCompanyDetails()::prerequest ${id}`)
+    /**
+     * getCompanyNotifications()
+     * Queries the OnAir Api for the instantiated company or a specific company's notifications
+
+    @author Mike DeVita <mike@devita.co>
+     * @param companyId string |? the Id of the company to get the notifications for
+     * @returns Promise<OnAirNotification[]>
+     */
+    async getCompanyNotifications(companyId?:string): Promise<OnAirNotification[]> {
+        const id = (companyId) ? companyId : this.Config.keys.companyId
+        this.Log.debug(`getCompanyNotifications()::prerequest ${id}`)
         const x:OnAirNotification[] = await this.Api.getCompanyNotifications(id);
         return x
     }
 
-    async getVAFlights(opts?:OnAirApiQueryOptions) {
-        let x = await this.Api.getVirtualAirlineFlights();
+    /**
+     * getVAFlights()
+     * Queries the OnAir Api for the instantiated VA or a specific VA's flights
+
+    @author Mike DeVita <mike@devita.co>
+     * @param vaId string |? the Id of the VA to get the flights for
+     * @param opts OnAirApiQueryOptions |? the options to use when querying the api
+     * @returns Promise<OnAirFlight[]>
+     */
+    async getVAFlights(vaId?:string, opts?:OnAirApiQueryOptions) {
+        let x = await this.Api.getVirtualAirlineFlights(vaId);
         if (opts?.filter) {
             const aircraftCode:string = opts.filter.aircraftCode as string;
             const companyCode:string = opts.filter.companyCode as string;
@@ -293,11 +454,27 @@ class OnAir implements IOnAir {
         return x
     }
 
+    /**
+     * getVAJobs()
+     * Queries the OnAir Api for the instantiated VA
+
+    @author Mike DeVita <mike@devita.co>
+     * @returns Promise<OnAirJob[]>
+     * @todo add ability to query for a specific VA's jobs
+     */
     async getVAJobs():Promise<OnAirJob[]> {
         const x:OnAirJob[] = await this.Api.getVirtualAirlineJobs();
         return x
     }
     
+    /**
+     * getVAMembers()
+     * Queries the OnAir Api for the instantiated VA
+
+    @author Mike DeVita <mike@devita.co>
+     * @returns Promise<OnAirMember[]>
+     * @todo add ability to query for a specific VA's members
+     */
     async getVAMembers():Promise<OnAirMember[]> {
         let x:OnAirMember[] = await this.Api.getVirtualAirlineMembers();
 
@@ -351,11 +528,27 @@ class OnAir implements IOnAir {
         return x
     }
 
+    /**
+     * getVAFleet()
+     * Queries the OnAir Api for the instantiated VA
+
+    @author Mike DeVita <mike@devita.co>
+     * @returns Promise<OnAirAircraft[]>
+     * @todo add ability to query for a specific VA's fleet
+     */
     async getVAFleet():Promise<OnAirAircraft[]> {
         const x:OnAirAircraft[] = await this.Api.getVirtualAirlineFleet();
         return x
     }
 
+    /**
+     * getVADetail()
+     * Queries the OnAir Api for the instantiated VA or a specific VA
+
+    @author Mike DeVita <mike@devita.co>
+     * @param vaId string |? the Id of the VA to get the details for
+     * @returns Promise<OnAirVirtualAirline>
+     */
     async getVADetail(vaId?:string): Promise<OnAirVirtualAirline> {
         const id = (vaId) ? vaId : this.Config.keys.vaId
         this.Log.debug(`getVADetail()::prerequest ${id}`)
@@ -363,6 +556,32 @@ class OnAir implements IOnAir {
         return x
     }
 
+    /**
+     * getVANotifications()
+     * Queries the OnAir Api for the instantiated VA or a specific VA
+
+    @author Mike DeVita <mike@devita.co>
+     * @param vaId string |? the Id of the VA to get the notifications for
+     * @returns Promise<OnAirNotification[]>
+     */
+    async getVANotifications(vaId?:string): Promise<OnAirNotification[]> {
+        const self = this;
+        const id = (vaId) ? vaId : self.Config.keys.vaId
+        self.Log.debug(`getVANotifications()::prerequest ${id}`)
+        const x:OnAirNotification[] = await self.Api.getVirtualAirlineNotifications(id);
+        return x
+    }
+
+
+    /**
+     * loadVirtualAirline()
+     * Loads the Virtual Airline from the database 
+
+    @author Mike DeVita <mike@devita.co>
+     * and sets it to the _VirtualAirline property of the class
+     * 
+     * @returns Promise<void>
+     */
     async loadVirtualAirline(): Promise<void> {
         const self = this;
         return new Promise(async (resolve, reject) => {
@@ -383,6 +602,16 @@ class OnAir implements IOnAir {
         });
     }
 
+    /**
+     * processVANotification()
+     * Processes a notification from the OnAir API
+
+    @author Mike DeVita <mike@devita.co>
+     * by creating or updating the corresponding record in the database
+     * 
+     * @param n OnAirNotification | the notification to process
+     * @returns Promise<OnAirRefreshResults>
+     */
     async processVANotification(n:OnAirNotification):Promise<OnAirRefreshResults> {
         const self = this;
         return new Promise(async (resolve, reject) => {
@@ -400,34 +629,14 @@ class OnAir implements IOnAir {
             return resolve(results);
         })
     }
+    /**
+     * refreshVirtualAirline()
+     * Refreshes the instantiated Virtual Airline details from the OnAir API
 
-    determineNotificationType(n:Notification):string {
-        let type = 'unknown';
-        if (!n.Description) return type;
-
-        if (isJobTaken(n.Description)) {
-            type = 'VAJob-Taken'
-        } else if (isJobAbandoned(n.Description)) {
-            type = 'VAJob-Abandoned'
-        } else if (isJobCompleted(n.Description)) {
-            type = 'VAJob-Completed'
-        } else if (isAircraftCrashed(n.Description)) {
-            type = 'Aircraft-Crashed';
-        } else if (isAircraftTransporting(n.Description)) {
-            type = 'Aircraft-Transporting';
-        }
-
-        return type;
-    }
-
-    async getVANotifications(vaId?:string): Promise<OnAirNotification[]> {
-        const self = this;
-        const id = (vaId) ? vaId : self.Config.keys.vaId
-        self.Log.debug(`getVANotifications()::prerequest ${id}`)
-        const x:OnAirNotification[] = await self.Api.getVirtualAirlineNotifications(id);
-        return x
-    }
-
+    @author Mike DeVita <mike@devita.co>
+     * by creating or updating the corresponding record in the database
+     * @returns Promise<OnAirRefreshResults>
+     */
     async refreshVirtualAirline():Promise<OnAirRefreshResults> {
         const self = this;
         return new Promise(async (resolve, reject) => {
@@ -454,6 +663,14 @@ class OnAir implements IOnAir {
         })
     }
 
+    /**
+     * refreshVANotifications()
+     * Refreshes the instantiated Virtual Airline notifications from the OnAir API
+
+    @author Mike DeVita <mike@devita.co>
+     * by creating or updating the corresponding record in the database
+     * @returns Promise<OnAirRefreshResults>
+     */
     async refreshVANotifications(): Promise<OnAirRefreshResults> {
         const self = this;
         return new Promise(async (resolve, reject) => {
@@ -589,6 +806,14 @@ class OnAir implements IOnAir {
         });
     }
 
+    /**
+     * refreshVAFleet()
+     * Refreshes the instantiated Virtual Airline fleet from the OnAir API
+
+    @author Mike DeVita <mike@devita.co>
+     * by creating or updating the corresponding record in the database
+     * @returns Promise<OnAirRefreshResults>
+     */
     async refreshVAFleet(): Promise<OnAirRefreshResults> {
         const self = this
         return new Promise(async (resolve, reject) => {
@@ -711,6 +936,14 @@ class OnAir implements IOnAir {
         });
     }
 
+    /**
+     * refreshVAMembers()
+     * Refreshes the instantiated Virtual Airline members from the OnAir API
+
+    @author Mike DeVita <mike@devita.co>
+     * by creating or updating the corresponding record in the database
+     * @returns Promise<OnAirRefreshResults>
+     */
     async refreshVAMembers(): Promise<OnAirRefreshResults> {
         const self = this;
         return new Promise(async (resolve, reject) => {
