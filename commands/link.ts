@@ -1,10 +1,33 @@
 
 import { APIUser, GuildMember, GuildMemberRoleManager, Interaction, InteractionReplyOptions, Role, SlashCommandBuilder, TextBasedChannel, TextBasedChannelFields, User, } from 'discord.js'
 import { AccountRepo, CompanyRepo, VirtualAirlineRepo } from '../repos';
-import { Account, Company, NewAccount, NewCompany, TranslatedCompany, VirtualAirline } from '../types';
+import { Account, Company, NewAccount, NewCompany, TranslatedCompany, VirtualAirline } from 'types';
 import { IBot } from '../interfaces';
 import { Company as OnAirCompany } from 'onair-api';
 import { CompanyTranslator } from '../translators';
+
+        
+async function addLinkedRole(roleName:string, account: Account, interaction: Interaction, app:IBot): Promise<void> {
+    try {
+        const roleId:string = app.getRoleId(roleName);
+        app.log.info(`Trying to add the '${roleName}' role with id '${roleId}' to '${account.Username}'`)
+
+        let member:GuildMember = interaction.member as GuildMember;
+        const linkedRole:Role | undefined = interaction.guild?.roles.cache.find(role => role.id === roleId);
+        if (!linkedRole) {
+            let msg = `Error finding the '${roleName}' role with id '${roleId}', double check the ID and that the role is defined in Your Discord server.`;
+            throw new Error(msg);
+        }
+        
+        await member.roles.add(linkedRole)
+        return;
+    }
+    catch (e) {
+        app.log.error(`Error adding the '${roleName}' role to ${account.Username}`);
+        let msg = `Error adding the '${roleName}' role to your account. ${e}`;
+        throw new Error(msg);
+    }    
+}
 
 export default {
 	data: new SlashCommandBuilder()
@@ -41,8 +64,8 @@ export default {
             return;
         }
 
-        // ensure the account isn't already linked
-        let linkedRoleExists = memberRoles.some((value:Role, key:string) => key === app.getRoleId("linked"));
+        // ensure that the Discord user doesn't already have the linked Discord role
+        let linkedRoleExists = memberRoles.some((value:Role, key:string) => key === app.getRoleId('linked'));
         if (interaction.member !== null && linkedRoleExists) {
             await interaction.reply('Your OnAir Company is already linked! Contact an admin if you need to change your company or for further assistance.');
             return;
@@ -83,15 +106,40 @@ export default {
             app.log.info(`Account ${account.Username} by id '${account.Id}' created`)
         }
 
-        // otherwise if the account exists, and the account is already linked in the database, return
+        // otherwise if the account exists, and the account is already linked in the database
         if (account !== null && account.IsOnAirLinked === true) {
-            app.log.info(`Account ${account.Username} by id '${account.Id}' is already linked`)
-            const reply:InteractionReplyOptions = {
-                content: `Hmm, Your account is already linked!`,
-                ephemeral: true
-            };
-            
-            return await interaction.editReply(reply);
+            app.log.info(`Account ${account.Username} by id '${account.Id}' is already linked but their discord user does not have the 'linked' role, trying to add...`);
+            // the discord role did not get assigned to the user, so try to add it
+            await addLinkedRole('linked', account, interaction, app)
+            .then(async () => {
+                app.log.info(`Successfully added 'linked' role to ${account.Username} by id '${account.Id}'`);
+                let msg = `Your OnAir Company \`${company.AirlineCode}\` has been linked with Your discord account @${interaction.user}.\n\n`;
+                msg += `\`\`\`\n`;
+                msg += `Company Code: ${company.AirlineCode}\n`;
+                msg += `Company Name: ${company.Name}\n`;
+                msg += `Level: ${company.Level}\n`;
+                msg += `Reputation: ${(company.Reputation*100).toFixed(2) + ' %'}\n`;
+                msg += `Checkride Level: ${company.CheckrideLevel}\n`;
+                msg += `Last Connection: ${company.LastConnection?.toDateString()}\n`;
+                msg += `\`\`\`\n`;
+
+                const reply:InteractionReplyOptions = {
+                    content: msg,
+                    ephemeral: true
+                };
+                
+                return await interaction.editReply(reply);
+            })
+            .catch(async (e) => {
+                if (e) {
+                    const reply:InteractionReplyOptions = {
+                        content: `Hmm, Your account is already linked and there was an Error when trying to add the linked role to your account.\nPlease contact an admin for further assistance providing the following message.\n\`\`\`\n${e}\n\`\`\``,
+                        ephemeral: true
+                    };
+                
+                    return await interaction.editReply(reply);
+                }
+            });
         }
 
         // Try to find the Company by its Id in the database
@@ -184,58 +232,41 @@ export default {
             }
         });
         
-        try {
-            const linkedRole:string = app.getRoleId("linked");
-            app.log.info(`Trying to add 'linked' role with id '${linkedRole}' to ${account.Username} by id '${account.Id}'`)
+        addLinkedRole('linked', account, interaction, app)
+        .then(async () => {
+            app.log.info(`Successfully added 'linked' role to ${account.Username} by id '${account.Id}'`);
+            let msg = `Your OnAir Company \`${company.AirlineCode}\` has been linked with Your discord account @${interaction.user}.\n\n`;
+            msg += `\`\`\`\n`;
+            msg += `Company Code: ${company.AirlineCode}\n`;
+            msg += `Company Name: ${company.Name}\n`;
+            msg += `Level: ${company.Level}\n`;
+            msg += `Reputation: ${(company.Reputation*100).toFixed(2) + ' %'}\n`;
+            msg += `Checkride Level: ${company.CheckrideLevel}\n`;
+            msg += `Last Connection: ${company.LastConnection?.toDateString()}\n`;
+            msg += `\`\`\`\n`;
 
-            let member:GuildMember = interaction.member as GuildMember;
-            member.roles.add(linkedRole)
-            .then(async () => {
-                app.log.info(`Successfully added 'linked' role to ${account.Username} by id '${account.Id}'`);
-                let msg = `Your OnAir Company has been linked with Your discord Account.\n\n`;
-                msg += `\`\`\`\n`;
-                msg += `Company Code: ${company.AirlineCode}\n`;
-                msg += `Company Name: ${company.Name}\n`;
-                msg += `Level: ${company.Level}\n`;
-                msg += `Reputation: ${(company.Reputation*100).toFixed(2) + ' %'}\n`;
-                msg += `Checkride Level: ${company.CheckrideLevel}\n`;
-                msg += `Last Connection: ${company.LastConnection?.toDateString()}\n`;
-                msg += `\`\`\`\n`;
-
-                const reply:InteractionReplyOptions = {
-                    content: msg,
-                    ephemeral: true
-                };
-                
-                return await interaction.editReply(reply);
-            })
-            .catch(async (e) => {
-                app.log.error(`Error adding 'linked' role to ${account.Username} by id '${account.Id}'.\n Error given: ${e}`);
-                
-                let msg = `Error adding 'linked' role to ${account.Username} by id '${account.Id}'.\n Error given:\n`;
-                msg += `\`\`\`\n`;
-                msg += `${e}\n`;
-                msg += `\`\`\`\n`;
-
-
-                const reply:InteractionReplyOptions = {
-                    content: msg,
-                    ephemeral: true
-                };
-                
-                return await interaction.editReply(reply);
-            });
-        }
-        catch (e) {
-            console.log(e);
-            let msg = 'Error adding the linked role to your account. Please contact an admin for further assistance providing the following message.';
+            const reply:InteractionReplyOptions = {
+                content: msg,
+                ephemeral: true
+            };
+            
+            return await interaction.editReply(reply);
+        })
+        .catch(async (e) => {
+            app.log.error(`Error adding 'linked' role to ${account.Username} by id '${account.Id}'.\n Error given: ${e}`);
+            
+            let msg = `Error adding 'linked' role to ${account.Username} by id '${account.Id}'.\n Error given:\n`;
             msg += `\`\`\`\n`;
             msg += `${e}\n`;
             msg += `\`\`\`\n`;
 
-            return await interaction.editReply({
+
+            const reply:InteractionReplyOptions = {
                 content: msg,
-            })
-        }        
+                ephemeral: true
+            };
+            
+            return await interaction.editReply(reply);
+        });
     }
 }
