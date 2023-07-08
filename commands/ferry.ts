@@ -5,7 +5,7 @@ import { AccountRepo, AircraftRepo, AirportRepo, FerryRepo } from '../repos';
 import { IBot } from '../interfaces';
 import { Account, Aircraft, Airport, Ferry, TranslatedAirport } from '../types';
 import { AirportProcessor, } from '../processors';
-import { AirportTranslator } from 'translators';
+import { AirportTranslator } from '../translators';
 
 export default {
 	data: new SlashCommandBuilder()
