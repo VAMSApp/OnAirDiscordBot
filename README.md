@@ -10,8 +10,8 @@ A bot that integrates Your OnAir Company or VA's details into Discord. Currently
 - copy `config.ts.example` to `config.ts`
 - fill out `.env` with required information
 - fill out `config.ts` with required information
-  - Update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId` with values from Discord developer website, see [this](https://github.com/vams-app/onair-discordbot/wiki/Creating-Your-Discord-bot) wiki for more
-  - Update `companyId`, `vAId`, `apiKey` in the `onAir` object with values from the OnAir companion app, see [this](https://github.com/vams-app/onair-discordbot/wiki/Obtaining-Your-OnAir-Credentials) wiki for more
+  - Update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId` with values from Discord developer website, see [this](https://github.com/VAMSApp/OnAirDiscordBot/wiki/Creating-Your-Discord-bot) wiki for more
+  - Update `companyId`, `vAId`, `apiKey` in the `onAir` object with values from the OnAir companion app, see [this](https://github.com/VAMSApp/OnAirDiscordBot/wiki/Obtaining-Your-OnAir-Credentials) wiki for more
 - finally, run the bot by executing `npm start`
 
 By default the Bot should send a message in the configured channel when it comes online. Simply interact with the bot using one of the below commands
@@ -162,10 +162,10 @@ Showing page 1 of 10
 
 ## Planned Features
 
-- Add persistence layer e.g. db to track data over time
-- Add cash flow related commands to indicate income vs expense and profit margins, see [#2](https://github.com/vams-app/onair-discordbot/issues/2)
-- Ability for users to link their Discord account to their OnAir company, see [#3](https://github.com/vams-app/onair-discordbot/issues/3)
-- polling & alerting functionality for flight & job status changes, see[#4](https://github.com/vams-app/onair-discordbot/issues/4)
+- [x] Add persistence layer e.g. db to track data over time and allow for more advanced features
+- Add cash flow related commands to indicate income vs expense and profit margins, see [#2](https://github.com/VAMSApp/OnAirDiscordBot/issues/2)
+- Ability for users to link their Discord account to their OnAir company, see [#3](https://github.com/VAMSApp/OnAirDiscordBot/issues/3)
+- polling & alerting functionality for flight & job status changes, see[#4](https://github.com/VAMSApp/OnAirDiscordBot/issues/4)
 
 ## Help & Support
 
