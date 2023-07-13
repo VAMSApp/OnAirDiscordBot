@@ -229,15 +229,16 @@ class Bot implements IBot {
         
         this.client.on('ready', async (client:Client) => {
             const discordServerName = client.guilds.cache.map(g => g.name).join('\n');
+            const username = client.user?.username || 'OnAirTrackerBot';
 
-            this.log.info(`Logged into the ${discordServerName} discord server as ${client?.user?.tag}`);
+            this.log.info(`Logged into the ${discordServerName} discord server as ${username}`);
             
             if (!this.config.discord) {
                 throw new Error('No Discord config provided, exiting.');
             }
 
             if (this.config.discord.onConnectNotice === true) {
-                const readyMsg:string = OnReadyMessage();
+                const readyMsg:string = OnReadyMessage(username);
                 const onConnectNoticeChannelId:string = this.getChannelId('OnConnectNoticeChannel');
 
                 client

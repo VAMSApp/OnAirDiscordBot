@@ -1,6 +1,5 @@
-export function OnReadyMessage():string {
-
-    const message:string = 'Howdy 👋\nOnAirTrackerBot here, OnAir information services are now accessible to this channel.\nType `/help` for more information!';
+export function OnReadyMessage(username:string):string {
+    const message:string = `Howdy 👋,\n${username} here, OnAir information services are now accessible to this server.\nAny issues or questions, encountered please reach out to \`@ndboost\``;
 
     return message;
 }
