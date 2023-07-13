@@ -1,11 +1,11 @@
-import { AircraftClass } from "."
+import { AircraftClass } from '.';
 
 
 /**
  * Model AircraftType
  * 
  */
- export type AircraftType = {
+export type AircraftType = {
     Id: string
     AircraftClassId?: string
     CreationDate: Date

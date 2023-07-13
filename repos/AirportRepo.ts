@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 import { IBot } from 'interfaces';
 import { Airport, QueryOptions, TranslatedAirport } from '../types';
 import { Airport as OnAirAirport } from 'onair-api';
-import BaseRepo from './BaseRepo'
+import BaseRepo from './BaseRepo';
 
 export interface IAirportRepo {
     findByICAO(icao:string, opts:any): Promise<Airport>;
@@ -20,9 +20,9 @@ class AirportRepoClass extends BaseRepo implements IAirportRepo {
     
     constructor() {
         super();
-        this.Model = this.prisma.airport
+        this.Model = this.prisma.airport;
         this.bot?.log.info('AirportRepo initialized');
-        this.findByICAO = this.findByICAO.bind(this)
+        this.findByICAO = this.findByICAO.bind(this);
     }
 
     async create(newX:TranslatedAirport|Airport, opts?:QueryOptions) {
@@ -34,18 +34,18 @@ class AirportRepoClass extends BaseRepo implements IAirportRepo {
             newX = {
                 ...newX,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
 
         const query:Prisma.AirportCreateArgs = {
             data: newX as Prisma.AirportCreateInput,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.create(query)
             .then((x:Airport) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:Airport) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async update(Id:string, x:Prisma.AirportUpdateInput|Airport, opts?:QueryOptions) {
@@ -57,7 +57,7 @@ class AirportRepoClass extends BaseRepo implements IAirportRepo {
             x = {
                 ...x,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
 
         const query:Prisma.AirportUpdateArgs = {
@@ -66,12 +66,12 @@ class AirportRepoClass extends BaseRepo implements IAirportRepo {
             },
             data: x as Prisma.AirportUpdateInput,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.update(query)
             .then((x:Airport) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:Airport) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async updateByICAO(icao:string, x:Prisma.AirportUpdateInput|Airport, opts?:QueryOptions) {
@@ -83,7 +83,7 @@ class AirportRepoClass extends BaseRepo implements IAirportRepo {
             x = {
                 ...x,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
 
         const query:Prisma.AirportUpdateArgs = {
@@ -92,12 +92,12 @@ class AirportRepoClass extends BaseRepo implements IAirportRepo {
             },
             data: x as Prisma.AirportUpdateInput,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.update(query)
             .then((x:Airport) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:Airport) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async findByICAO(icao:string, opts?:QueryOptions):Promise<Airport> {
@@ -110,13 +110,13 @@ class AirportRepoClass extends BaseRepo implements IAirportRepo {
             },
             orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.findUnique(query)
             .then((x:Airport) => self.determineCanSync(x))
             .then((x:Airport) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:Airport) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Airport) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 }
 

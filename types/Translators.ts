@@ -5,7 +5,7 @@ import {
     ResultsResponse,
     SerializedResponse,
     TranslatedResponse,
-} from ".";
+} from '.';
 
 export type Translator = {
     IsSyncable:boolean;

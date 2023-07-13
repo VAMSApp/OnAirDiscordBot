@@ -4,7 +4,7 @@
  * Model JobType
  * 
  */
- export type JobType = {
+export type JobType = {
     Id: string
     string: string
     Name: string

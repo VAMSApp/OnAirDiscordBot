@@ -10,13 +10,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model AppConfig {
-  Id        String    @id
-  AppTitle  String
-  CreatedAt DateTime  @default(now())
-  UpdatedAt DateTime? @updatedAt
-}
-
 model Account {
   Id               String           @id @default(uuid())
   DiscordId        String           @unique
@@ -49,7 +42,7 @@ model VirtualAirline {
   Id                                     String    @id
   Name                                   String
   AirlineCode                            String    @unique
-  ApiKey                                 String    @unique
+  ApiKey                                 String?   @unique
   OwnerId                                String?
   InitalOwnerEquity                      Int?
   PercentDividendsToDistribute           Float?
@@ -98,6 +91,7 @@ model VirtualAirline {
   Invitations   VAInvitation[]
   Notifications Notification[]
   Member        Member[]
+  VARoles        VARole[]
 }
 
 model VAInvitation {
@@ -244,27 +238,49 @@ model Email {
 model Notification {
   Id             String   @id
   VaId           String
+  Description    String
+  IsRead         Boolean  @default(false)
+  IsNotification Boolean  @default(false)
+  ZuluEventTime  DateTime
   CompanyId      String?
   AircraftId     String?
   FlightId       String?
   EmployeeId     String?
-  IsRead         Boolean  @default(false)
-  IsNotification Boolean  @default(false)
-  ZuluEventTime  DateTime
-  CategoryId     Int?
-  ActionId       Int?
-  Description    String
+  CategoryId     Int?     @default(0)
+  ActionId       Int?     @default(0)
   Amount         Float    @default(0)
 
   OnAirSyncedAt DateTime?
   UpdatedAt     DateTime? @updatedAt
   CreatedAt     DateTime  @default(now())
 
-  VirtualAirline VirtualAirline @relation(fields: [VaId], references: [Id])
-  Company        Company?       @relation(fields: [CompanyId], references: [Id])
-  Employee       Employee?      @relation(fields: [EmployeeId], references: [Id])
-  Aircraft       Aircraft?      @relation(fields: [AircraftId], references: [Id])
-  Flight         Flight?        @relation(fields: [FlightId], references: [Id])
+  VirtualAirline VirtualAirline        @relation(fields: [VaId], references: [Id])
+  Company        Company?              @relation(fields: [CompanyId], references: [Id])
+  Employee       Employee?             @relation(fields: [EmployeeId], references: [Id])
+  Aircraft       Aircraft?             @relation(fields: [AircraftId], references: [Id])
+  Flight         Flight?               @relation(fields: [FlightId], references: [Id])
+  Category       NotificationCategory? @relation(fields: [CategoryId], references: [Id])
+  Action         NotificationAction?   @relation(fields: [ActionId], references: [Id])
+}
+
+model NotificationCategory {
+  Id            Int            @id
+  Name          String
+  ShortName     String         @unique
+  OnAirSyncedAt DateTime?
+  UpdatedAt     DateTime?      @updatedAt
+  CreatedAt     DateTime       @default(now())
+  Notifications Notification[]
+}
+
+model NotificationAction {
+  Id            Int            @id
+  Name          String
+  ShortName     String         @unique
+  OnAirSyncedAt DateTime?
+  UpdatedAt     DateTime?      @updatedAt
+  CreatedAt     DateTime       @default(now())
+  Notifications Notification[]
 }
 
 model Employee {
@@ -354,8 +370,8 @@ model Airport {
   BaseJobs                           Job[]      @relation("JobBaseAirport")
   FerryDepartures                    Ferry[]    @relation("FerryDepartureAirport")
   FerryArrivals                      Ferry[]    @relation("FerryArrivalAirport")
-  EmployeesAtAirport  Employee[] @relation("EmployeeCurrentAirport")
-  EmployeesHomeAirport Employee[] @relation("EmployeeHomeAirport")
+  EmployeesAtAirport                 Employee[] @relation("EmployeeCurrentAirport")
+  EmployeesHomeAirport               Employee[] @relation("EmployeeHomeAirport")
 }
 
 model AircraftEngine {
@@ -740,22 +756,23 @@ model Flight {
 }
 
 model VARole {
-  Id                                     String    @id
+  Id                                     String         @id
   VAId                                   String
   Name                                   String
   Permission                             Int
   IsDefaultNewRole                       Boolean
   Color                                  String
-  PayPercent                             Float     @default(0.00)
+  PayPercent                             Float          @default(0.00)
   IsHidden                               Boolean
   RestrictLoadingVAJobsIntoNonVAAircraft Boolean
   RestrictLoadingNonVAJobsIntoVAAircraft Boolean
-  PayWeekly                              Float     @default(0.00)
-  PayPerFlightHour                       Float     @default(0.00)
+  PayWeekly                              Float          @default(0.00)
+  PayPerFlightHour                       Float          @default(0.00)
   OnAirSyncedAt                          DateTime?
-  UpdatedAt                              DateTime? @updatedAt
-  CreatedAt                              DateTime  @default(now())
+  UpdatedAt                              DateTime?      @updatedAt
+  CreatedAt                              DateTime       @default(now())
   Members                                Member[]
+  VirtualAirline                         VirtualAirline @relation(fields: [VAId], references: [Id])
 }
 
 model Member {
@@ -772,7 +789,7 @@ model Member {
   Color                     String
   AcceptMigration           Boolean        @default(false)
   ReputationImpact          Float          @default(0.00)
-  LastWeeklyPay             DateTime
+  LastWeeklyPay             DateTime?
   OnAirSyncedAt             DateTime?
   UpdatedAt                 DateTime?      @updatedAt
   CreatedAt                 DateTime?      @default(now())

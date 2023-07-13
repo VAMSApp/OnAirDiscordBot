@@ -4,25 +4,25 @@ export function DetermineAircraftStatus(statusCode:number, iconOnly:boolean = fa
     let status = '';
 
     switch (statusCode) {
-        case 0:
-            status = (iconOnly) ? '✅' : '✅ Idle'
-            break;
-        case 1:
-            status = (iconOnly) ? '⚙️' : '⚙️ Maintenance'
-            break;
-        case 2:
-            status = (iconOnly) ? '🔃' : '🔃 ApronWork'
-            break;
-        case 3:
-            status = (iconOnly) ? '✈️' : '✈️ InFlight'
-            break;
-        case 4:
-            status = (iconOnly) ? '🌍' : '🌍 Warp'
-            break;
-        case 5:
-            status = (iconOnly) ? '✈️' : '✈️ Ferry'
-            break;
+    case 0:
+        status = (iconOnly) ? '✅' : '✅ Idle';
+        break;
+    case 1:
+        status = (iconOnly) ? '⚙️' : '⚙️ Maintenance';
+        break;
+    case 2:
+        status = (iconOnly) ? '🔃' : '🔃 ApronWork';
+        break;
+    case 3:
+        status = (iconOnly) ? '✈️' : '✈️ InFlight';
+        break;
+    case 4:
+        status = (iconOnly) ? '🌍' : '🌍 Warp';
+        break;
+    case 5:
+        status = (iconOnly) ? '✈️' : '✈️ Ferry';
+        break;
     }
 
-    return status
+    return status;
 }

@@ -1,4 +1,4 @@
-import { Member } from ".";
+import { Member } from '.';
 
 export type TranslatedVARole = {
     Id: string;

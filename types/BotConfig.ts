@@ -16,5 +16,5 @@ export type BotConfig = {
         logLevel: string;
         logToConsole: boolean;
     }
-    redis: RedisOptions;
+    redis?: RedisOptions;
 }

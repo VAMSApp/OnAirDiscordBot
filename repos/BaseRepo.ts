@@ -1,11 +1,13 @@
-import Db from '../db'
-import moment from 'moment'
+/* eslint-disable @typescript-eslint/no-this-alias */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import Db from '../db';
+import moment from 'moment';
 import {  PrismaClient, } from '@prisma/client';
 import { IBot } from '../interfaces';
 import { QueryOptions } from 'types';
 
 class BaseRepo {
-    Model:any
+    Model:any;
     prisma:PrismaClient = Db;
     IsSyncable = false;
     bot: IBot|undefined;
@@ -16,7 +18,7 @@ class BaseRepo {
         this.upsert = this.upsert.bind(this);
         this.findAll = this.findAll.bind(this);
         this.findById = this.findById.bind(this);
-        this.findFirst = this.findFirst.bind(this)
+        this.findFirst = this.findFirst.bind(this);
         this.destroy = this.destroy.bind(this);
         this.humanize = this.humanize.bind(this);
         this.serialize = this.serialize.bind(this);
@@ -38,20 +40,20 @@ class BaseRepo {
     
         // if OnAirSyncedAt is not null
         if (x.OnAirSyncedAt) {
-            const currentDate = new Date()
+            const currentDate = new Date();
             const OnAirSyncedAt = (typeof x.OnAirSyncedAt === 'string') ? new Date(x.OnAirSyncedAt) : x.OnAirSyncedAt;
-            const ONE_MIN = 1*60*1000
+            const ONE_MIN = 1*60*1000;
     
             // if the difference between the current date and the OnAirSyncedAt date is greater than 1 minute
             if ((currentDate.valueOf() - OnAirSyncedAt.valueOf()) > ONE_MIN) {
-                canSync = true
+                canSync = true;
             }
         }
     
         return {
             ...x,
             canSync,
-        }
+        };
     }
 
     serialize(x:any) {
@@ -65,7 +67,7 @@ class BaseRepo {
             parsedX = x;
         }
 
-        return parsedX
+        return parsedX;
     }
 
     humanize(x:any, keys:any) {
@@ -83,7 +85,7 @@ class BaseRepo {
                         if (!d) throw new Error('Date is required');
                         const h = moment(d).fromNow();
                         return h.toString();
-                    }
+                    };
 
                     if (y[key]) {
                         // humanize it
@@ -100,7 +102,7 @@ class BaseRepo {
                         if (!d) throw new Error('Date is required');
                         const h = moment(d).fromNow();
                         return h.toString();
-                    }
+                    };
                     // humanize it
                     x[`Humanized_${key}`] = humanizedDate(x[key]);
                 }
@@ -108,7 +110,7 @@ class BaseRepo {
         }
         
         return x;
-    };
+    }
 
     omit(_x:any, keys:any) {
         if (!_x) throw new Error('Record is required');
@@ -138,18 +140,18 @@ class BaseRepo {
             newX = {
                 ...newX,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
 
         const query = {
             data: newX,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.create(query)
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async update(Id:any, x:any, opts?:QueryOptions) {
@@ -160,7 +162,7 @@ class BaseRepo {
             x = {
                 ...x,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
 
         const query = {
@@ -169,12 +171,12 @@ class BaseRepo {
             },
             data: x,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.update(query)
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async upsert(Id:any, payload:any, opts?:QueryOptions) {
@@ -192,13 +194,13 @@ class BaseRepo {
             create: {
                 ...payload,
             },
-        }
+        };
 
         return await this.Model.upsert(query)
             .then((x:any) => self.determineCanSync(x))
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async findAll(opts?:QueryOptions) {
@@ -208,12 +210,12 @@ class BaseRepo {
             where: undefined,
             orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.findMany(query)
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async findById(Id:string, opts?:QueryOptions) {
@@ -225,11 +227,14 @@ class BaseRepo {
                 Id: Id,
             },
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
         
         const x = await this.Model.findUnique(query)
+            .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
+            .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
 
-        return x
+        return x;
     }
 
     async findFirst(opts?:QueryOptions) {
@@ -238,12 +243,12 @@ class BaseRepo {
         const query = {
             orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.findFirst(query)
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async destroy(Id:any, opts?:QueryOptions) {
@@ -256,12 +261,12 @@ class BaseRepo {
             },
             orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.delete(query)
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 }
 

@@ -1,4 +1,4 @@
-import { Account, Company } from "."
+import { Account, Company } from '.';
 
 export type Employee = {
     Id: string

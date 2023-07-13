@@ -1,6 +1,6 @@
-import { Prisma } from '@prisma/client'
-import { Account, NewAccount, QueryOptions } from '../types'
-import BaseRepo from './BaseRepo'
+import { Prisma } from '@prisma/client';
+import { Account, NewAccount, QueryOptions } from '../types';
+import BaseRepo from './BaseRepo';
 
 export interface IAccountRepo {
     findByDiscordId(DiscordId:string, opts:any): Promise<Account>;
@@ -18,12 +18,12 @@ class AccountRepoClass extends BaseRepo implements IAccountRepo {
     
     constructor() {
         super();
-        this.Model = this.prisma.account
+        this.Model = this.prisma.account;
         this.bot?.log.info('AccountRepo initialized');
 
-        this.findByDiscordId = this.findByDiscordId.bind(this)
-        this.toggleField = this.toggleField.bind(this)
-        this.upsert = this.upsert.bind(this)
+        this.findByDiscordId = this.findByDiscordId.bind(this);
+        this.toggleField = this.toggleField.bind(this);
+        this.upsert = this.upsert.bind(this);
     }
 
     async findByDiscordId(DiscordId:string, opts?:QueryOptions) {
@@ -35,12 +35,12 @@ class AccountRepoClass extends BaseRepo implements IAccountRepo {
                 DiscordId: DiscordId,
             },
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return this.Model.findUnique(query)
             .then((x:Account) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:Account) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:Account) => (opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Account) => (opts?.serialize) ? self.serialize(x) : x);
     }
 
     async toggleField(Id:string, fieldKey:string, opts?:QueryOptions) {
@@ -53,7 +53,7 @@ class AccountRepoClass extends BaseRepo implements IAccountRepo {
 
         x[fieldKey] = !x[fieldKey];
 
-        return await this.update(x.Id, x)
+        return await this.update(x.Id, x);
     }
 
     async create(newX:NewAccount, opts?:QueryOptions) {
@@ -63,18 +63,18 @@ class AccountRepoClass extends BaseRepo implements IAccountRepo {
         if (self.IsSyncable === true) {
             newX = {
                 ...newX,
-            }
+            };
         }
 
         const query:Prisma.AccountCreateArgs = {
             data: newX as Prisma.AccountCreateInput,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.create(query)
             .then((x:Account) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:Account) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:Account) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Account) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async upsert(DiscordId:string, payload:Account, opts?:QueryOptions) {
@@ -109,13 +109,13 @@ class AccountRepoClass extends BaseRepo implements IAccountRepo {
                 UpdatedAt: payload.UpdatedAt,
             },
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         const x = await this.Model.upsert(query)
             .then((x:Account) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:Account) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
             .then((x:Account) => (opts?.serialize) ? self.serialize(x) : x)
-            .catch((err:any) => console.error(err))
+            .catch((err:any) => console.error(err));
 
         return x;
     }

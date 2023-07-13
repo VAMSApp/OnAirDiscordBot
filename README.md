@@ -1,22 +1,65 @@
 # OnAir Discord Bot
 
-A bot that integrates Your OnAir Company or VA's details into Discord. Currently has the ability to show flights, members, jobs, fleet, and cash flow information all from within discord.
+A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details within your Discord server. The Bot currently only has the ability to show flights, members, jobs, fleet, and cash flow information from within discord but there is no persistence, each command is a one-off request to the OnAir API. See [Planned Features](#planned-features) for more information on what is planned for the future.
 
 ## How to use
 
 - clone the repository `git clone git@github.com:mikedevita/onairdiscordbot.git`
 - install the required nodejs modules `npm i`
-- copy `.example-env` to `.env`
 - copy `config.ts.example` to `config.ts`
-- fill out `.env` with required information
 - fill out `config.ts` with required information
-  - Update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId` with values from Discord developer website, see [this](https://github.com/VAMSApp/OnAirDiscordBot/wiki/Creating-Your-Discord-bot) wiki for more
+  - Ensure to update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId` with values from Discord developer website, see [this](https://github.com/VAMSApp/OnAirDiscordBot/wiki/Creating-Your-Discord-bot) wiki for more
+  - ensure the bot is granted the `bot` and `applications.commands` scopes in the Discord developer website
   - Update `companyId`, `vAId`, `apiKey` in the `onAir` object with values from the OnAir companion app, see [this](https://github.com/VAMSApp/OnAirDiscordBot/wiki/Obtaining-Your-OnAir-Credentials) wiki for more
 - finally, run the bot by executing `npm start`
 
-By default the Bot should send a message in the configured channel when it comes online. Simply interact with the bot using one of the below commands
+By default the Bot should send a message in Your discord Server when it comes online. Simply interact with the bot using one of the commands in the [Commands](#bot-commands) section below.
 
 ## Bot Commands
+| Command | Description |
+| ------- | ----------- |
+| [/detail](#detail) | shows OnAir details about the registered Virtual Airline |
+| [/airport](#airport) | shows details about a given airport |
+| [/members](#members) | shows a list of all members in the registered Virtual Airline |
+| [/fleet](#fleet) | shows a list of all aircraft in the registered Virtual Airline |
+| [/flights](#flights) | shows a list of all flights in the registered Virtual Airline |
+| [/jobs](#jobs) | shows a list of all jobs in the registered Virtual Airline |
+
+
+## Planned Features
+- [ ] Add cash flow related commands to indicate income vs expense and profit margins, see [#2](https://github.com/VAMSApp/OnAirDiscordBot/issues/2) for more information
+- [ ] Add persistence layer to track data over time and allow for more advanced features, see [#8](https://github.com/VAMSApp/OnAirDiscordBot/issues/8) for more information
+  - [ ] Ability for users to link their Discord account to their OnAir company, see [#9](https://github.com/VAMSApp/OnAirDiscordBot/issues/9) for more information
+  - [ ] polling & alerting functionality for flight & job status changes, see [#4](https://github.com/VAMSApp/OnAirDiscordBot/issues/4) for more information
+
+## Help & Support
+
+feel free to reach out to me on discord with any questions, my discord username is `ndboost`. I also idle in the #web-apis channel on the [OnAir company's official discord server](https://discord.com/invite/WY5htXu).
+
+## Bot Commands
+
+### Virtual Airline Details (/detail :ephemeral?)
+
+Provides basic details about the registered VA such as Name, ICAO, Level, Reputation. In the future will provide more details such as cash flow, etc
+
+#### Params
+
+| Name | Desc                    | Default |
+| ---- | ----------------------- | ------- |
+| ephemeral | Send the message as an ephemeral message | true |
+
+#### Response
+
+```
+[IMPAL] Imperium Airlines Details
+  Level: 7
+  XP: 5293 / 7000
+  Reputation: 98.37%
+  World: Thunder
+  Created On: September 8th, 2020
+  Last Connected: July 11th, 2023
+```
+
 
 ### Airport (/airport :icao)
 
@@ -160,13 +203,3 @@ Showing page 1 of 10
 5  N4816Y    PNAS     ✅ Completed    2022-10-19T00:52:14.89   2022-10-19T00:55:41.97   VDPP    VDKC
 ```
 
-## Planned Features
-
-- [x] Add persistence layer e.g. db to track data over time and allow for more advanced features
-- Add cash flow related commands to indicate income vs expense and profit margins, see [#2](https://github.com/VAMSApp/OnAirDiscordBot/issues/2)
-- Ability for users to link their Discord account to their OnAir company, see [#3](https://github.com/VAMSApp/OnAirDiscordBot/issues/3)
-- polling & alerting functionality for flight & job status changes, see[#4](https://github.com/VAMSApp/OnAirDiscordBot/issues/4)
-
-## Help & Support
-
-feel free to reach out to me on discord with any questions, my discord username is `ndboost`. I also idle in the #web-apis channel on the [OnAir company's official discord server](https://discord.com/invite/WY5htXu).

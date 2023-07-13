@@ -4,7 +4,7 @@
  * Model Charter
  * 
  */
- export type Charter = {
+export type Charter = {
     Id: string
     JobId: string
     CharterTypeId: string

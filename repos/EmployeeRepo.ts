@@ -1,6 +1,6 @@
-import { Prisma } from '@prisma/client'
-import { Employee, TranslatedEmployee, QueryOptions } from '../types'
-import BaseRepo from './BaseRepo'
+import { Prisma } from '@prisma/client';
+import { Employee, TranslatedEmployee, QueryOptions } from '../types';
+import BaseRepo from './BaseRepo';
 
 export interface IEmployeeRepo {
     create(newX:TranslatedEmployee, opts?:QueryOptions): Promise<Employee>;
@@ -16,7 +16,7 @@ class EmployeeRepoClass extends BaseRepo implements IEmployeeRepo {
     
     constructor() {
         super();
-        this.Model = this.prisma.employee
+        this.Model = this.prisma.employee;
         this.bot?.log.info('EmployeeRepo initialized');
     }
 
@@ -30,18 +30,18 @@ class EmployeeRepoClass extends BaseRepo implements IEmployeeRepo {
             newX = {
                 ...newX,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
 
         const query:Prisma.EmployeeCreateArgs = {
             data: newX as Prisma.EmployeeCreateInput,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.create(query)
             .then((x:Employee) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:Employee) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:Employee) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Employee) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async update(Id:any, x:any, opts?:QueryOptions) {
@@ -56,7 +56,7 @@ class EmployeeRepoClass extends BaseRepo implements IEmployeeRepo {
             x = {
                 ...x,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
 
         const query:Prisma.EmployeeUpdateArgs = {
@@ -65,12 +65,12 @@ class EmployeeRepoClass extends BaseRepo implements IEmployeeRepo {
             },
             data: x as Prisma.EmployeeUpdateInput,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.update(query)
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 }
 

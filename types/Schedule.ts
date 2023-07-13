@@ -1,4 +1,4 @@
-import { IBot } from "interfaces";
+import { IBot } from 'interfaces';
 
 export type Schedule = {
     name: string;

@@ -3,7 +3,7 @@
  * Model AircraftEngine
  * 
  */
- export type AircraftEngine = {
+export type AircraftEngine = {
     Id: string
     AircraftId: string
     Number: number

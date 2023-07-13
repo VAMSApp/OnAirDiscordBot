@@ -1,11 +1,11 @@
-import { Airport, Company } from "types"
-import { AircraftEngine } from "./AircraftEngine"
+import { Airport, Company } from 'types';
+import { AircraftEngine } from './AircraftEngine';
 
 /**
  * Model Aircraft
  * 
  */
- export declare type Aircraft = {
+export declare type Aircraft = {
     Id: string;
     Nickname: string;    
     AircraftStatus: number;

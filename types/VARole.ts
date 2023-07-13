@@ -4,7 +4,7 @@
  * Model VARole
  * 
  */
- export type VARole = {
+export type VARole = {
     Id: string
     VAId: string
     Name: string

@@ -39,9 +39,9 @@ export type OnAirConfig = {
     loadOnStartup: boolean;
     events: OnAirEventsConfig;
     sorting: {
-        Members: string[]|boolean;
-        Flights: string[]|boolean;
-        Jobs: string[]|boolean;
+        Members: string[];
+        Flights: string[];
+        Jobs: string[];
     },
     polling: OnAirPollingsConfig;
 }

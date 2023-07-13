@@ -5,3 +5,4 @@ export * from './FleetList';
 export * from './JobsList';
 export * from './FlightsList';
 export * from './MembersList';
+export * from './AircraftDetail';

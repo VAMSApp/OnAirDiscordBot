@@ -3,7 +3,7 @@
  * Model Company
  * 
  */
- export type Company = {
+export type Company = {
     Id: string
     Name: string
     AirlineCode: string

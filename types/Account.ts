@@ -4,7 +4,7 @@ import {
     VirtualAirline,
     Employee,
     NewEmployee,
-} from "."
+} from '.';
 
 export type Account = {
     Id:               string  

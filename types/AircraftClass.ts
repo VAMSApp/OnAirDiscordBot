@@ -4,7 +4,7 @@
  * Model AircraftClass
  * 
  */
- export type AircraftClass = {
+export type AircraftClass = {
     Id: string
     ShortName: string
     Name: string

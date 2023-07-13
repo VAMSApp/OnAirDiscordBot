@@ -1,4 +1,4 @@
-import { Company, Airport, AircraftEngine, AircraftType } from ".";
+import { Company, Airport, AircraftEngine, AircraftType } from '.';
 
 export type TranslatedFlight = {
     Id: string

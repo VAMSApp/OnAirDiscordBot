@@ -1,11 +1,24 @@
 {
     "cSpell.words": [
+        "AOPA",
         "apikey",
         "Checkride",
+        "CLIENTID",
         "companycode",
         "companyid",
+        "GUILDID",
+        "Offsetin",
+        "oldmessages",
+        "onairdiscordbot",
+        "OWNERID",
         "showcompleted",
+        "signin",
+        "sortorder",
         "Syncable",
+        "upserted",
+        "vafleet",
+        "VAID",
+        "vajobs",
         "virtualairline"
     ]
 }

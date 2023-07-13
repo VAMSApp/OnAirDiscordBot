@@ -1,32 +1,55 @@
-import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js'
-import { VirtualAirline as OnAirVirtualAirline } from 'onair-api';
+import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js';
+import { VirtualAirline as OnAirVirtualAirline, Member as OnAirMember, } from 'onair-api';
 import { IBot } from '../interfaces';
-import { VADetail } from '../messages'
+import { VADetail } from '../messages';
+import { SlashCommand } from 'types';
+import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
 
-export default {
-	data: new SlashCommandBuilder()
-	.setName('detail')
-	.setDescription('OnAir VA detail')
-    .addBooleanOption(option =>
-        option.setName('ephemeral')
-            .setDescription('Whether to show the results in an ephemeral message')
-            .setRequired(false)
-    ),    
-	async execute(interaction:Interaction, app:IBot) {
+export interface VirtualAirlineDetail extends OnAirVirtualAirline {
+    MemberCount:number;
+    Members: OnAirMember[]
+}
+
+const VADetailCommand:SlashCommand = {
+    name: 'detail',
+    description: 'OnAir VA detail',
+    roleName: 'member',
+    data: new SlashCommandBuilder()
+        .setName('detail')
+        .setDescription('OnAir VA detail')
+        .addBooleanOption(option =>
+            option.setName('ephemeral')
+                .setDescription('Whether to show the results in an ephemeral message')
+                .setRequired(false)
+        ),
+    async execute(interaction:Interaction, app:IBot) {
         if (!interaction.isChatInputCommand()) return;
+        if (!IsAuthorizedToRunCommand(this, interaction, app)) {
+            await interaction.reply({ content: 'You are not authorized to run this command', ephemeral: true });
+            return;
+        }
+        
         let ephemeral:boolean|null = interaction.options.getBoolean('ephemeral');
         if (ephemeral === null) {
-            ephemeral = true
+            ephemeral = true;
         }
-        await interaction.deferReply({ ephemeral: ephemeral })
+        await interaction.deferReply({ ephemeral: ephemeral });
 
-        let msg = ''
+        let msg = '';
     
-        const x:OnAirVirtualAirline = await app.OnAir.getVADetail();
-        if (!x) msg = 'No VA found'
+        const va:OnAirVirtualAirline = await app.OnAir.getVADetail();
+        const members:OnAirMember[] = await app.OnAir.getVAMembers();
+
+        const x:VirtualAirlineDetail = {
+            ...va,
+            MemberCount: members.length,
+            Members: members,
+        };
+
+        if (!x) msg = 'No VA found';
 
         if (x) {
-            msg += `\n${VADetail(x)}`
+            msg += `\n${VADetail(x)}`;
         }
 
         const reply:InteractionReplyOptions = {
@@ -35,5 +58,7 @@ export default {
         };
         
         await interaction.editReply(reply);
-	}
-}
+    }
+};
+
+export default VADetailCommand;

@@ -1,5 +1,5 @@
 import { AircraftClass, QueryOptions } from '../types';
-import BaseRepo from './BaseRepo'
+import BaseRepo from './BaseRepo';
 
 export interface IAircraftClassRepo {
     create(newX:any, opts?:QueryOptions): Promise<AircraftClass>;
@@ -15,7 +15,7 @@ class AircraftClassRepoClass extends BaseRepo implements IAircraftClassRepo {
     
     constructor() {
         super();
-        this.Model = this.prisma.aircraftClass
+        this.Model = this.prisma.aircraftClass;
         this.bot?.log.info('AircraftClassRepo initialized');
     }    
 }

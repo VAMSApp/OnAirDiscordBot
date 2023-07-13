@@ -1,3 +1,3 @@
-import { AirportResponse, FleetResponse, FlightsResponse, JobsResponse, MembersResponse, VirtualAirlineResponse } from "onair-api";
+import { Airport, Aircraft, Flight, Job, Member, VirtualAirline } from 'onair-api';
 
-export type OnAirResultsResponse = VirtualAirlineResponse|AirportResponse|FleetResponse|FlightsResponse|JobsResponse|MembersResponse;
+export type OnAirResultsResponse = VirtualAirline|Airport|Airport[]|Aircraft|Aircraft[]|Flight|Flight[]|Job|Job[]|Member|Member[];

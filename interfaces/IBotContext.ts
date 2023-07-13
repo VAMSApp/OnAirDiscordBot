@@ -1,9 +1,10 @@
-import { BotConfig } from "../types";
-import { ILogger, IOnAir } from ".";
+import { BotConfig } from '../types';
+import { ILogger, IOnAir } from '.';
+import { Client } from 'discord.js';
 
 export interface IBotContext {
     config: BotConfig;
     log: ILogger;
-    client?: any;
+    client?: Client;
     OnAir:  IOnAir;
 }

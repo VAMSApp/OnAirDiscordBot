@@ -1,6 +1,6 @@
-import { Prisma } from '@prisma/client'
-import { AircraftEngine, QueryOptions } from '../types'
-import BaseRepo from './BaseRepo'
+import { Prisma } from '@prisma/client';
+import { AircraftEngine, QueryOptions } from '../types';
+import BaseRepo from './BaseRepo';
 
 export interface IAircraftEngineRepo {
     create(newX:any, opts?:QueryOptions): Promise<AircraftEngine>;
@@ -17,7 +17,7 @@ class AircraftEngineRepoClass extends BaseRepo implements IAircraftEngineRepo {
     
     constructor() {
         super();
-        this.Model = this.prisma.aircraftEngine
+        this.Model = this.prisma.aircraftEngine;
         this.bot?.log.info('AircraftEngineRepo initialized');
     }
 }

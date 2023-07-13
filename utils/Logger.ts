@@ -13,7 +13,7 @@ class Logger implements ILogger {
         this.Config = {
             logLevel: cfg?.logLevel || 'info',
             logToConsole: cfg?.logToConsole || false,
-        }
+        };
 
         this.initialize();
 

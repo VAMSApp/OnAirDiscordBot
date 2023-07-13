@@ -1,11 +1,12 @@
-import { Prisma } from '@prisma/client';
-import { TranslatedCompany, QueryOptions, Company } from '../types';
-import BaseRepo from './BaseRepo'
+/* eslint-disable @typescript-eslint/no-this-alias */
+import { Prisma, Company } from '@prisma/client';
+import { TranslatedCompany, QueryOptions, } from '../types';
+import BaseRepo from './BaseRepo';
 
 export interface ICompanyRepo {
-    findByAirlineCode(Identifier:string, opts:any): Promise<Company>;
-    create(newX:any, opts?:QueryOptions): Promise<Company>;
-    update(Id:any, x:any, opts?:QueryOptions): Promise<Company>;
+    findByAirlineCode(Identifier:string, opts:QueryOptions): Promise<Company>;
+    create(newX:Prisma.CompanyCreateInput, opts?:QueryOptions): Promise<Company>;
+    update(Id:string, x:Prisma.CompanyUpdateInput, opts?:QueryOptions): Promise<Company>;
 }
 
 class CompanyRepoClass extends BaseRepo {
@@ -13,37 +14,34 @@ class CompanyRepoClass extends BaseRepo {
     
     constructor() {
         super();
-        this.Model = this.prisma.company
+        this.Model = this.prisma.company;
         this.bot?.log.info('CompanyRepo initialized');
         this.create = this.create.bind(this);
         this.update = this.update.bind(this);
-        this.findByAirlineCode = this.findByAirlineCode.bind(this)
+        this.findByAirlineCode = this.findByAirlineCode.bind(this);
     }
 
-    async create(newX:TranslatedCompany, opts?:QueryOptions) {
+    async create(newX:Prisma.CompanyCreateInput, opts?:QueryOptions) {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         const self = this;
         if (!newX) throw new Error('New Record is required');
 
-        if (newX.WorldId) delete newX.WorldId;
         if (self.IsSyncable === true) {
             newX = {
                 ...newX,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
-
-        
-        const data:Prisma.CompanyCreateInput = newX as Prisma.CompanyCreateInput;
 
         const query:Prisma.CompanyCreateArgs = {
-            data: data,
+            data: newX,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.prisma.company.create(query)
-            .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
-            .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Company) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
+            .then((x:Company) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
+            .then((x:Company) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async update(Id:string, x:TranslatedCompany, opts?:QueryOptions) {
@@ -54,7 +52,7 @@ class CompanyRepoClass extends BaseRepo {
             x = {
                 ...x,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
 
         const data:Prisma.CompanyUpdateInput = x as Prisma.CompanyUpdateInput;
@@ -65,12 +63,12 @@ class CompanyRepoClass extends BaseRepo {
             },
             data: data,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.update(query)
-            .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
-            .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Company) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
+            .then((x:Company) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
+            .then((x:Company) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async findByAirlineCode(AirlineCode:string, opts?:QueryOptions) {
@@ -83,13 +81,13 @@ class CompanyRepoClass extends BaseRepo {
             },
             orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.findUnique(query)
-            .then((x:any) => self.determineCanSync(x))
-            .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
-            .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Company) => self.determineCanSync(x))
+            .then((x:Company) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
+            .then((x:Company) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
+            .then((x:Company) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
     
 }

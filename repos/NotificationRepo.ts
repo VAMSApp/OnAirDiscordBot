@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { QueryOptions, Notification, TranslatedNotification } from '../types';
 import { Notification as OnAirNotification } from 'onair-api';
-import BaseRepo from './BaseRepo'
+import BaseRepo from './BaseRepo';
 
 export interface INotificationRepo {
     create(newX:any, opts?:QueryOptions): Promise<Notification>;
@@ -17,7 +17,7 @@ class NotificationRepoClass extends BaseRepo implements INotificationRepo {
     
     constructor() {
         super();
-        this.Model = this.prisma.notification
+        this.Model = this.prisma.notification;
         this.bot?.log.info('NotificationRepo initialized');
         this.findById = this.findById.bind(this);
     }
@@ -31,11 +31,11 @@ class NotificationRepoClass extends BaseRepo implements INotificationRepo {
                 Id: Id,
             },
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
         
-        const x = await this.Model.findUnique(query)
+        const x = await this.Model.findUnique(query);
 
-        return x
+        return x;
     }
 
     async create(newX:Prisma.NotificationCreateInput, opts?:QueryOptions) {
@@ -46,18 +46,18 @@ class NotificationRepoClass extends BaseRepo implements INotificationRepo {
             newX = {
                 ...newX,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
 
         const query:Prisma.NotificationCreateArgs = {
             data: newX as Prisma.NotificationCreateInput,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.create(query)
             .then((x:Notification) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:Notification) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:Notification) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Notification) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async update(Id:any, x:Notification, opts?:QueryOptions) {
@@ -68,7 +68,7 @@ class NotificationRepoClass extends BaseRepo implements INotificationRepo {
             x = {
                 ...x,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
 
         const query:Prisma.NotificationUpdateArgs = {
@@ -77,12 +77,12 @@ class NotificationRepoClass extends BaseRepo implements INotificationRepo {
             },
             data: x as Prisma.NotificationUpdateInput,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.update(query)
             .then((x:Notification) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:Notification) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:Notification) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:Notification) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 }
 

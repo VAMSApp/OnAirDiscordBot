@@ -1,4 +1,4 @@
-import { ScheduleOptions } from "node-cron";
+import { ScheduleOptions } from 'node-cron';
 
 export type OnAirPollingConfig = {
     notify?: string[]|string|undefined|boolean;

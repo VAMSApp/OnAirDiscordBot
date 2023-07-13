@@ -1,6 +1,6 @@
 import { Company, Prisma } from '@prisma/client';
 import { Aircraft, QueryOptions, TranslatedAircraft } from '../types';
-import BaseRepo from './BaseRepo'
+import BaseRepo from './BaseRepo';
 
 export interface IAircraftRepo {
     findByIdentifier(Identifier:string, opts:any): Promise<Aircraft>;
@@ -18,13 +18,13 @@ class AircraftRepoClass extends BaseRepo implements IAircraftRepo {
     
     constructor() {
         super();
-        this.Model = this.prisma.aircraft
+        this.Model = this.prisma.aircraft;
         this.bot?.log.info('AircraftRepo initialized');
         this.upsert = this.upsert.bind(this);
         this.create = this.create.bind(this);
         this.update = this.update.bind(this);
-        this.findByIdentifier = this.findByIdentifier.bind(this)
-        this.findByVirtualAirlineId = this.findByVirtualAirlineId.bind(this)
+        this.findByIdentifier = this.findByIdentifier.bind(this);
+        this.findByVirtualAirlineId = this.findByVirtualAirlineId.bind(this);
     }
 
     async create(newX:TranslatedAircraft, opts?:QueryOptions) {
@@ -35,19 +35,19 @@ class AircraftRepoClass extends BaseRepo implements IAircraftRepo {
             newX = {
                 ...newX,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
         const data:Prisma.AircraftCreateInput = newX as Prisma.AircraftCreateInput;
 
         const query:Prisma.AircraftCreateArgs = {
             data: data,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.prisma.aircraft.create(query)
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
     async update(Id:any, x:any, opts?:QueryOptions) {
@@ -58,7 +58,7 @@ class AircraftRepoClass extends BaseRepo implements IAircraftRepo {
             x = {
                 ...x,
                 OnAirSyncedAt: new Date(),
-            }
+            };
         }
 
         const data:Prisma.AircraftUpdateInput = x as Prisma.AircraftUpdateInput;
@@ -69,12 +69,12 @@ class AircraftRepoClass extends BaseRepo implements IAircraftRepo {
             },
             data: data,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.update(query)
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
 
 
@@ -88,13 +88,13 @@ class AircraftRepoClass extends BaseRepo implements IAircraftRepo {
             },
             orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.findUnique(query)
             .then((x:any) => self.determineCanSync(x))
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
     }
     
     async findByVirtualAirlineId(vaId: string, opts?:QueryOptions): Promise<Aircraft[]> {
@@ -107,13 +107,13 @@ class AircraftRepoClass extends BaseRepo implements IAircraftRepo {
             },
             orderBy: (opts?.orderBy) ? opts.orderBy : undefined,
             include: (opts?.include) ? opts.include : undefined,
-        }
+        };
 
         return await this.Model.findMany(query)
             .then((x:any) => self.determineCanSync(x))
             .then((x:any) => (x && opts?.omit) ? self.omit(x, opts.omit) : x)
             .then((x:any) => (x && opts?.humanize) ? self.humanize(x, opts.humanize) : x)
-            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x)
+            .then((x:any) => (x && opts?.serialize) ? self.serialize(x) : x);
         throw new Error('Method not implemented.');
     }
 }

@@ -3,7 +3,7 @@
  * Model Cargo
  * 
  */
- export type Cargo = {
+export type Cargo = {
     Id: string
     JobId: string
     CargoTypeId: string

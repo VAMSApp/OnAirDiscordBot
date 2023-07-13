@@ -4,7 +4,7 @@
  * Model Airport
  * 
  */
- export type Airport = {
+export type Airport = {
     Id: string
     ICAO: string
     IATA?: string | null

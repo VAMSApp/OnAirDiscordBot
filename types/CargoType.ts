@@ -3,7 +3,7 @@
  * Model CargoType
  * 
  */
- export type CargoType = {
+export type CargoType = {
     Id: string
     string: string
     Name: string

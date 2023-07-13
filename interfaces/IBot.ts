@@ -1,13 +1,12 @@
-import { IEventService } from '../utils';
-import { ILogger, IOnAir } from '.'
-import { BotConfig } from '../types'
+import { ILogger, IOnAir } from '.';
+import { BotConfig } from '../types';
+import { Client } from 'discord.js';
 
 export interface IBot {
     config: BotConfig;
     log: ILogger;
-    client: any;
+    client: Client;
     OnAir: IOnAir;
-    EventHandler: IEventService;
 
     loadCommands(): Promise<void>;
     deployCommands(): Promise<void>;

@@ -4,7 +4,7 @@
  * Model Member
  * 
  */
- export type Member = {
+export type Member = {
     Id: string
     VaId: string
     CompanyId: string

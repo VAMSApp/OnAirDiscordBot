@@ -1,5 +1,5 @@
 {
-  "name": "discordbot-ts",
+  "name": "onairdiscordbot",
   "version": "0.0.1",
   "description": "Discord.js bot written in TypeScript with OnAir Company interactions",
   "author": {
@@ -8,7 +8,9 @@
   },
   "main": "index.ts",
   "scripts": {
-    "start": "clear && ts-node index.ts",
+    "start": "clear && ts-node -r index.ts",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "prisma": {
@@ -17,13 +19,13 @@
   "keywords": [],
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^4.6.1",
+    "@prisma/client": "^5.0.0",
     "@types/node": "^18.11.10",
     "async": "^3.2.4",
     "chalk": "^5.1.2",
     "cron": "^2.1.0",
     "cronstrue": "^2.20.0",
-    "discord.js": "^14.7.1",
+    "discord.js": "^14.11.0",
     "dotenv": "^16.0.3",
     "easy-table": "^1.2.0",
     "ioredis": "^5.2.4",
@@ -31,7 +33,7 @@
     "module-alias": "^2.2.2",
     "moment": "^2.29.4",
     "node-cron": "^3.0.2",
-    "onair-api": "^2.4.0",
+    "onair-api": "^2.6.1",
     "reflect-metadata": "^0.1.13",
     "typescript": "^4.9.3",
     "uuid": "^9.0.0",
@@ -43,9 +45,13 @@
     "@types/lodash": "^4.14.191",
     "@types/node-cron": "^3.0.6",
     "@types/uuid": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
     "chai": "^4.3.6",
+    "eslint": "^8.44.0",
     "mocha": "^10.0.0",
     "nodemon": "^2.0.20",
-    "prisma": "^4.7.1"
+    "prisma": "^5.0.0",
+    "tsconfig-paths": "^4.2.0"
   }
 }

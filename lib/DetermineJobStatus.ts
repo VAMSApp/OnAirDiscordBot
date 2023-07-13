@@ -1,15 +1,15 @@
-import { Cargo, Charter } from "onair-api"
+import { Cargo, Charter } from 'onair-api';
 
 export function DetermineJobStatus (j:Cargo|Charter) {
-    let status = ''
+    let status = '';
 
     if (j.AssignedToVAMember) {
-        status = '🧑‍✈️ Assigned'
+        status = '🧑‍✈️ Assigned';
     } else if (j.CurrentAircraft) {
-        status = '✈️ In Progress'
+        status = '✈️ In Progress';
     } else {
-        status = '📝 Pending'
+        status = '📝 Pending';
     }
 
-    return status
+    return status;
 }

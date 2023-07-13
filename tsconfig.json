@@ -1,6 +1,13 @@
 {
+    "ts-node": {
+        // Do not forget to `npm i -D tsconfig-paths`
+        "require": ["tsconfig-paths/register"]
+    },
     "compilerOptions": {
         "baseUrl": ".",
+        "paths": {
+            "@/*": ["./*"]
+        },
         "target": "ESNext",
         "module": "commonjs",
         "strict": true,
@@ -20,7 +27,7 @@
     },
     "include": [
         "./**/*.ts",
-        "prisma/seed-data.js"
+        "prisma/seed-data.ts"
     ],
     "exclude": [
         "node_modules",

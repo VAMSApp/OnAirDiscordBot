@@ -4,7 +4,7 @@
  * Model Notification
  * 
  */
- export type Notification = {
+export type Notification = {
     Id: string
     VaId?: string | null
     CompanyId?: string | null

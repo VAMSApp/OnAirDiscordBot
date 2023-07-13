@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { QueryOptions, Ferry } from '../types';
-import BaseRepo from './BaseRepo'
+import BaseRepo from './BaseRepo';
 
 export interface IFerryRepo {
     create(newX:any, opts?:QueryOptions): Promise<Ferry>;
@@ -16,7 +16,7 @@ class FerryRepoClass extends BaseRepo implements IFerryRepo {
     
     constructor() {
         super();
-        this.Model = this.prisma.ferry
+        this.Model = this.prisma.ferry;
         this.bot?.log.info('FerryRepo initialized');
 
         this.findPendingByAircraftId = this.findPendingByAircraftId.bind(this);
