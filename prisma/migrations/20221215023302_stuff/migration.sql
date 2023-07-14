@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "Notification" ALTER COLUMN "ActionId" DROP NOT NULL,
-ALTER COLUMN "CategoryId" DROP NOT NULL;
