@@ -24,7 +24,7 @@ All command responses are ephemeral by default, meaning only the user who execut
 | [/detail](#virtual-airline-details-detail-ephemeral) | shows OnAir details about the registered Virtual Airline |
 | [/members](#members-members) | shows a list of all members in the registered Virtual Airline |
 | [/fleet](#fleet-fleet) | shows a list of all aircraft in the registered Virtual Airline |
-/ [/aircraft](#aircraft-detail-aircraft-identifier) | shows details about a given aircraft |
+| [/aircraft](#aircraft-detail-aircraft-identifier) | shows details about a given aircraft |
 | [/jobs](#jobs-jobs) | shows a list of all jobs in the registered Virtual Airline |
 | [/flights](#flights-flights) | shows a list of all flights in the registered Virtual Airline |
 
