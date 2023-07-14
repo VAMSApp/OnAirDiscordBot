@@ -16,7 +16,7 @@ A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details
 By default the Bot should send a message in Your discord Server when it comes online. Simply interact with the bot using one of the commands in the [Commands](#bot-commands) section below.
 
 ## Bot Commands
-All command responses are ephemeral by default, meaning only the user who executed the command can see the response. This can be changed by passing the `ephemeral` param to any command, see [Virtual Airline Details](#virtual-airline-details-detail) for an example.
+All command responses are ephemeral by default, meaning only the user who executed the command can see the response. This can be changed by passing the `ephemeral` param to any command, see [Virtual Airline Details](#virtual-airline-details-detail-ephemeral) for an example.
 
 | Command | Description |
 | ------- | ----------- |
