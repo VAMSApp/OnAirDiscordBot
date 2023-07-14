@@ -16,14 +16,17 @@ A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details
 By default the Bot should send a message in Your discord Server when it comes online. Simply interact with the bot using one of the commands in the [Commands](#bot-commands) section below.
 
 ## Bot Commands
+All command responses are ephemeral by default, meaning only the user who executed the command can see the response. This can be changed by passing the `ephemeral` param to any command, see [Virtual Airline Details](#virtual-airline-details-detail) for an example.
+
 | Command | Description |
 | ------- | ----------- |
-| [/detail](#detail) | shows OnAir details about the registered Virtual Airline |
-| [/airport](#airport) | shows details about a given airport |
-| [/members](#members) | shows a list of all members in the registered Virtual Airline |
-| [/fleet](#fleet) | shows a list of all aircraft in the registered Virtual Airline |
-| [/flights](#flights) | shows a list of all flights in the registered Virtual Airline |
-| [/jobs](#jobs) | shows a list of all jobs in the registered Virtual Airline |
+| [/airport](#airport-airport-icao) | shows details about a given airport |
+| [/detail](#virtual-airline-details-detail-ephemeral) | shows OnAir details about the registered Virtual Airline |
+| [/members](#members-members) | shows a list of all members in the registered Virtual Airline |
+| [/fleet](#fleet-fleet) | shows a list of all aircraft in the registered Virtual Airline |
+/ [/aircraft](#aircraft-detail-aircraft-identifier) | shows details about a given aircraft |
+| [/jobs](#jobs-jobs) | shows a list of all jobs in the registered Virtual Airline |
+| [/flights](#flights-flights) | shows a list of all flights in the registered Virtual Airline |
 
 
 ## Planned Features
@@ -35,15 +38,6 @@ By default the Bot should send a message in Your discord Server when it comes on
 ## Help & Support
 
 feel free to reach out to me on discord with any questions, my discord username is `ndboost`. I also idle in the #web-apis channel on the [OnAir company's official discord server](https://discord.com/invite/WY5htXu).
-
-## Bot Commands
-* [Virtual Airline Detail](#xxxx)
-* [Airport](#xxxx)
-* [Members](#xxxx)
-* [Fleet](#xxxx)
-* [Flights](#xxxx)
-* [Jobs](#xxxx)
-
 
 ### Virtual Airline Details (/detail :ephemeral?)
 
