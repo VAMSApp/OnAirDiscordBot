@@ -15,6 +15,21 @@ A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details
 
 By default the Bot should send a message in Your discord Server when it comes online. Simply interact with the bot using one of the commands in the [Commands](#bot-commands) section below.
 
+## Planned Features
+- [ ] Add cash flow related commands to indicate income vs expense and profit margins, see [#2](https://github.com/VAMSApp/OnAirDiscordBot/issues/2) for more information
+- [ ] Add persistence layer to track data over time and allow for more advanced features, see [#8](https://github.com/VAMSApp/OnAirDiscordBot/issues/8) for more information
+  - [ ] Ability for users to link their Discord account to their OnAir company, see [#9](https://github.com/VAMSApp/OnAirDiscordBot/issues/9) for more information
+  - [ ] polling & alerting functionality for flight & job status changes, see [#4](https://github.com/VAMSApp/OnAirDiscordBot/issues/4) for more information
+
+## Free Help & Support
+
+feel free to reach out to me on discord with any questions about the bot, my discord username is `ndboost`. I also idle in the #web-apis channel on the [OnAir company's official discord server](https://discord.com/invite/WY5htXu).
+
+## Bot Hosting and Paid Support
+
+If you are interested in having this bot hosted for you or would like to pay for additional features or support, please feel free to reach out to me on discord, my username is `ndboost` to discuss your requirements.
+
+
 ## Bot Commands
 All command responses are ephemeral by default, meaning only the user who executed the command can see the response. This can be changed by passing the `ephemeral` param to any command, see [Virtual Airline Details](#virtual-airline-details-detail-ephemeral) for an example.
 
@@ -27,17 +42,6 @@ All command responses are ephemeral by default, meaning only the user who execut
 | [/aircraft](#aircraft-detail-aircraft-identifier) | shows details about a given aircraft |
 | [/jobs](#jobs-jobs) | shows a list of all jobs in the registered Virtual Airline |
 | [/flights](#flights-flights) | shows a list of all flights in the registered Virtual Airline |
-
-
-## Planned Features
-- [ ] Add cash flow related commands to indicate income vs expense and profit margins, see [#2](https://github.com/VAMSApp/OnAirDiscordBot/issues/2) for more information
-- [ ] Add persistence layer to track data over time and allow for more advanced features, see [#8](https://github.com/VAMSApp/OnAirDiscordBot/issues/8) for more information
-  - [ ] Ability for users to link their Discord account to their OnAir company, see [#9](https://github.com/VAMSApp/OnAirDiscordBot/issues/9) for more information
-  - [ ] polling & alerting functionality for flight & job status changes, see [#4](https://github.com/VAMSApp/OnAirDiscordBot/issues/4) for more information
-
-## Help & Support
-
-feel free to reach out to me on discord with any questions, my discord username is `ndboost`. I also idle in the #web-apis channel on the [OnAir company's official discord server](https://discord.com/invite/WY5htXu).
 
 ### Virtual Airline Details (/detail :ephemeral?)
 
