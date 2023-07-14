@@ -21,65 +21,65 @@ async function main() {
         console.log(`  ✅ World '${x.Name}' upserted`);
     });
 
-    await eachSeries(SeedData['aircraftStatus'], async (x) => {
-        const newX = await prisma.aircraftStatus.upsert({
-            where: {
-                Id: x.Id,
-            },
-            update: x,
-            create: x,
-        });
+    // await eachSeries(SeedData['aircraftStatus'], async (x) => {
+    //     const newX = await prisma.aircraftStatus.upsert({
+    //         where: {
+    //             Id: x.Id,
+    //         },
+    //         update: x,
+    //         create: x,
+    //     });
 
-        console.log(`  ✅ Aircraft Status '${newX.Name}' upserted`);
-    });
+    //     console.log(`  ✅ Aircraft Status '${newX.Name}' upserted`);
+    // });
 
-    await eachSeries(SeedData['fuelType'], async (x) => {
-        const newX = await prisma.fuelType.upsert({
-            where: {
-                Id: x.Id,
-            },
-            update: x,
-            create: x,
-        });
+    // await eachSeries(SeedData['fuelType'], async (x) => {
+    //     const newX = await prisma.fuelType.upsert({
+    //         where: {
+    //             Id: x.Id,
+    //         },
+    //         update: x,
+    //         create: x,
+    //     });
 
-        console.log(`  ✅ Fuel Type '${newX.Name}' upserted`);
-    });
+    //     console.log(`  ✅ Fuel Type '${newX.Name}' upserted`);
+    // });
 
-    await eachSeries(SeedData['engineType'], async (x) => {
-        const newX = await prisma.engineType.upsert({
-            where: {
-                Id: x.Id,
-            },
-            update: x,
-            create: x,
-        });
+    // await eachSeries(SeedData['engineType'], async (x) => {
+    //     const newX = await prisma.engineType.upsert({
+    //         where: {
+    //             Id: x.Id,
+    //         },
+    //         update: x,
+    //         create: x,
+    //     });
 
-        console.log(`  ✅ Engine Type '${newX.Name}' upserted`);
-    });
+    //     console.log(`  ✅ Engine Type '${newX.Name}' upserted`);
+    // });
 
-    await eachSeries(SeedData['notificationCategory'], async (x) => {
-        const newX = await prisma.notificationCategory.upsert({
-            where: {
-                Id: x.Id,
-            },
-            update: x,
-            create: x,
-        });
+    // await eachSeries(SeedData['notificationCategory'], async (x) => {
+    //     const newX = await prisma.notificationCategory.upsert({
+    //         where: {
+    //             Id: x.Id,
+    //         },
+    //         update: x,
+    //         create: x,
+    //     });
 
-        console.log(`  ✅ Notification Category '${newX.Name}' upserted`);
-    });
+    //     console.log(`  ✅ Notification Category '${newX.Name}' upserted`);
+    // });
 
-    await eachSeries(SeedData['notificationAction'], async (x) => {
-        const newX = await prisma.notificationAction.upsert({
-            where: {
-                Id: x.Id,
-            },
-            update: x,
-            create: x,
-        });
+    // await eachSeries(SeedData['notificationAction'], async (x) => {
+    //     const newX = await prisma.notificationAction.upsert({
+    //         where: {
+    //             Id: x.Id,
+    //         },
+    //         update: x,
+    //         create: x,
+    //     });
 
-        console.log(`  ✅ Notification Action '${newX.Name}' upserted`);
-    });
+    //     console.log(`  ✅ Notification Action '${newX.Name}' upserted`);
+    // });
 }
 
 main()

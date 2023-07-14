@@ -16,11 +16,13 @@ import { OnAirApiQueryOptions, } from 'types';
 import {
     IBot,
 } from '.';
+import { VirtualAirline } from '@prisma/client';
+import { VirtualAirlineWithRelations } from '@/repos';
 
 export interface IOnAir {
     App:IBot;
     Api:IOnAirApi;
-    VirtualAirline:OnAirVirtualAirline|null;
+    VirtualAirline:VirtualAirline|null;
     Notifications:OnAirNotification[]|null;
     Members:OnAirMember[]|null;
     Flights:OnAirFlight[]|null;
@@ -45,4 +47,5 @@ export interface IOnAir {
     getVANotifications(): Promise<OnAirNotification[]>;
     loadVAFleet(): Promise<OnAirAircraft[]>;
     getAircraftDetailByIdentifier(identifier:string): Promise<OnAirAircraft|undefined>;
+    loadVirtualAirline(): Promise<VirtualAirlineWithRelations>;
 }

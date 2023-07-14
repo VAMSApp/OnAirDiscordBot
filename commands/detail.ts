@@ -1,14 +1,9 @@
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js';
-import { VirtualAirline as OnAirVirtualAirline, Member as OnAirMember, } from 'onair-api';
 import { IBot } from '../interfaces';
 import { VADetail } from '../messages';
 import { SlashCommand } from 'types';
 import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
-
-export interface VirtualAirlineDetail extends OnAirVirtualAirline {
-    MemberCount:number;
-    Members: OnAirMember[]
-}
+import { VirtualAirlineWithRelations } from '@/repos';
 
 const VADetailCommand:SlashCommand = {
     name: 'detail',
@@ -37,14 +32,8 @@ const VADetailCommand:SlashCommand = {
 
         let msg = '';
     
-        const va:OnAirVirtualAirline = await app.OnAir.getVADetail();
-        const members:OnAirMember[] = await app.OnAir.getVAMembers();
-
-        const x:VirtualAirlineDetail = {
-            ...va,
-            MemberCount: members.length,
-            Members: members,
-        };
+        // const va:OnAirVirtualAirline = await app.OnAir.getVADetail();
+        const x:VirtualAirlineWithRelations = await app.OnAir.loadVirtualAirline();
 
         if (!x) msg = 'No VA found';
 

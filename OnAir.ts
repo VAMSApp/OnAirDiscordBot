@@ -15,7 +15,9 @@ import OnAirApi, {
     VirtualAirline as OnAirVirtualAirline
 } from 'onair-api';
 import { ILogger, IOnAir, IBot, } from './interfaces';
-import { OnAirApiConfig, OnAirApiQueryOptions, OnAirConfig, VirtualAirline } from './types';
+import { OnAirApiConfig, OnAirApiQueryOptions, OnAirConfig } from './types';
+import { OnAirRequestRepo, VirtualAirlineRepo, VirtualAirlineWithRelations } from './repos';
+import { Prisma, OnAirRequest, VirtualAirline, } from '@prisma/client';
 
 export type ProcessRecordError = {
     error?: Error|string|null;
@@ -27,7 +29,7 @@ class OnAir implements IOnAir {
     protected Config:OnAirConfig;
     public Log:ILogger;
     public Api:OnAirApi;
-    public VirtualAirline:OnAirVirtualAirline|null = null;
+    public VirtualAirline:VirtualAirline|null = null;
     public _VirtualAirline:VirtualAirline|null = null;
     public Notifications:OnAirNotification[]|null = null;
     public Members:OnAirMember[]|null = null;
@@ -70,6 +72,8 @@ class OnAir implements IOnAir {
         this.getVANotifications = this.getVANotifications.bind(this);
         this.loadVAFleet = this.loadVAFleet.bind(this);
         this.getAircraftDetailByIdentifier = this.getAircraftDetailByIdentifier.bind(this);
+        this.loadVirtualAirline = this.loadVirtualAirline.bind(this);
+        
     }
 
     
@@ -90,8 +94,8 @@ class OnAir implements IOnAir {
     /**
      * getAircraftDetail()
      * Queries the OnAir Api for an aircraft's details by Id
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @param aircraftId string | the Id of the aircraft to get
      * @returns Promise<OnAirAircraft>
      * @throws string
@@ -106,8 +110,8 @@ class OnAir implements IOnAir {
     /**
      * getFlightDetail()
      * Queries the OnAir Api for a flight's details by Id
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @param flightId string | the Id of the flight to get
      * @returns Promise<OnAirFlight>
      * @throws string
@@ -122,8 +126,8 @@ class OnAir implements IOnAir {
     /**
      * getEmployeeDetail()
      * Queries the OnAir Api for an employee's details by Id
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @param employeeId string | the Id of the employee to get
      * @returns Promise<OnAirEmployee>
      * @throws string
@@ -138,8 +142,8 @@ class OnAir implements IOnAir {
     /**
      * getCompanyFleet()
      * Queries the OnAir Api for the instantiated company or a specific company's fleet
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @param companyId string |? the Id of the company to get the fleet for
      * @returns Promise<OnAirAircraft[]>
      * @throws string
@@ -152,8 +156,8 @@ class OnAir implements IOnAir {
     /**
      * getCompanyFlights()
      * Queries the OnAir Api for the instantiated company or a specific company's flights
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @param opts OnAirApiQueryOptions |? the options to use when querying the api
      * @returns Promise<OnAirFlight[]>
      */
@@ -183,8 +187,8 @@ class OnAir implements IOnAir {
     /**
      * getCompanyJobs()
      * Queries the OnAir Api for the instantiated company or a specific company's jobs
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @param companyId string |? the Id of the company to get the jobs for
      * @returns 
      */
@@ -196,8 +200,8 @@ class OnAir implements IOnAir {
     /**
      * getCompanyDetail()
      * Queries the OnAir Api for the instantiated company or a specific company's details
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @param companyId string |? the Id of the company to get the details for
      * @returns Promise<OnAirCompany>
      */
@@ -209,8 +213,8 @@ class OnAir implements IOnAir {
     /**
      * getCompanyNotifications()
      * Queries the OnAir Api for the instantiated company or a specific company's notifications
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @param companyId string |? the Id of the company to get the notifications for
      * @returns Promise<OnAirNotification[]>
      */
@@ -224,8 +228,8 @@ class OnAir implements IOnAir {
     /**
      * getVAFlights()
      * Queries the OnAir Api for the instantiated VA or a specific VA's flights
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @param vaId string |? the Id of the VA to get the flights for
      * @param opts OnAirApiQueryOptions |? the options to use when querying the api
      * @returns Promise<OnAirFlight[]>
@@ -258,8 +262,8 @@ class OnAir implements IOnAir {
     /**
      * getVAJobs()
      * Queries the OnAir Api for the instantiated VA
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @returns Promise<OnAirJob[]>
      * @todo add ability to query for a specific VA's jobs
      */
@@ -271,8 +275,8 @@ class OnAir implements IOnAir {
     /**
      * getVAMembers()
      * Queries the OnAir Api for the instantiated VA
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @returns Promise<OnAirMember[]>
      * @todo add ability to query for a specific VA's members
      */
@@ -317,8 +321,8 @@ class OnAir implements IOnAir {
     /**
      * getVAFleet()
      * Queries the OnAir Api for the instantiated VA
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @returns Promise<OnAirAircraft[]>
      * @todo add ability to query for a specific VA's fleet
      */
@@ -330,8 +334,8 @@ class OnAir implements IOnAir {
     /**
      * getVADetail()
      * Queries the OnAir Api for the instantiated VA or a specific VA
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @param vaId string |? the Id of the VA to get the details for
      * @returns Promise<OnAirVirtualAirline>
      */
@@ -345,49 +349,205 @@ class OnAir implements IOnAir {
     /**
      * getVANotifications()
      * Queries the OnAir Api for the instantiated VA or a specific VA
-
-    @author Mike DeVita <mike@devita.co>
+     * 
+     * @author Mike DeVita <mike@devita.co>
      * @param vaId string |? the Id of the VA to get the notifications for
      * @returns Promise<OnAirNotification[]>
      */
     async getVANotifications(vaId?:string): Promise<OnAirNotification[]> {
-        const self = this;
-        const id = (vaId) ? vaId : self.Config.keys.vaId;
-        self.Log.debug(`getVANotifications()::prerequest ${id}`);
-        const x:OnAirNotification[] = await self.Api.getVirtualAirlineNotifications(id);
+        const id = (vaId) ? vaId : this.Config.keys.vaId;
+        this.Log.debug(`getVANotifications()::prerequest ${id}`);
+        const x:OnAirNotification[] = await this.Api.getVirtualAirlineNotifications(id);
         return x;
     }
 
+    /**
+     * getAircraftDetailByIdentifier()
+     * Queries the OnAir Api for the instantiated VA or a specific VA's fleet
+     * and attempts to filter that result by the provided aircraft identifier
+     * 
+     * @author Mike DeVita <mike@devita.co>
+     * @param vaId string |? the Id of the VA to get the notifications for
+     * @returns Promise<OnAirNotification[]>
+     */
+    async getAircraftDetailByIdentifier(identifier:string): Promise<OnAirAircraft|undefined> {
+        let x:OnAirAircraft|undefined = undefined;
+
+        if (this.Fleet.length === 0) {
+            await this.loadVAFleet();
+        }
+
+        if (this.Fleet.length > 0) {
+            x = this.Fleet.find(a => a.Identifier === identifier);
+        }
+
+        return x;
+    }
+
+    /**
+     * loadVAFleet()
+     * Queries the OnAir Api for the instantiated VA or a specific VA's fleet
+     *
+     * @author Mike DeVita <mike@devita.co>
+     * @returns Promise<OnAirAircraft[]>
+     */
     async loadVAFleet(): Promise<OnAirAircraft[]> {
-        const self = this;
         let x:OnAirAircraft[]|undefined = undefined;
 
-        if (self.Fleet.length === 0) {
-            self.Log.debug('loadVAFleet()::Getting VA fleet from OnAir Api');
-            x = await self.getVAFleet();
+        if (this.Fleet.length === 0) {
+            this.Log.debug('loadVAFleet()::Getting VA fleet from OnAir Api');
+            x = await this.getVAFleet();
         }
 
         if (x) {
-            self.Fleet = x;
+            this.Fleet = x;
         }
 
-        return self.Fleet;
+        return this.Fleet;
     }
 
-    async getAircraftDetailByIdentifier(identifier:string): Promise<OnAirAircraft|undefined> {
-        const self = this;
-        let x:OnAirAircraft|undefined = undefined;
+    async translateOnAirVirtualAirline(x:OnAirVirtualAirline): Promise<Prisma.VirtualAirlineCreateInput> {
+        const output:Prisma.VirtualAirlineCreateInput = {
+            Id: x.Id,
+            Name: x.Name,
+            AirlineCode: x.AirlineCode,
+            ApiKey: this.Config.keys.apiKey,
+            InitalOwnerEquity: x.InitalOwnerEquity,
+            PercentDividendsToDistribute: x.PercentDividendsToDistribute,
+            LastDividendsDistribution: (x.LastDividendsDistribution) ? new Date(x.LastDividendsDistribution) : undefined,
+            ForceAssignJobsToPilots: x.ForceAssignJobsToPilots,
+            AutomaticallyAssignJobWhenTaken: x.AutomaticallyAssignJobWhenTaken,
+            AutomaticallyAssignJobWhenLoaded: x.AutomaticallyAssignJobWhenLoaded,
+            RestrictLoadingVAJobsIntoNonVAAircraft: x.RestrictLoadingVAJobsIntoNonVAAircraft,
+            RestrictLoadingNonVAJobsIntoVAAircraft: x.RestrictLoadingNonVAJobsIntoVAAircraft,
+            MemberCount: x.MemberCount,
+            LastConnection: (x.LastConnection) ? new Date(x.LastConnection) : undefined,
+            LastReportDate: (x.LastReportDate) ? new Date(x.LastReportDate) : undefined,
+            Reputation: x.Reputation,
+            CreationDate: (x.CreationDate) ? new Date(x.CreationDate) : new Date(),
+            DifficultyLevel: x.DifficultyLevel,
+            UTCOffsetinHours: x.UTCOffsetinHours,
+            Paused: x.Paused,
+            Level: x.Level,
+            LevelXP: x.LevelXP,
+            TransportEmployeeInstant: x.TransportEmployeeInstant,
+            TransportPlayerInstant: x.TransportPlayerInstant,
+            ForceTimeInSimulator: x.ForceTimeInSimulator,
+            UseSmallAirports: x.UseSmallAirports,
+            UseOnlyVanillaAirports: x.UseOnlyVanillaAirports,
+            EnableSkillTree: x.EnableSkillTree,
+            CheckrideLevel: x.CheckrideLevel,
+            EnableLandingPenalities: x.EnableLandingPenalities,
+            EnableEmployeesFlightDutyAndSleep: x.EnableEmployeesFlightDutyAndSleep,
+            AircraftRentLevel: x.AircraftRentLevel,
+            EnableCargosAndChartersLoadingTime: x.EnableCargosAndChartersLoadingTime,
+            InSurvival: x.InSurvival,
+            PayBonusFactor: x.PayBonusFactor,
+            EnableSimFailures: x.EnableSimFailures,
+            DisableSeatsConfigCheck: x.DisableSeatsConfigCheck,
+            RealisticSimProcedures: x.RealisticSimProcedures,
+            TravelTokens: x.TravelTokens,
+            OnAirSyncedAt: new Date(),
+            World: {
+                connect: {
+                    Id: x.WorldId
+                }
+            }
+        };
 
-        if (self.Fleet.length === 0) {
-            await self.loadVAFleet();
-        }
-
-        if (self.Fleet.length > 0) {
-            x = self.Fleet.find(a => a.Identifier === identifier);
-        }
-
-        return x;
+        return output;
     }
+    
+    /**
+     * refreshVirtualAirline()
+     * Queries the OnAir Api for the instantiated VA or a specific VA
+     * and saves it to the database.
+     * 
+     * @author Mike DeVita <mike@devita.co>
+     * @returns Promise<VirtualAirlineWithRelations>
+     */
+    async refreshVirtualAirline(): Promise<VirtualAirlineWithRelations> {
+        this.Log.debug('refreshVirtualAirline()::Getting VA details from OnAir Api');
+        
+        let refreshRequest:OnAirRequest = await OnAirRequestRepo.create({
+            Model: 'VirtualAirline',
+            RequestDate: new Date(),
+        });
+
+        let va:VirtualAirlineWithRelations|null = await VirtualAirlineRepo.findById(this.Config.keys.vaId, {
+            include: {
+                World: true,
+            }
+        });
+
+
+        this.Log.debug(`refreshVirtualAirline()::refreshRequest ${refreshRequest.Id} created in database, requesting data from OnAir Api`);
+
+        const x:OnAirVirtualAirline = await this.getVADetail() as OnAirVirtualAirline;
+        const ResponseDate:Date = new Date();
+
+        if (!x) {
+            throw new Error('Unable to get VA details from OnAir Api for given vaId');
+        }
+
+        // create a new VA object
+        const query:Prisma.VirtualAirlineCreateInput = await this.translateOnAirVirtualAirline(x);
+        va = await VirtualAirlineRepo.create(query, {
+            include: {
+                World: true,
+            }
+        });
+
+        if (!va) {
+            throw new Error('Unable to create the VA in the database');
+        }
+
+        const refreshUpdateQuery = {
+            ResponseDate: ResponseDate,
+            ResponseData: JSON.stringify(x),
+            VirtualAirline: {
+                connect: {
+                    Id: va.Id,
+                }
+            }
+        };
+
+        refreshRequest = await OnAirRequestRepo.update(refreshRequest.Id, refreshUpdateQuery);
+        this.Log.debug(`refreshVirtualAirline()::refreshRequest ${refreshRequest.Id} updated VirtualAirline relationship in database`);
+
+        return Promise.resolve(va);
+    }
+    
+    /**
+     * loadVirtualAirline()
+     * Attempts to load the VirtualAirline from the database.
+     * If it doesn't exist, it will query the OnAir Api for the
+     * instantiated VA or a specific VA details and save it
+     * to the database.
+     * 
+     * @author Mike DeVita <mike@devita.co>
+     * @returns Promise<Aircraft[]>
+     */
+    async loadVirtualAirline(): Promise<VirtualAirlineWithRelations> {
+        // first try to get the VA from the database
+        let va:VirtualAirlineWithRelations|null = await VirtualAirlineRepo.findById(this.Config.keys.vaId, {
+            include: {
+                World: true,
+            }
+        });
+
+        if (!va) {
+            // no va exists, so get it from the OnAir Api
+            va = await this.refreshVirtualAirline();
+        }
+
+        /**
+         * @todo check if the VA needs to be updated by comparing the OnAirSyncedAt date against the currentDate
+         * if it is greater than x in difference, then run refresh the VA from the OnAir Api and update the database
+         */
+        return Promise.resolve(va);
+    }
+
 }
 
 export default OnAir;
