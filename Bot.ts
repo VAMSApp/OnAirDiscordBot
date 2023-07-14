@@ -14,7 +14,6 @@ import { Channel, Client, Collection, Interaction, REST, Routes, TextChannel, } 
 import { OnReadyMessage } from '@/messages';
 import { readdirSync } from 'fs';
 import path from 'path';
-import BaseRepo from '@/repos/BaseRepo';
 import { eachSeries } from 'async';
 
 class Bot implements IBot {
@@ -39,7 +38,6 @@ class Bot implements IBot {
         this.GuildId = this.config.discord.guildId;
 
         this.log = new Logger(this.config.log);
-        new BaseRepo().init(this);
 
         this.OnAir = new OnAir(this.config.onair, this as IBot);
         this.client = new Client({

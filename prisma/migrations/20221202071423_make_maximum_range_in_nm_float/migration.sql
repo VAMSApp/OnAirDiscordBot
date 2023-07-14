@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "AircraftType" ALTER COLUMN "maximumRangeInNM" SET DATA TYPE DOUBLE PRECISION;

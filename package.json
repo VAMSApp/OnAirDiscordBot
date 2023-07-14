@@ -13,13 +13,9 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "prisma": {
-    "seed": "node prisma/seed.js"
-  },
   "keywords": [],
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.0.0",
     "@types/node": "^18.11.10",
     "async": "^3.2.4",
     "chalk": "^5.1.2",
@@ -51,7 +47,6 @@
     "eslint": "^8.44.0",
     "mocha": "^10.0.0",
     "nodemon": "^2.0.20",
-    "prisma": "^5.0.0",
     "tsconfig-paths": "^4.2.0"
   }
 }

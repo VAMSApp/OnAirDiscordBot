@@ -1,6 +1,6 @@
 import { VirtualAirlineDetail } from 'commands/detail';
 import { DetermineWorld } from '../lib';
-import { FormatDate, HumanizeDate } from '../utils';
+import { FormatDate, FormatNumberWithCommas, HumanizeDate } from '../utils';
 
 export function VADetail(x:VirtualAirlineDetail) {
     if (!x) return;
@@ -16,6 +16,18 @@ export function VADetail(x:VirtualAirlineDetail) {
     detail += `  Created On: ${createdOn}\n`;
     detail += `  Last Connected: ${lastConnection}\n`;
     detail += `  Members: ${x.MemberCount}\n`;
+
+    if (x.FleetCount) {
+        detail += `  Fleet: ${FormatNumberWithCommas(x.FleetCount)}\n`;
+    }
+
+    if (x.FlightCount) {
+        detail += `  Flights: ${FormatNumberWithCommas(x.FlightCount)}\n`;
+    }
+
+    if (x.FlightHours) {
+        detail += `  Cumulative Flight Hours: ${FormatNumberWithCommas(x.FlightHours)}\n`;
+    }
     detail += '```';
 
     return detail;

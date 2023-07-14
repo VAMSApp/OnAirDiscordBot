@@ -1,5 +1,10 @@
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js';
-import { VirtualAirline as OnAirVirtualAirline, Member as OnAirMember, } from 'onair-api';
+import {
+    Aircraft as OnAirAircraft,
+    Flight as OnAirFlight,
+    VirtualAirline as OnAirVirtualAirline,
+    Member as OnAirMember,
+} from 'onair-api';
 import { IBot } from '../interfaces';
 import { VADetail } from '../messages';
 import { SlashCommand } from 'types';
@@ -8,6 +13,9 @@ import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
 export interface VirtualAirlineDetail extends OnAirVirtualAirline {
     MemberCount:number;
     Members: OnAirMember[]
+    FleetCount:number;
+    FlightCount:number;
+    FlightHours:number;
 }
 
 const VADetailCommand:SlashCommand = {
@@ -39,11 +47,23 @@ const VADetailCommand:SlashCommand = {
     
         const va:OnAirVirtualAirline = await app.OnAir.getVADetail();
         const members:OnAirMember[] = await app.OnAir.getVAMembers();
+        const fleet:OnAirAircraft[] = await app.OnAir.getVAFleet();
+        const flights:OnAirFlight[] = await app.OnAir.getVAFlights();
+        const flightHours:number = flights.reduce((a:number, b:OnAirFlight) => {
+            if (b.AirborneTime) {
+                return a + parseFloat(b.AirborneTime);
+            }
 
+            return a;
+        }, 0);
+                
         const x:VirtualAirlineDetail = {
             ...va,
             MemberCount: members.length,
             Members: members,
+            FleetCount: fleet.length || 0,
+            FlightCount: flights.length || 0,
+            FlightHours: flightHours,
         };
 
         if (!x) msg = 'No VA found';
