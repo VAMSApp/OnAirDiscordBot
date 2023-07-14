@@ -37,6 +37,13 @@ By default the Bot should send a message in Your discord Server when it comes on
 feel free to reach out to me on discord with any questions, my discord username is `ndboost`. I also idle in the #web-apis channel on the [OnAir company's official discord server](https://discord.com/invite/WY5htXu).
 
 ## Bot Commands
+* [Virtual Airline Detail](#xxxx)
+* [Airport](#xxxx)
+* [Members](#xxxx)
+* [Fleet](#xxxx)
+* [Flights](#xxxx)
+* [Jobs](#xxxx)
+
 
 ### Virtual Airline Details (/detail :ephemeral?)
 
@@ -147,6 +154,26 @@ There are 6 aircraft currently in the fleet
 5  JET   N1883M      Cessna Longitude Aviators Club Livery  ✅ Idle  LEMD - Madrid, Madrid            6129 lbs     0/0/0
 6  JET   N6526N      Airbus A320 Neo Asobo                  ✅ Idle  EGLL - London, England           56385 lbs    0/0/0
 ```
+
+
+### Aircraft Detail (/aircraft :identifier)
+
+Provides details for the given Aircraft by an identifier code
+
+#### Params
+
+| Name | Desc                    | Default |
+| ---- | ----------------------- | ------- |
+| identifier | Aircraft Identifier Code ICAO          |        |
+
+#### Response
+
+```
+Type  Identifier  Name                            Status  Current Airport                Max Payload  Pax E/B/F
+----  ----------  ------------------------------  ------  -----------------------------  -----------  ---------
+METL  N1883U      Beechcraft King Air 350i Asobo  ✅ Idle  YBCG - Gold Coast, Queensland  5145 lbs     15/0/0  
+```
+
 
 ### Jobs (/jobs)
 
