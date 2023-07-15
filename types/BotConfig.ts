@@ -10,6 +10,7 @@ export type RedisConfig = {
 }
 
 export type BotConfig = {
+    persistence: boolean
     discord: DiscordConfig;    
     onair: OnAirConfig;
     log: {

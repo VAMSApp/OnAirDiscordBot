@@ -1,9 +1,10 @@
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js';
-import { Member as OnAirMember } from 'onair-api';
 import { IBot } from '../interfaces';
 import { MembersList } from '../messages';
-import { SlashCommand } from 'types';
+import { OnAirApiQueryOptions, SlashCommand } from 'types';
 import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
+import { MemberWithRelations } from '@/repos';
+import { Member as OnAirMember } from 'onair-api';
 
 const MembersCommand:SlashCommand = {
     name: 'members',
@@ -60,10 +61,12 @@ const MembersCommand:SlashCommand = {
         }
         
 
-        const x:OnAirMember[] = await app.OnAir.getVAMembers({
-            sortBy: sortBy,
-            sortOrder: sortOrder,
-        });
+        const opts:OnAirApiQueryOptions = {
+            sortBy,
+            sortOrder,
+        };
+        
+        const x:MemberWithRelations[]|OnAirMember[] = await app.OnAir.loadVAMembers(opts);
 
         if (!x) {
             msg = 'No VA members found';
@@ -76,13 +79,28 @@ const MembersCommand:SlashCommand = {
             return;
         }
 
-        msg = `Sorting by '${sortBy}' ${sortOrder}\n`;
-        msg += `${MembersList(x)}`;
+        msg = `Showing ${x.length} VA members for **${app.OnAir.VirtualAirline?.AirlineCode} ${app.OnAir.VirtualAirline?.Name}**\n`;
+        msg += `Sorted by the **${sortBy}** field in **${sortOrder.toUpperCase()}** order.\n`;
+        const membersList:string|void = MembersList(x);
+        
+        if (!membersList) {
+            msg = 'Unable to generate members list';
+            const reply:InteractionReplyOptions = {
+                content: `\`\`\`\n${msg}\`\`\``,
+                ephemeral: ephemeral,
+            };
+
+            await interaction.editReply(reply);
+            return;
+        }
+        
+        msg += `\`\`\`\n${membersList}\`\`\``;
 
         const reply:InteractionReplyOptions = {
-            content: `\`\`\`\n${msg}\`\`\``,
+            content: msg,
             ephemeral: ephemeral,
         };
+        
         await interaction.editReply(reply);
     }
 };

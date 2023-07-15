@@ -15,13 +15,26 @@ import OnAirApi, {
     VirtualAirline as OnAirVirtualAirline
 } from 'onair-api';
 import { ILogger, IOnAir, IBot, } from './interfaces';
-import { OnAirApiConfig, OnAirApiQueryOptions, OnAirConfig } from './types';
-import { OnAirRequestRepo, VirtualAirlineRepo, VirtualAirlineWithRelations } from './repos';
+import { OnAirApiConfig, OnAirApiQueryOptions, OnAirConfig, } from './types';
+import { MemberRepo, MemberWithRelations, OnAirRequestRepo, VirtualAirlineRepo, VirtualAirlineWithRelations } from './repos';
 import { Prisma, OnAirRequest, VirtualAirline, } from '@prisma/client';
+import { eachSeries } from 'async';
+import { VirtualAirlineTranslator, VARoleTranslator, MemberTranslator, CompanyTranslator, } from './translators';
 
 export type ProcessRecordError = {
     error?: Error|string|null;
     record: unknown;
+}
+
+export type OnAirMemberWithVAId = OnAirMember & {
+    vaId: string;
+}
+
+export interface ITranslators {
+    VirtualAirline: VirtualAirlineTranslator;
+    Member: MemberTranslator;
+    Company: CompanyTranslator;
+    VARole: VARoleTranslator;
 }
 
 class OnAir implements IOnAir {
@@ -37,6 +50,7 @@ class OnAir implements IOnAir {
     public Jobs:OnAirJob[]|null = null;
     public Fleet:OnAirAircraft[] = [];
     public VARoles:OnAirVARole[] = [];
+    public Translators:ITranslators;
     
     constructor(config:OnAirConfig, app:IBot) {
         if (!config) throw new Error('No OnAir config provided, exiting.');
@@ -45,6 +59,13 @@ class OnAir implements IOnAir {
 
         this.Config = this.App.config.onair;
         this.Log = this.App.log;
+        
+        this.Translators = {
+            VirtualAirline: new VirtualAirlineTranslator(app),
+            Member: new MemberTranslator(app),
+            Company: new CompanyTranslator(app),
+            VARole: new VARoleTranslator(app),
+        };
 
         if (!this.Config.keys.vaId) throw new Error('No VA ID provided');
         if (!this.Config.keys.apiKey) throw new Error('No API Key provided');
@@ -74,6 +95,7 @@ class OnAir implements IOnAir {
         this.getAircraftDetailByIdentifier = this.getAircraftDetailByIdentifier.bind(this);
         this.loadVirtualAirline = this.loadVirtualAirline.bind(this);
         
+        this.loadVirtualAirline();
     }
 
     
@@ -405,59 +427,249 @@ class OnAir implements IOnAir {
 
         return this.Fleet;
     }
+    
+    /**
+     * loadVirtualAirline()
+     * Attempts to load the VirtualAirline from the database.
+     * If it doesn't exist, it will query the OnAir Api for the
+     * instantiated VA or a specific VA details and save it
+     * to the database.
+     * 
+     * @author Mike DeVita <mike@devita.co>
+     * @returns Promise<Aircraft[]>
+     */
+    async loadVirtualAirline(): Promise<VirtualAirlineWithRelations> {
+        // first try to get the VA from the database
+        let va:VirtualAirlineWithRelations|null = await VirtualAirlineRepo.findById(this.Config.keys.vaId, {
+            include: {
+                World: true,
+            }
+        });
 
-    async translateOnAirVirtualAirline(x:OnAirVirtualAirline): Promise<Prisma.VirtualAirlineCreateInput> {
-        const output:Prisma.VirtualAirlineCreateInput = {
-            Id: x.Id,
-            Name: x.Name,
-            AirlineCode: x.AirlineCode,
-            ApiKey: this.Config.keys.apiKey,
-            InitalOwnerEquity: x.InitalOwnerEquity,
-            PercentDividendsToDistribute: x.PercentDividendsToDistribute,
-            LastDividendsDistribution: (x.LastDividendsDistribution) ? new Date(x.LastDividendsDistribution) : undefined,
-            ForceAssignJobsToPilots: x.ForceAssignJobsToPilots,
-            AutomaticallyAssignJobWhenTaken: x.AutomaticallyAssignJobWhenTaken,
-            AutomaticallyAssignJobWhenLoaded: x.AutomaticallyAssignJobWhenLoaded,
-            RestrictLoadingVAJobsIntoNonVAAircraft: x.RestrictLoadingVAJobsIntoNonVAAircraft,
-            RestrictLoadingNonVAJobsIntoVAAircraft: x.RestrictLoadingNonVAJobsIntoVAAircraft,
-            MemberCount: x.MemberCount,
-            LastConnection: (x.LastConnection) ? new Date(x.LastConnection) : undefined,
-            LastReportDate: (x.LastReportDate) ? new Date(x.LastReportDate) : undefined,
-            Reputation: x.Reputation,
-            CreationDate: (x.CreationDate) ? new Date(x.CreationDate) : new Date(),
-            DifficultyLevel: x.DifficultyLevel,
-            UTCOffsetinHours: x.UTCOffsetinHours,
-            Paused: x.Paused,
-            Level: x.Level,
-            LevelXP: x.LevelXP,
-            TransportEmployeeInstant: x.TransportEmployeeInstant,
-            TransportPlayerInstant: x.TransportPlayerInstant,
-            ForceTimeInSimulator: x.ForceTimeInSimulator,
-            UseSmallAirports: x.UseSmallAirports,
-            UseOnlyVanillaAirports: x.UseOnlyVanillaAirports,
-            EnableSkillTree: x.EnableSkillTree,
-            CheckrideLevel: x.CheckrideLevel,
-            EnableLandingPenalities: x.EnableLandingPenalities,
-            EnableEmployeesFlightDutyAndSleep: x.EnableEmployeesFlightDutyAndSleep,
-            AircraftRentLevel: x.AircraftRentLevel,
-            EnableCargosAndChartersLoadingTime: x.EnableCargosAndChartersLoadingTime,
-            InSurvival: x.InSurvival,
-            PayBonusFactor: x.PayBonusFactor,
-            EnableSimFailures: x.EnableSimFailures,
-            DisableSeatsConfigCheck: x.DisableSeatsConfigCheck,
-            RealisticSimProcedures: x.RealisticSimProcedures,
-            TravelTokens: x.TravelTokens,
-            OnAirSyncedAt: new Date(),
-            World: {
-                connect: {
-                    Id: x.WorldId
+        if (!va) {
+            // no va exists, so get it from the OnAir Api
+            va = await this.refreshVirtualAirline();
+        }
+
+        /**
+         * @todo check if the VA needs to be updated by comparing the OnAirSyncedAt date against the currentDate
+         * if it is greater than x in difference, then run refresh the VA from the OnAir Api and update the database
+         */
+        if (!this.VirtualAirline) {
+            this.VirtualAirline = va;
+        }
+
+        return Promise.resolve(va);
+    }
+
+    async loadVAMembers(opts?:OnAirApiQueryOptions): Promise<MemberWithRelations[]|OnAirMember[]> {
+        if (this.App.config.persistence !== true) {
+            const members:OnAirMember[] = await this.getVAMembers(opts);
+            this.Log.debug(`loadVAMembers()::members.length ${members.length}`);
+            return Promise.resolve(members);
+        } else {
+            let members:MemberWithRelations[] = await MemberRepo.findByVAId(this.Config.keys.vaId, {
+                include: {
+                    Company: true,
+                    VARole: true,
+                }
+            });
+
+            /**
+             * @todo check the OnAirSyncedAt to see if the members need to be updated from the OnAir Api or not
+             */
+            if (members.length === 0) {
+                this.Log.debug('loadVAMembers()::Getting VA members from OnAir Api');
+                await this.refreshVAMembers();
+
+                members = await MemberRepo.findByVAId(this.Config.keys.vaId, {
+                    include: {
+                        Company: true,
+                        VARole: true,
+                    }
+                });
+            }
+
+            this.Log.debug(`loadVAMembers()::members.length ${members.length}`);
+            if (opts?.sortBy) {
+                switch (opts.sortBy) {
+                case 'role':
+                    members.sort((a:MemberWithRelations, b:MemberWithRelations) => {
+                        return (opts.sortOrder === 'asc')
+                            ? a.VARole.Permission - b.VARole.Permission
+                            : b.VARole.Permission - a.VARole.Permission;
+                    });
+                    break;
+                case 'company':
+                    members.sort((a:MemberWithRelations, b:MemberWithRelations) => {
+                        return (opts.sortOrder === 'asc')
+                            ? a.Company.Name.localeCompare(b.Company.Name)
+                            : b.Company.Name.localeCompare(a.Company.Name);
+                    });
+                    break;
+                case 'flight-hours':
+                    members.sort((a:MemberWithRelations, b:MemberWithRelations) => {
+                        return (opts.sortOrder === 'asc')
+                            ? a.FlightHours - b.FlightHours
+                            : b.FlightHours - a.FlightHours;
+                    });
+                    break;
+                case 'rep':
+                    members.sort((a:MemberWithRelations, b:MemberWithRelations) => {
+                        return (opts.sortOrder === 'asc')
+                            ? a.ReputationImpact - b.ReputationImpact
+                            : b.ReputationImpact - a.ReputationImpact;
+                    });
+                    break;
                 }
             }
-        };
 
-        return output;
+            return Promise.resolve(members);
+        }
     }
-    
+
+    // async translateOnAirVirtualAirline(x:OnAirVirtualAirline): Promise<Prisma.VirtualAirlineCreateInput> {
+    //     const output:Prisma.VirtualAirlineCreateInput = {
+    //         Id: x.Id,
+    //         Name: x.Name,
+    //         AirlineCode: x.AirlineCode,
+    //         ApiKey: this.Config.keys.apiKey,
+    //         InitalOwnerEquity: x.InitalOwnerEquity,
+    //         PercentDividendsToDistribute: x.PercentDividendsToDistribute,
+    //         LastDividendsDistribution: (x.LastDividendsDistribution) ? new Date(x.LastDividendsDistribution) : undefined,
+    //         ForceAssignJobsToPilots: x.ForceAssignJobsToPilots,
+    //         AutomaticallyAssignJobWhenTaken: x.AutomaticallyAssignJobWhenTaken,
+    //         AutomaticallyAssignJobWhenLoaded: x.AutomaticallyAssignJobWhenLoaded,
+    //         RestrictLoadingVAJobsIntoNonVAAircraft: x.RestrictLoadingVAJobsIntoNonVAAircraft,
+    //         RestrictLoadingNonVAJobsIntoVAAircraft: x.RestrictLoadingNonVAJobsIntoVAAircraft,
+    //         MemberCount: x.MemberCount,
+    //         LastConnection: (x.LastConnection) ? new Date(x.LastConnection) : undefined,
+    //         LastReportDate: (x.LastReportDate) ? new Date(x.LastReportDate) : undefined,
+    //         Reputation: x.Reputation,
+    //         CreationDate: (x.CreationDate) ? new Date(x.CreationDate) : new Date(),
+    //         DifficultyLevel: x.DifficultyLevel,
+    //         UTCOffsetinHours: x.UTCOffsetinHours,
+    //         Paused: x.Paused,
+    //         Level: x.Level,
+    //         LevelXP: x.LevelXP,
+    //         TransportEmployeeInstant: x.TransportEmployeeInstant,
+    //         TransportPlayerInstant: x.TransportPlayerInstant,
+    //         ForceTimeInSimulator: x.ForceTimeInSimulator,
+    //         UseSmallAirports: x.UseSmallAirports,
+    //         UseOnlyVanillaAirports: x.UseOnlyVanillaAirports,
+    //         EnableSkillTree: x.EnableSkillTree,
+    //         CheckrideLevel: x.CheckrideLevel,
+    //         EnableLandingPenalities: x.EnableLandingPenalities,
+    //         EnableEmployeesFlightDutyAndSleep: x.EnableEmployeesFlightDutyAndSleep,
+    //         AircraftRentLevel: x.AircraftRentLevel,
+    //         EnableCargosAndChartersLoadingTime: x.EnableCargosAndChartersLoadingTime,
+    //         InSurvival: x.InSurvival,
+    //         PayBonusFactor: x.PayBonusFactor,
+    //         EnableSimFailures: x.EnableSimFailures,
+    //         DisableSeatsConfigCheck: x.DisableSeatsConfigCheck,
+    //         RealisticSimProcedures: x.RealisticSimProcedures,
+    //         TravelTokens: x.TravelTokens,
+    //         OnAirSyncedAt: new Date(),
+    //         World: {
+    //             connect: {
+    //                 Id: x.WorldId
+    //             }
+    //         }
+    //     };
+
+    //     return output;
+    // }
+
+    // async translateOnAirMember(x:OnAirMember) {
+    //     const output = {
+    //         Id: x.Id,
+    //         TotalCargosTransportedLbs: x.TotalCargosTransportedLbs,
+    //         TotalPAXsTransported: x.TotalPAXsTransported,
+    //         TotalEarnedCredits: x.TotalEarnedCredits,
+    //         TotalSpentCredits: x.TotalSpentCredits,
+    //         NumberOfFlights: x.NumberOfFlights,
+    //         FlightHours: x.FlightHours,
+    //         Color: x.Color,
+    //         ReputationImpact: x.ReputationImpact,
+    //         LastWeeklyPay: (x.LastWeeklyPay) ? new Date(x.LastWeeklyPay) : undefined,
+    //         VirtualAirline: {
+    //             connect: {
+    //                 Id: x.VAId
+    //             }
+    //         },
+    //         VARole: {
+    //             connectOrCreate: {
+    //                 where: {
+    //                     Id: x.VARoleId
+    //                 },
+    //                 create: await this.translateVARole(x.VARole)
+    //             }
+    //         },
+    //         Company: {
+    //             connectOrCreate: {
+    //                 where: {
+    //                     Id: x.CompanyId
+    //                 },
+    //                 create: await this.translateOnAirCompany(x.Company)
+    //             }
+    //         }
+    //     };
+
+    //     return output;
+    // }
+
+    // async translateOnAirCompany(X:OnAirCompany) {
+    //     const output = {
+    //         Id: X.Id,
+    //         Name: X.Name,
+    //         AirlineCode: X.AirlineCode,
+    //         LastConnection: (X.LastConnection) ? new Date(X.LastConnection) : undefined,
+    //         LastReportDate: (X.LastReportDate) ? new Date(X.LastReportDate) : undefined,
+    //         Reputation: X.Reputation,
+    //         CreationDate: (X.CreationDate) ? new Date(X.CreationDate) : undefined,
+    //         DifficultyLevel: X.DifficultyLevel,
+    //         UTCOffsetinHours: X.UTCOffsetinHours,
+    //         Paused: X.Paused,
+    //         PausedDate: (X.PausedDate) ? new Date(X.PausedDate) : undefined,
+    //         Level: X.Level,
+    //         LevelXP: X.LevelXP,
+    //         TransportEmployeeInstant: X.TransportEmployeeInstant,
+    //         TransportPlayerInstant: X.TransportPlayerInstant,
+    //         ForceTimeInSimulator: X.ForceTimeInSimulator,
+    //         UseSmallAirports: X.UseSmallAirports,
+    //         UseOnlyVanillaAirports: X.UseOnlyVanillaAirports,
+    //         EnableSkillTree: X.EnableSkillTree,
+    //         CheckrideLevel: X.CheckrideLevel,
+    //         EnableLandingPenalities: X.EnableLandingPenalities,
+    //         EnableEmployeesFlightDutyAndSleep: X.EnableEmployeesFlightDutyAndSleep,
+    //         AircraftRentLevel: X.AircraftRentLevel,
+    //         EnableCargosAndChartersLoadingTime: X.EnableCargosAndChartersLoadingTime,
+    //         InSurvival: X.InSurvival,
+    //         PayBonusFactor: X.PayBonusFactor,
+    //         EnableSimFailures: X.EnableSimFailures,
+    //         DisableSeatsConfigCheck: X.DisableSeatsConfigCheck,
+    //         RealisticSimProcedures: X.RealisticSimProcedures,
+    //         TravelTokens: X.TravelTokens,
+    //         CurrentBadgeId: X.CurrentBadgeId,
+    //         CurrentBadgeUrl: X.CurrentBadgeUrl,
+    //         CurrentBadgeName: X.CurrentBadgeName,
+    //         LastWeeklyManagementsPaymentDate: (X.LastWeeklyManagementsPaymentDate) ? new Date(X.LastWeeklyManagementsPaymentDate) : undefined,
+    //         OnAirSyncedAt: new Date(),
+    //         VirtualAirline: {
+    //             connect: {
+    //                 Id: this.Config.keys.vaId
+    //             }
+    //         },
+    //         World: {
+    //             connect: {
+    //                 Id: X.WorldId
+    //             }
+    //         }
+    //     };
+
+    //     return output;
+    // }
+
     /**
      * refreshVirtualAirline()
      * Queries the OnAir Api for the instantiated VA or a specific VA
@@ -491,7 +703,7 @@ class OnAir implements IOnAir {
         }
 
         // create a new VA object
-        const query:Prisma.VirtualAirlineCreateInput = await this.translateOnAirVirtualAirline(x);
+        const query:Prisma.VirtualAirlineCreateInput = this.Translators.VirtualAirline.translate(x);
         va = await VirtualAirlineRepo.create(query, {
             include: {
                 World: true,
@@ -517,37 +729,88 @@ class OnAir implements IOnAir {
 
         return Promise.resolve(va);
     }
-    
+
     /**
-     * loadVirtualAirline()
-     * Attempts to load the VirtualAirline from the database.
-     * If it doesn't exist, it will query the OnAir Api for the
-     * instantiated VA or a specific VA details and save it
-     * to the database.
+     * refreshVAMembers()
+     * Queries the OnAir Api for the instantiated VA or a specific VA
+     * members and saves them to the database.
      * 
      * @author Mike DeVita <mike@devita.co>
-     * @returns Promise<Aircraft[]>
+     * @returns Promise<MemberWithRelations[]>
+     * @todo this needs to be updated to use the new OnAirRequestRepo
      */
-    async loadVirtualAirline(): Promise<VirtualAirlineWithRelations> {
-        // first try to get the VA from the database
-        let va:VirtualAirlineWithRelations|null = await VirtualAirlineRepo.findById(this.Config.keys.vaId, {
-            include: {
-                World: true,
-            }
+    async refreshVAMembers(): Promise<void> {
+        const members:MemberWithRelations[] = []; // empty array to hold members
+        this.Log.debug('refreshVAMembers()::Getting VA Members from OnAir Api');
+        
+        let refreshRequest:OnAirRequest = await OnAirRequestRepo.create({
+            Model: 'Member',
+            RequestDate: new Date(),
         });
 
-        if (!va) {
-            // no va exists, so get it from the OnAir Api
-            va = await this.refreshVirtualAirline();
+        this.Log.debug(`refreshVAMembers()::refreshRequest ${refreshRequest.Id} created in database, requesting data from OnAir Api`);
+
+        const x:OnAirMember[] = await this.getVAMembers() as OnAirMember[];
+        const ResponseDate:Date = new Date();
+
+        if (!x) {
+            throw new Error('Unable to get VA members from OnAir Api for given vaId');
         }
 
-        /**
-         * @todo check if the VA needs to be updated by comparing the OnAirSyncedAt date against the currentDate
-         * if it is greater than x in difference, then run refresh the VA from the OnAir Api and update the database
-         */
-        return Promise.resolve(va);
-    }
+        // loop through x and create or update each member
+        eachSeries(x, async (member:OnAirMember) => {
+            const translated = this.Translators.Member.translate(member);
+            this.Log.debug(`refreshVAMembers()::Member ${translated.Id} translated, checking for existing member in database`);
+            let m:MemberWithRelations|null = await MemberRepo.findById(member.Id, {
+                include: {
+                    Company: true,
+                    VARole: true,
+                }
+            });
 
+
+            if (!m) {
+                this.Log.debug(`refreshVAMembers()::Member ${translated.Id} not found in database, creating new member`);
+                m = await MemberRepo.create(translated, {
+                    include: {
+                        Company: true,
+                        VARole: true,
+                    }
+                });
+
+                members.push(m);
+                return;
+            } else {
+                this.Log.debug(`refreshVAMembers()::Member ${translated.Id} found in database, updating Member ${m.Company.AirlineCode}`);
+                m = await MemberRepo.update(m.Id, translated, {
+                    include: {
+                        Company: true,
+                        VARole: true,
+                    }
+                });
+
+                members.push(m);
+                return;
+            }
+
+        }, async (err) => {
+            if (err) {
+                throw new Error(err.message);
+            }
+            
+            const refreshUpdateQuery = {
+                ResponseDate: ResponseDate,
+                ResponseData: JSON.stringify(x)
+            };
+
+            refreshRequest = await OnAirRequestRepo.update(refreshRequest.Id, refreshUpdateQuery);
+            this.Log.debug(`refreshVAMembers()::refreshRequest ${refreshRequest.Id} updated ResponseData and ResponseDate fields in database`);
+
+
+            return Promise.resolve(members);
+        });
+    }
+        
 }
 
 export default OnAir;

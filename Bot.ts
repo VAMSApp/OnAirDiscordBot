@@ -39,9 +39,12 @@ class Bot implements IBot {
         this.GuildId = this.config.discord.guildId;
 
         this.log = new Logger(this.config.log);
-        new BaseRepo().init(this);
+        if (this.config.persistence === true) {
+            new BaseRepo().init(this);
+        }
 
         this.OnAir = new OnAir(this.config.onair, this as IBot);
+        
         this.client = new Client({
             intents: [
                 this.config.discord.intents

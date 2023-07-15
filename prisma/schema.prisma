@@ -86,9 +86,9 @@ model VirtualAirline {
   CreatedAt     DateTime  @default(now())
   UpdatedAt     DateTime? @updatedAt
 
-  Member    Member[]
+  Members    Member[]
   VARoles   VARole[]
-  Members   Company[]
+  Companies   Company[]
   RefreshRequests OnAirRequest[]
   World     World    @relation(fields: [WorldId], references: [Id])
   // Owner         Account?       @relation(fields: [OwnerId], references: [Id])
@@ -279,7 +279,7 @@ model VARole {
 
 model Member {
   Id                        String                @id
-  VaId                      String
+  VAId                      String
   CompanyId                 String
   VARoleId                  String
   TotalCargosTransportedLbs Float                 @default(0.00)
@@ -297,7 +297,7 @@ model Member {
   CreatedAt                 DateTime?             @default(now())
   Company                   Company               @relation(fields: [CompanyId], references: [Id])
   VARole                    VARole                @relation(fields: [VARoleId], references: [Id])
-  VirtualAirline            VirtualAirline        @relation(fields: [VaId], references: [Id])
+  VirtualAirline            VirtualAirline        @relation(fields: [VAId], references: [Id])
 }
 
 model OnAirRequest {

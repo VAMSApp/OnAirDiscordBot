@@ -17,7 +17,7 @@ import {
     IBot,
 } from '.';
 import { VirtualAirline } from '@prisma/client';
-import { VirtualAirlineWithRelations } from '@/repos';
+import { MemberWithRelations, VirtualAirlineWithRelations } from '@/repos';
 
 export interface IOnAir {
     App:IBot;
@@ -48,4 +48,5 @@ export interface IOnAir {
     loadVAFleet(): Promise<OnAirAircraft[]>;
     getAircraftDetailByIdentifier(identifier:string): Promise<OnAirAircraft|undefined>;
     loadVirtualAirline(): Promise<VirtualAirlineWithRelations>;
+    loadVAMembers(opts?:OnAirApiQueryOptions): Promise<MemberWithRelations[]|OnAirMember[]>;
 }
