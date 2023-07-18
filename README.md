@@ -1,6 +1,6 @@
 # OnAir Discord Bot
 
-A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details within your Discord server. The Bot currently only has the ability to show flights, members, jobs, fleet, and cash flow information from within discord but there is no persistence, each command is a one-off request to the OnAir API. See [Planned Features](#planned-features) for more information on what is planned for the future.
+A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details within your Discord server. The Bot currently only has the ability to show flights, members, jobs, fleet, and airport information from within discord, each command is a one-off request to the OnAir API and is translated into a discord response. See [Planned Features](#planned-features) for more information on what is planned for the future.
 
 ## How to use
 
