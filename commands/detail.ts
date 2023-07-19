@@ -49,6 +49,7 @@ const VADetailCommand:SlashCommand = {
         const members:OnAirMember[] = await app.OnAir.getVAMembers();
         const fleet:OnAirAircraft[] = await app.OnAir.getVAFleet();
         const flights:OnAirFlight[] = await app.OnAir.getVAFlights();
+        
         const flightHours:number = flights.reduce((a:number, b:OnAirFlight) => {
             if (b.AirborneTime) {
                 return a + parseFloat(b.AirborneTime);
