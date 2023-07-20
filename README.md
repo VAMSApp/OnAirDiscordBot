@@ -3,14 +3,13 @@
 A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details within your Discord server. The Bot currently only has the ability to show flights, members, jobs, fleet, and airport information from within discord, each command is a one-off request to the OnAir API and is translated into a discord response. See [Planned Features](#planned-features) for more information on what is planned for the future.
 
 ## How to use
-
 - clone the repository `git clone git@github.com:mikedevita/onairdiscordbot.git`
 - install the required nodejs modules `npm i`
 - copy `config.ts.example` to `config.ts`
 - fill out `config.ts` with required information
-  - Ensure to update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId` with values from Discord developer website, see [this](https://github.com/VAMSApp/OnAirDiscordBot/wiki/Creating-Your-Discord-bot) wiki for more
+  - Ensure to update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId` with values from Discord developer website, see [this]([https://github.com/VAMSApp/OnAirDiscordBot/wiki/Creating-Your-Discord-bot](https://github.com/VAMSApp/OnAirDiscordBot/wiki/How-to-register-a-new-discord-bot)) wiki for more
   - ensure the bot is granted the `bot` and `applications.commands` scopes in the Discord developer website
-  - Update `companyId`, `vAId`, `apiKey` in the `onAir` object with values from the OnAir companion app, see [this](https://github.com/VAMSApp/OnAirDiscordBot/wiki/Obtaining-Your-OnAir-Credentials) wiki for more
+  - Update `companyId`, `vAId`, `apiKey` in the `onAir` object with values from the OnAir companion app, see [this]([https://github.com/VAMSApp/OnAirDiscordBot/wiki/Obtaining-Your-OnAir-Credentials](https://github.com/VAMSApp/OnAirDiscordBot/wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir)) wiki for more
 - finally, run the bot by executing `npm start`
 
 By default the Bot should send a message in Your discord Server when it comes online. Simply interact with the bot using one of the commands in the [Commands](#bot-commands) section below.
