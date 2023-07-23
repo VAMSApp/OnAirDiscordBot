@@ -37,11 +37,9 @@ export type OnAirConfig = {
     enabled: boolean;
     refreshOnStartup: boolean;
     loadOnStartup: boolean;
-    events: OnAirEventsConfig;
     sorting: {
         Members: string[];
         Flights: string[];
         Jobs: string[];
     },
-    polling: OnAirPollingsConfig;
 }

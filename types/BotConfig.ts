@@ -1,4 +1,3 @@
-import { RedisOptions } from 'ioredis';
 import { OnAirConfig } from '.';
 import { DiscordConfig } from './DiscordConfig';
 
@@ -16,5 +15,4 @@ export type BotConfig = {
         logLevel: string;
         logToConsole: boolean;
     }
-    redis?: RedisOptions;
 }

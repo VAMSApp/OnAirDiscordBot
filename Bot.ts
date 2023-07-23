@@ -272,9 +272,14 @@ class Bot implements IBot {
         if (!this.config.discord) {
             throw new Error('No Discord config provided, exiting.');
         }
+        
+        if (!this.config.discord.roles) {
+            return '';
+        } else {
+            const roleId:string = this.config.discord.roles[roleName];
+            return roleId;
+        }
 
-        const roleId:string = this.config.discord.roles[roleName];
-        return roleId;
     }
 }
 

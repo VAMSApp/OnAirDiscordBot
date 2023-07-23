@@ -3,6 +3,7 @@ import { IBot } from 'interfaces';
 import { SlashCommand } from 'types';
 
 export default function IsAuthorizedToRunCommand(cmd:SlashCommand, interaction:Interaction, app:IBot):boolean {
+    if (!app.config.discord.roles) return true; // if roles aren't defined in config, return true
     let isAuthorized = false;
     const member: GuildMember = interaction.member as GuildMember;
     const memberRoles = (member.roles as GuildMemberRoleManager).cache;

@@ -26,7 +26,11 @@ const config:BotConfig = {
             'onair-vafleet': '###_DISCORD_CHANNEL_ID_###', // The channel to send onair VA notification messages to
             'onair-vajobs': '###_DISCORD_CHANNEL_ID_###', // The channel to send onair VA notification messages to
         },
-        
+        roles: undefined, // if you want to restrict bot's slash command useage to specific roles, add the role IDs here, otherwise leave undefined
+        // roles: {
+        //     member: '###_DISCORD_ROLE_ID_###',
+        //     owner: '###_DISCORD_ROLE_ID_###',
+        // }
     },
     onair: {
         enabled: true,
@@ -47,12 +51,6 @@ const config:BotConfig = {
         logLevel: 'info',
         logToConsole: true,
     },
-    // required for OnAir Event polling
-    // redis: {
-    //     host: 'localhost',
-    //     port: 6379,
-    //     db: 0,
-    // }
 };
 
 export default config;
