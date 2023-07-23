@@ -12,21 +12,16 @@ const config:BotConfig = {
         onConnectNoticeAutoDelete: true, // if set to true, bot will automatically delete the OnConnectNotice message after ${onConnectNoticeAutoDeleteAfter} milliseconds
         onConnectNoticeAutoDeleteAfter: 10000, // time in milliseconds to wait before deleting the OnConnectNotice message
         intents: [
-            GatewayIntentBits.Guilds, // no need to change unless you want to restrict bot's useage more
+            GatewayIntentBits.Guilds, // no need to change unless you want to restrict bot's usage more
         ],
         owners: [
             '###_DISCORD_OWNERID_###', // discord server owner User ID
         ],
         channels: {
-            'auth-signup': '###_DISCORD_CHANNEL_ID_###', // The channel to send auth signup event messages to
-            'auth-signin': '###_DISCORD_CHANNEL_ID_###', // The channel to send auth signin event messages to
-            'discord': '###_DISCORD_CHANNEL_ID_###', // The channel to send discord event messages to
             'OnConnectNoticeChannel': '###_DISCORD_CHANNEL_ID_###', // The channel to send OnConnectNotice event messages to
             'onair-notifications': '###_DISCORD_CHANNEL_ID_###', // The channel to send onair VA notification messages to
-            'onair-vafleet': '###_DISCORD_CHANNEL_ID_###', // The channel to send onair VA notification messages to
-            'onair-vajobs': '###_DISCORD_CHANNEL_ID_###', // The channel to send onair VA notification messages to
         },
-        roles: undefined, // if you want to restrict bot's slash command useage to specific roles, add the role IDs here, otherwise leave undefined
+        roles: undefined, // if you want to restrict bot's slash command usage to specific roles, add the role IDs here, otherwise leave undefined
         // roles: {
         //     member: '###_DISCORD_ROLE_ID_###',
         //     owner: '###_DISCORD_ROLE_ID_###',
