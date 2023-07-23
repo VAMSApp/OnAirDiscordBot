@@ -3,25 +3,19 @@ import { BotConfig } from './types';
 
 const config:BotConfig = {
     discord: {
-        enabled: true,
-        token: '###_DISCORD_TOKEN_###',
-        clientId: '###_DISCORD_CLIENTID_###',
-        guildId: '###_DISCORD_GUILDID_###',
-        deployCommands: true,
+        enabled: true, // set to false to disable the discord bot
+        token: '###_DISCORD_TOKEN_###', // obtain from https://discord.com/developers/applications
+        clientId: '###_DISCORD_CLIENTID_###', // also known as Application ID, obtain from https://discord.com/developers/applications
+        guildId: '###_DISCORD_GUILDID_###',  // also known as Server ID, obtain in Discord server, right click server icon, click copy Server ID
+        deployCommands: true, // whether or not to deploy the slash commands at startup, this will refresh the commands if changed, ok to leave to true
         onConnectNotice: false, // if set to true, bot will send a message to the channel specified in the 'OnConnectNoticeChannel' setting when it connects to Discord
         onConnectNoticeAutoDelete: true, // if set to true, bot will automatically delete the OnConnectNotice message after ${onConnectNoticeAutoDeleteAfter} milliseconds
         onConnectNoticeAutoDeleteAfter: 10000, // time in milliseconds to wait before deleting the OnConnectNotice message
         intents: [
-            GatewayIntentBits.Guilds,
+            GatewayIntentBits.Guilds, // no need to change unless you want to restrict bot's useage more
         ],
-        roles: {
-            member: '###_DISCORD_MEMBER-GROUP-ID_###',
-            owner: '###_DISCORD_OWNER-GROUP-ID_###',
-            verified: '###_DISCORD_VERIFIED-GROUP-ID_###',
-            linked: '###_DISCORD_LINKED-GROUP-ID_###',
-        },
         owners: [
-            '###_DISCORD_OWNERID_###',
+            '###_DISCORD_OWNERID_###', // discord server owner User ID
         ],
         channels: {
             'auth-signup': '###_DISCORD_CHANNEL_ID_###', // The channel to send auth signup event messages to
@@ -37,76 +31,12 @@ const config:BotConfig = {
     onair: {
         enabled: true,
         keys: {
-            companyId: '###_ONAIR_COMPANYID_###',
-            vaId: '###_ONAIR_VAID_###',
-            apiKey: '###_ONAIR_APIKEY_###',
-        },
-        events: {
-            VirtualAirline: {
-                autoDelete: true,
-                autoDeleteAfter: 10000,
-                enabled: false,
-            },
-            VAFleet: {
-                autoDelete: true,
-                autoDeleteAfter: 10000,
-                enabled: false,
-            },
-            VAJob: {
-                autoDelete: true,
-                autoDeleteAfter: 10000,
-                enabled: false,
-            },
-            VANotification: {
-                autoDelete: true,
-                autoDeleteAfter: 10000,
-                enabled: false,
-            },
-            VAMember: {
-                autoDelete: true,
-                autoDeleteAfter: 10000,
-                enabled: false,
-            },
-        },
-        polling: {
-            VirtualAirline: {
-                notify: false, // [ 'discord' ] if set to an array or a string, the bot will send a discord message to the specified channel(s)
-                enabled: false, // if set to true, bot will routinely poll OnAir for the current VA details
-                cron: '0 * * * *', // will run cron task every 1 hour,
-                autoDelete: true, // if set to true, bo will automatically delete the refresh complete notification after the autoDeleteInterval (milliseconds)
-                autoDeleteInterval: 10000, // time in milliseconds to wait before deleting the refresh complete notification
-            },
-            VAJobs: {
-                notify: false, // [ 'discord' ] if set to an array or a string, the bot will send a discord message to the specified channel(s)
-                enabled: false, // if set to true, bot will routinely poll OnAir for the latest VA Jobs status
-                cron: '*/15 * * * *',  // will run cron task every 15 minutes,
-                autoDelete: true, // if set to true, bo will automatically delete the refresh complete notification after the autoDeleteInterval (milliseconds)
-                autoDeleteInterval: 10000, // time in milliseconds to wait before deleting the refresh complete notification
-            },
-            VAFleet: {
-                notify: false, // [ 'discord' ] if set to an array or a string, the bot will send a discord message to the specified channel(s)
-                enabled: false, // if set to true, bot will routinely poll OnAir for the current VA fleet status
-                cron: '*/5 * * * *',  // will run cron task every 30 minutes,
-                autoDelete: true, // if set to true, bo will automatically delete the refresh complete notification after the autoDeleteInterval (milliseconds)
-                autoDeleteInterval: 10000, // time in milliseconds to wait before deleting the refresh complete notification
-            },
-            VAMembers: {
-                notify: false, // [ 'discord' ] if set to an array or a string, the bot will send a discord message to the specified channel(s)
-                enabled: false, // if set to true, bot will routinely poll OnAir for the current VA fleet status
-                cron: '*/30 * * * *',  // will run cron task every 30 minutes,
-                autoDelete: true, // if set to true, bo will automatically delete the refresh complete notification after the autoDeleteInterval (milliseconds)
-                autoDeleteInterval: 10000, // time in milliseconds to wait before deleting the refresh complete notification
-            },
-            VANotifications: {
-                notify: false, // [ 'discord' ] if set to an array or a string, the bot will send a discord message to the specified channel(s)
-                enabled: false, // if set to true, bot will routinely poll OnAir for the current VA Notifications
-                cron: '*/5 * * * *',  // will run cron task every minute,
-                autoDelete: true, // if set to true, bo will automatically delete the refresh complete notification after the autoDeleteInterval (milliseconds)
-                autoDeleteInterval: 10000, // time in milliseconds to wait before deleting the refresh complete notification
-            },
+            companyId: '###_ONAIR_COMPANYID_###', // obtain from the OnAir Company app, see wiki https://github.com/VAMSApp/OnAirDiscordBot/wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir
+            vaId: '###_ONAIR_VAID_###', // obtain from the OnAir Company app, see wiki https://github.com/VAMSApp/OnAirDiscordBot/wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir
+            apiKey: '###_ONAIR_APIKEY_###', // obtain from the OnAir Company app, see wiki https://github.com/VAMSApp/OnAirDiscordBot/wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir
         },
         sorting: {
-            Members: ['role', 'company', 'latest', 'flights', 'hours', 'rep'],
+            Members: ['role', 'company', 'latest', 'flights', 'hours', 'rep'], // columns in results that are able to be sorted by
             Flights: [],
             Jobs: [],
         },
