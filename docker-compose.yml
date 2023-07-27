@@ -1,0 +1,6 @@
+version: '3'
+services:
+  bot:
+    image: onairdiscordbot
+    env_file: 
+      - .env
