@@ -3,6 +3,9 @@
 A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details within your Discord server. The Bot currently only has the ability to show flights, members, jobs, fleet, and airport information from within discord, each command is a one-off request to the OnAir API and is translated into a discord response. See [Planned Features](#planned-features) for more information on what is planned for the future.
 
 ## How to use
+There are now two ways to use the bot. The original dedicated machine where you clone and configure the bot, I have also built a docker image with the latest code matching the master branch.
+
+### Manual/Dedicated Machine Method
 - clone the repository `git clone git@github.com:mikedevita/onairdiscordbot.git`
 - install the required nodejs modules `npm i`
 - copy `config.ts.example` to `config.ts`
@@ -13,6 +16,9 @@ A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details
 - finally, run the bot by executing `npm start`
 
 By default the Bot should send a message in Your discord Server when it comes online. Simply interact with the bot using one of the commands in the [Commands](#bot-commands) section below.
+
+### Docker Image Method
+The documentation for the docker image is currently being developed.
 
 ## Planned Features
 - [ ] Add cash flow related commands to indicate income vs expense and profit margins, see [#2](https://github.com/VAMSApp/OnAirDiscordBot/issues/2) for more information
