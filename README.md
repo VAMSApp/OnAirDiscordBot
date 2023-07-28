@@ -23,9 +23,9 @@ By default the Bot should send a message to the channelId defined in Your discor
 
 ### Docker Method
 - how to use docker run to start the docker container, [docker run example](wiki/Docker-run-example)
-  -  **requires:** docker
+  -  **requires:** docker on the intended system
 - how to use docker-compose to start the docker container, [docker-compose example](wiki/Docker‐compose-example)
-  -  **requires:** docker-compose
+  -  **requires:** docker and docker-compose on the intended system
 
 ## Planned Features
 - [ ] Add cash flow related commands to indicate income vs expense and profit margins, see [#2](issues/2) for more information
