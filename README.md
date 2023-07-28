@@ -4,8 +4,8 @@ A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details
 
 ## How to use
 There are now two ways you can start using the bot 
-1. Local or server installation where you will need to install node.js version `^18.16` then clone and configure the bot to run on your local system, read more about that [here]()
-2. if you prefer going the docker route, I also now maintain a docker image [mikedevita/onairdiscordbot](https://hub.docker.com/repository/docker/mikedevita/onairdiscordbot), read more about that [here]()
+1. Local or server installation where you will need to install node.js version `^18.16` then clone and configure the bot to run on your local system, read more about that [here](#manualdedicated-machine-method)
+2. if you prefer going the docker route, I also now maintain a docker image [mikedevita/onairdiscordbot](https://hub.docker.com/repository/docker/mikedevita/onairdiscordbot), read more about that [here](#docker-method)
 
 ### Manual/Dedicated Machine Method
 - clone the repository `git clone git@github.com:mikedevita/onairdiscordbot.git`
@@ -20,8 +20,10 @@ There are now two ways you can start using the bot
 By default the Bot should send a message in Your discord Server when it comes online. Simply interact with the bot using one of the commands in the [Commands](#bot-commands) section below.
 
 ### Docker Method
-- [docker run example](wiki/Docker-run-example)
-- [docker-compose example](wiki/Docker‐compose-example)
+- how to use docker run to start the docker container, [docker run example](wiki/Docker-run-example)
+  -  **requires:** docker
+- how to use docker-compose to start the docker container, [docker-compose example](wiki/Docker‐compose-example)
+  -  **requires:** docker-compose
 
 ## Planned Features
 - [ ] Add cash flow related commands to indicate income vs expense and profit margins, see [#2](issues/2) for more information
