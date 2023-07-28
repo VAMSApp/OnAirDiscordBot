@@ -2,5 +2,21 @@ version: '3'
 services:
   bot:
     image: onairdiscordbot
-    env_file: 
-      - .env
+    container_name: onairdiscordbot
+    # use external .env file
+    env_file: .env
+    # or pass environment variables
+    # directly in by defining them like so
+    # environment:
+    #   DISCORD_TOKEN: '###_REPLACE_WITH_YOUR_DATA_###'
+    #   DISCORD_CLIENTID: '###_REPLACE_WITH_YOUR_DATA_###'
+    #   DISCORD_GUILDID: '###_REPLACE_WITH_YOUR_DATA_###'
+    #   DISCORD_OWNER: '###_REPLACE_WITH_YOUR_DATA_###'
+    #   DISCORD_CHANNEL: '###_REPLACE_WITH_YOUR_DATA_###'
+    #   DISCORD_ONCONNECTNOTICE: '###_REPLACE_WITH_YOUR_DATA_###'
+    #   DISCORD_DEPLOYCOMMANDS: '###_REPLACE_WITH_YOUR_DATA_###'
+    #   ONAIR_COMPANYID: '###_REPLACE_WITH_YOUR_DATA_###'
+    #   ONAIR_VAID: 'true'
+    #   ONAIR_APIKEY: 'true'
+    #   LOGLEVEL: 'info'
+    #   LOG_TO_CONSOLE: 'true'

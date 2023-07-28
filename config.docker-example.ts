@@ -15,6 +15,7 @@ const {
     ONAIR_VAID,
     ONAIR_APIKEY,
     LOGLEVEL,
+    LOG_TO_CONSOLE,
 } = process.env;
 
 if (!DISCORD_TOKEN) throw new Error('DISCORD_TOKEN is required in .env');
@@ -61,13 +62,11 @@ const config:BotConfig = {
             Members: ['role', 'company', 'latest', 'flights', 'hours', 'rep'],
             Flights: [],
             Jobs: [],
-        },
-        refreshOnStartup: false, // if set to true, bot will run all enabled refresh tasks at startup
-        loadOnStartup: false, // if set to true, bot will run all enabled model tasks from the database at startup
+        }
     },
     log: {
         logLevel: LOGLEVEL || 'info',
-        logToConsole: true,
+        logToConsole: (LOG_TO_CONSOLE === 'true') || true,
     },
 };
 

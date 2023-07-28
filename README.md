@@ -3,28 +3,31 @@
 A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details within your Discord server. The Bot currently only has the ability to show flights, members, jobs, fleet, and airport information from within discord, each command is a one-off request to the OnAir API and is translated into a discord response. See [Planned Features](#planned-features) for more information on what is planned for the future.
 
 ## How to use
-There are now two ways to use the bot. The original dedicated machine where you clone and configure the bot, I have also built a docker image with the latest code matching the master branch.
+There are now two ways you can start using the bot 
+1. Local or server installation where you will need to install node.js version `^18.16` then clone and configure the bot to run on your local system, read more about that [here]()
+2. if you prefer going the docker route, I also now maintain a docker image [mikedevita/onairdiscordbot](https://hub.docker.com/repository/docker/mikedevita/onairdiscordbot), read more about that [here]()
 
 ### Manual/Dedicated Machine Method
 - clone the repository `git clone git@github.com:mikedevita/onairdiscordbot.git`
 - install the required nodejs modules `npm i`
 - copy `config.ts.example` to `config.ts`
 - fill out `config.ts` with required information
-  - Ensure to update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId` with values from Discord developer website, see [this]([https://github.com/VAMSApp/OnAirDiscordBot/wiki/Creating-Your-Discord-bot](https://github.com/VAMSApp/OnAirDiscordBot/wiki/How-to-register-a-new-discord-bot)) wiki for more
+  - Ensure to update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId` with values from Discord developer website, see [this]([wiki/Creating-Your-Discord-bot](wiki/How-to-register-a-new-discord-bot)) wiki for more
   - ensure the bot is granted the `bot` and `applications.commands` scopes in the Discord developer website
-  - Update `companyId`, `vAId`, `apiKey` in the `onAir` object with values from the OnAir companion app, see [this]([https://github.com/VAMSApp/OnAirDiscordBot/wiki/Obtaining-Your-OnAir-Credentials](https://github.com/VAMSApp/OnAirDiscordBot/wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir)) wiki for more
+  - Update `companyId`, `vAId`, `apiKey` in the `onAir` object with values from the OnAir companion app, see [this]([wiki/Obtaining-Your-OnAir-Credentials](wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir)) wiki for more
 - finally, run the bot by executing `npm start`
 
 By default the Bot should send a message in Your discord Server when it comes online. Simply interact with the bot using one of the commands in the [Commands](#bot-commands) section below.
 
-### Docker Image Method
-The documentation for the docker image is currently being developed.
+### Docker Method
+- [docker run example](wiki/Docker-run-example)
+- [docker-compose example](wiki/Docker‐compose-example)
 
 ## Planned Features
-- [ ] Add cash flow related commands to indicate income vs expense and profit margins, see [#2](https://github.com/VAMSApp/OnAirDiscordBot/issues/2) for more information
-- [ ] Add persistence layer to track data over time and allow for more advanced features, see [#8](https://github.com/VAMSApp/OnAirDiscordBot/issues/8) for more information
-  - [ ] Ability for users to link their Discord account to their OnAir company, see [#9](https://github.com/VAMSApp/OnAirDiscordBot/issues/9) for more information
-  - [ ] polling & alerting functionality for flight & job status changes, see [#4](https://github.com/VAMSApp/OnAirDiscordBot/issues/4) for more information
+- [ ] Add cash flow related commands to indicate income vs expense and profit margins, see [#2](issues/2) for more information
+- [ ] Add persistence layer to track data over time and allow for more advanced features, see [#8](issues/8) for more information
+  - [ ] Ability for users to link their Discord account to their OnAir company, see [#9](issues/9) for more information
+  - [ ] polling & alerting functionality for flight & job status changes, see [#4](issues/4) for more information
 
 ## Free Help & Support
 

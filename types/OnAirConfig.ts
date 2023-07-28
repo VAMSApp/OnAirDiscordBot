@@ -35,8 +35,6 @@ export type OnAirPollingsConfig = {
 export type OnAirConfig = {
     keys: OnAirApiConfig;
     enabled: boolean;
-    refreshOnStartup: boolean;
-    loadOnStartup: boolean;
     sorting: {
         Members: string[];
         Flights: string[];

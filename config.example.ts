@@ -38,9 +38,7 @@ const config:BotConfig = {
             Members: ['role', 'company', 'latest', 'flights', 'hours', 'rep'], // columns in results that are able to be sorted by
             Flights: [],
             Jobs: [],
-        },
-        refreshOnStartup: false, // if set to true, bot will run all enabled refresh tasks at startup
-        loadOnStartup: false, // if set to true, bot will run all enabled model tasks from the database at startup
+        }
     },
     log: {
         logLevel: 'info',
