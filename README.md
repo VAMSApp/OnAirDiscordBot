@@ -4,20 +4,22 @@ A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details
 
 ## How to use
 There are now two ways you can start using the bot 
-1. Local or server installation where you will need to install node.js version `^18.16` then clone and configure the bot to run on your local system, read more about that [here](#manualdedicated-machine-method)
-2. if you prefer going the docker route, I also now maintain a docker image [mikedevita/onairdiscordbot](https://hub.docker.com/repository/docker/mikedevita/onairdiscordbot), read more about that [here](#docker-method)
+- Local or server installation where you will need to install node.js version `^18.16` then clone and configure the bot to run on your local system, read more about that [here](#manualdedicated-machine-method)
+- if you prefer going the docker route, I also now maintain a docker image [mikedevita/onairdiscordbot](https://hub.docker.com/repository/docker/mikedevita/onairdiscordbot), read more about that [here](#docker-method)
 
 ### Manual/Dedicated Machine Method
+*Note:* This assumes that your intended system already has node.js version `^18.16` installed
 - clone the repository `git clone git@github.com:mikedevita/onairdiscordbot.git`
 - install the required nodejs modules `npm i`
 - copy `config.ts.example` to `config.ts`
 - fill out `config.ts` with required information
-  - Ensure to update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId` with values from Discord developer website, see [this]([wiki/Creating-Your-Discord-bot](wiki/How-to-register-a-new-discord-bot)) wiki for more
+  - Ensure to update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId`, with values from Discord developer website, see [this]([wiki/Creating-Your-Discord-bot](wiki/How-to-register-a-new-discord-bot)) wiki for more info
+  - Ensure to update the `owners` and `channels` objects
   - ensure the bot is granted the `bot` and `applications.commands` scopes in the Discord developer website
-  - Update `companyId`, `vAId`, `apiKey` in the `onAir` object with values from the OnAir companion app, see [this]([wiki/Obtaining-Your-OnAir-Credentials](wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir)) wiki for more
+  - Update `companyId`, `vAId`, `apiKey` in the `onAir` object with values from the OnAir companion app, see [this]([wiki/Obtaining-Your-OnAir-Credentials](wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir)) wiki for more info
 - finally, run the bot by executing `npm start`
 
-By default the Bot should send a message in Your discord Server when it comes online. Simply interact with the bot using one of the commands in the [Commands](#bot-commands) section below.
+By default the Bot should send a message to the channelId defined in Your discord Server when it comes online. Simply interact with the bot using one of the commands in the [Commands](#bot-commands) section below.
 
 ### Docker Method
 - how to use docker run to start the docker container, [docker run example](wiki/Docker-run-example)
