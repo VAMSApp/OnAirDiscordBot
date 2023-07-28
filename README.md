@@ -1,6 +1,6 @@
 # OnAir Discord Bot
 
-A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details within your Discord server. The Bot currently only has the ability to show flights, members, jobs, fleet, and airport information from within discord, each command is a one-off request to the OnAir API and is translated into a discord response. See [Planned Features](#planned-features) for more information on what is planned for the future.
+A Discord.js bot that integrates Your OnAir Company or Virtual Airline's details within your Discord server. Giving your users the ability to query flights, members, jobs, fleet, and airport information from within discord, each command is a one-off request to the OnAir API and is translated into a discord response table. See [Planned Features](#planned-features) for what's in the works.
 
 ## How to use
 There are now two ways you can start using the bot 
@@ -33,9 +33,12 @@ By default the Bot should send a message to the channelId defined in Your discor
   - [ ] Ability for users to link their Discord account to their OnAir company, see [#9](issues/9) for more information
   - [ ] polling & alerting functionality for flight & job status changes, see [#4](issues/4) for more information
 
-## Free Help & Support
+## Feature Requests
+Are welcome, simply submit an issue
 
-feel free to reach out to me on discord with any questions about the bot, my discord username is `ndboost`. I also idle in the #web-apis channel on the [OnAir company's official discord server](https://discord.com/invite/WY5htXu).
+## Help & Support
+
+feel free to reach out to me on discord with any questions about the bot, my discord username is `ndboost`. I also idle in the #web-apis channel on the [OnAir company's official discord server](https://discord.com/invite/WY5htXu)
 
 ## Bot Hosting and Paid Support
 
