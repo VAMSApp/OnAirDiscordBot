@@ -22,6 +22,17 @@ const VADetailCommand:SlashCommand = {
     name: 'detail',
     description: 'OnAir VA detail',
     roleName: 'member',
+    help: {
+        name: 'detail',
+        description: 'Usage: `/detail`\n\nExample: `/detail`',
+        params: [
+            {
+                name: 'ephemeral',
+                description: 'Whether to show the results in an ephemeral message',
+                defaultValue: 'true',
+            }
+        ]
+    },
     data: new SlashCommandBuilder()
         .setName('detail')
         .setDescription('OnAir VA detail')

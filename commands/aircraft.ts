@@ -10,6 +10,22 @@ const AircraftCommand:SlashCommand = {
     name: 'aircraft',
     description: 'Replies with the OnAir details for a given aircraft',
     roleName: 'member',
+    help:  {
+        name: 'aircraft',
+        description: 'Usage: `/aircraft <identifier>`\n\nExample: `/aircraft N12345`',
+        params: [
+            {
+                name: 'identifier',
+                description: 'Aircraft identifier',
+                required: true
+            },
+            {
+                name: 'ephemeral',
+                description: 'Whether to show the results in an ephemeral message',
+                defaultValue: 'true',
+            }
+        ]
+    },
     data: new SlashCommandBuilder()
         .setName('aircraft')
         .setDescription('Replies with the OnAir details for a given aircraft')
@@ -32,8 +48,12 @@ const AircraftCommand:SlashCommand = {
             return;
         }
         
-        const ephemeral:boolean = interaction.options.getBoolean('ephemeral') || true;
+        let ephemeral:boolean|null = interaction.options.getBoolean('ephemeral');
         const identifier:string = interaction.options.getString('identifier') as string;
+
+        if (ephemeral === null) {
+            ephemeral = true;
+        }
 
         await interaction.deferReply({ ephemeral: ephemeral });
 

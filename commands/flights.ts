@@ -9,6 +9,27 @@ const FlightsCommand:SlashCommand = {
     name: 'flights',
     description: 'Replies with the OnAir VA\'s current flights',
     roleName: 'member',
+    help: {
+        name: 'flights',
+        description: 'Usage: `/flights`\n\nExample: `/flights`',
+        params: [
+            {
+                name: 'page',
+                description: 'What page of the flights list to show',
+                defaultValue: '1',
+            },
+            {
+                name: 'size',
+                description: 'How many results to show, maximum of 10',
+                defaultValue: '5',
+            },
+            {
+                name: 'ephemeral',
+                description: 'Whether to show the results in an ephemeral message',
+                defaultValue: 'true',
+            }
+        ]
+    },
     data: new SlashCommandBuilder()
         .setName('flights')
         .setDescription('Replies with the OnAir VA\'s current flights')
@@ -67,6 +88,7 @@ const FlightsCommand:SlashCommand = {
         const sortBy:string = interaction.options.getString('sortby') || 'StartTime';
         const sortOrder:string = interaction.options.getString('sortorder') || 'desc';
         let ephemeral:boolean|null = interaction.options.getBoolean('ephemeral');
+        
         if (ephemeral === null) {
             ephemeral = true;
         }

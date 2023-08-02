@@ -9,6 +9,27 @@ const MembersCommand:SlashCommand = {
     name: 'members',
     description: 'Replies with the OnAir VA members',
     roleName: 'member',
+    help: {
+        name: 'members',
+        description: 'Usage: `/members`\n\nExample: `/members`',
+        params: [
+            {
+                name: 'sortorder',
+                description: 'What order to sort the results',
+                defaultValue: 'asc',
+            },
+            {
+                name: 'sortby',
+                description: 'Sort the results by columns',
+                defaultValue: 'role',
+            },
+            {
+                name: 'ephemeral',
+                description: 'Whether to show the results in an ephemeral message',
+                defaultValue: 'true',
+            }
+        ]
+    },
     data: new SlashCommandBuilder()
         .setName('members')
         .setDescription('Replies with the OnAir VA members')

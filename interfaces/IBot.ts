@@ -1,12 +1,13 @@
 import { ILogger, IOnAir } from '.';
-import { BotConfig } from '../types';
-import { Client } from 'discord.js';
+import { BotConfig, Command } from '../types';
+import { Client, Collection } from 'discord.js';
 
 export interface IBot {
     config: BotConfig;
     log: ILogger;
     client: Client;
     OnAir: IOnAir;
+    commands: Collection<string, Command>;
 
     loadCommands(): Promise<void>;
     deployCommands(): Promise<void>;

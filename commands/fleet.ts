@@ -8,6 +8,27 @@ export default {
     name: 'fleet',
     description: 'Replies with the OnAir VA\'s fleet',
     roleName: 'member',
+    help: {
+        name: 'fleet',
+        description: 'Usage: `/fleet`\n\nExample: `/fleet`',
+        params: [
+            {
+                name: 'page',
+                description: 'What page of the fleet list to show',
+                defaultValue: '1',
+            },
+            {
+                name: 'size',
+                description: 'How many results to show, maximum of 10',
+                defaultValue: '5',
+            },
+            {
+                name: 'ephemeral',
+                description: 'Whether to show the results in an ephemeral message',
+                defaultValue: 'true',
+            }
+        ]
+    },
     data: new SlashCommandBuilder()
         .setName('fleet')
         .setDescription('Replies with the OnAir VA\'s fleet')

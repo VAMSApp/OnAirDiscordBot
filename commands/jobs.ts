@@ -9,6 +9,32 @@ const VAJobsCommand:SlashCommand = {
     name: 'jobs',
     description: 'Replies with the OnAir VA\'s pending jobs',
     roleName: 'member',
+    help:  {
+        name: 'jobs',
+        description: 'Usage: `/jobs`\n\nExample: `/jobs`',
+        params: [
+            {
+                name: 'page',
+                description: 'What page of the job list to show',
+                defaultValue: '1',
+            },
+            {
+                name: 'size',
+                description: 'How many results to show, maximum of 10',
+                defaultValue: '5',
+            },
+            {
+                name: 'ephemeral',
+                description: 'Whether to show the results in an ephemeral message',
+                defaultValue: 'true',
+            },
+            {
+                name: 'showcompleted',
+                description: 'Whether to show completed jobs, defaults to false',
+                defaultValue: 'false',
+            }
+        ]
+    },
     data: new SlashCommandBuilder()
         .setName('jobs')
         .setDescription('Replies with the OnAir VA\'s pending jobs')

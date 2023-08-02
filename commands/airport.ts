@@ -9,6 +9,22 @@ const AirportCommand:SlashCommand = {
     name: 'airport',
     description: 'Replies with the OnAir details for a given airport',
     roleName: 'member',
+    help:  {
+        name: 'airport',
+        description: 'Usage: `/airport <icao>`\n\nExample: `/airport KJFK`',
+        params: [
+            {
+                name: 'icao',
+                description: 'Airport ICAO',
+                required: true
+            },
+            {
+                name: 'ephemeral',
+                description: 'Whether to show the results in an ephemeral message',
+                defaultValue: 'true',
+            }
+        ]
+    },
     data: new SlashCommandBuilder()
         .setName('airport')
         .setDescription('Replies with the OnAir details for a given airport')
@@ -31,9 +47,11 @@ const AirportCommand:SlashCommand = {
 
         const icao:string = interaction.options.getString('icao') as string;
         let ephemeral:boolean|null = interaction.options.getBoolean('ephemeral');
+
         if (ephemeral === null) {
             ephemeral = true;
         }
+        
         await interaction.deferReply({ ephemeral: ephemeral });
 
         let msg = '';
