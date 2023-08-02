@@ -50,7 +50,7 @@ const AircraftCommand:SlashCommand = {
         
         let ephemeral:boolean|null = interaction.options.getBoolean('ephemeral');
         const identifier:string = interaction.options.getString('identifier') as string;
-
+        
         if (ephemeral === null) {
             ephemeral = true;
         }
