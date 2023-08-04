@@ -237,18 +237,20 @@ class OnAir implements IOnAir {
         if (opts?.filter) {
             const aircraftCode:string = opts.filter.aircraftCode as string;
             const companyCode:string = opts.filter.companyCode as string;
-            const showcompleted:boolean = opts.filter.showcompleted as boolean;
 
-            if (aircraftCode !== null) {
+            if (opts.filter.aircraftCode) {
                 x = x.filter(f => f.Aircraft.Identifier === aircraftCode);
             }
 
-            if (companyCode) {
+            if (opts.filter.companyCode) {
                 x = x.filter(f => f.Company.AirlineCode === companyCode);
             }
 
-            if (!showcompleted) {
-                x = x.filter(f => f.StartTime && !f.EndTime);
+            if (opts.filter.showcompleted === false || !opts.filter.showcompleted) {
+                x = x.filter((f) => {
+                    const filtered = (f.StartTime && !f.EndTime);
+                    return filtered;
+                });
             }
         }
         
