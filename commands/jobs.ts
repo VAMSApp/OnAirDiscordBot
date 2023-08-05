@@ -4,6 +4,7 @@ import { IBot } from '../interfaces';
 import { JobsList } from '../messages';
 import { SlashCommand } from 'types';
 import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
+import HandleDiscordCommandError from '@/lib/HandleDiscordCommandError';
 
 const VAJobsCommand:SlashCommand = {
     name: 'jobs',
@@ -68,7 +69,7 @@ const VAJobsCommand:SlashCommand = {
         }
 
         const page:number = interaction.options.getInteger('page') || 1;
-        let size:number = interaction.options.getInteger('size') || 5;
+        const size:number = interaction.options.getInteger('size') || 5;
         let ephemeral:boolean|null = interaction.options.getBoolean('ephemeral');
         const showCompleted:boolean = interaction.options.getBoolean('showcompleted') as boolean|| false;
         
@@ -97,25 +98,34 @@ const VAJobsCommand:SlashCommand = {
 
             msg += `\n\nShowing page ${page} of ${(Math.ceil(x.length / size) > 0) ? Math.ceil(x.length / size) : 1}`;
 
-            if (size) {
-                if (size && size > 5) {
-                    size = 5;
-                }
-            }
-
             const slicedX = x.slice((page - 1) * size, page * size);
             
             const jobsList = JobsList(slicedX);
             msg += `\n${jobsList}`;
         }
         
-        const reply:InteractionReplyOptions = {
-            content: `\`\`\`\n${msg}\`\`\``,
-            ephemeral: ephemeral,
-        };
-        
-        await interaction.editReply(reply);
-        return;
+
+        try {
+            const reply:InteractionReplyOptions = {
+                content: `\`\`\`\n${msg}\`\`\``,
+                ephemeral: ephemeral,
+            };
+    
+            await interaction.editReply(reply);
+            return;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        catch (err:any) {
+            const msg = HandleDiscordCommandError(err, app);
+
+            const reply:InteractionReplyOptions = {
+                content: `\`\`\`\n${msg}\`\`\``,
+                ephemeral: true,
+            };
+
+            await interaction.editReply(reply);
+            return;
+        }
     }
 };
 

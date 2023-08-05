@@ -3,6 +3,8 @@ import { Aircraft as OnAirAircraft } from 'onair-api';
 import { IBot } from '../interfaces';
 import { FleetList } from '../messages';
 import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
+import { OnAirApiQueryOptions } from '@/types';
+import HandleDiscordCommandError from '@/lib/HandleDiscordCommandError';
 
 export default {
     name: 'fleet',
@@ -44,6 +46,26 @@ export default {
                 .setMinValue(1)
                 .setRequired(false)
         )
+        .addStringOption(option =>
+            option.setName('sortby')
+                .setDescription('How to sort the results')
+                .setRequired(false)
+                .addChoices(
+                    { name: 'Type', value: 'type' },
+                    { name: 'Identifier', value: 'identifier' },
+                    { name: 'Status', value: 'status' },
+                    { name: 'Airport', value: 'airport' },
+                )
+        )
+        .addStringOption(option =>
+            option.setName('sortorder')
+                .setDescription('What order to sort the results')
+                .setRequired(false)
+                .addChoices(
+                    { name: 'Ascending', value: 'asc' },
+                    { name: 'Descending', value: 'desc' },
+                )
+        )
         .addBooleanOption(option =>
             option.setName('ephemeral')
                 .setDescription('Whether to show the results in an ephemeral message')
@@ -57,7 +79,9 @@ export default {
         }
         
         const page:number = interaction.options.getInteger('page') || 1;
-        let size:number = interaction.options.getInteger('size') || 5;
+        const size:number = interaction.options.getInteger('size') || 5;
+        const sortBy:string = interaction.options.getString('sortby') || 'StartTime';
+        const sortOrder:string = interaction.options.getString('sortorder') || 'desc';
         let ephemeral:boolean|null = interaction.options.getBoolean('ephemeral');
         
         if (ephemeral === null) {
@@ -68,8 +92,12 @@ export default {
 
         let msg = '';
 
-
-        const x:OnAirAircraft[] = await app.OnAir.getVAFleet();
+        const opts:OnAirApiQueryOptions = {
+            sortBy: sortBy,
+            sortOrder: sortOrder,
+        };
+        
+        const x:OnAirAircraft[] = await app.OnAir.getVAFleet(opts);
         if (!x) msg = 'No fleet found';
 
         if (x) {
@@ -84,12 +112,6 @@ export default {
             }
 
             msg += `\n\nShowing page ${page} of ${(Math.ceil(x.length / size) > 0) ? Math.ceil(x.length / size) : 1}`;
-
-            if (size) {
-                if (size && size > 5) {
-                    size = 5;
-                }
-            }
             
             const slicedX = x.slice((page - 1) * size, page * size);
 
@@ -97,12 +119,27 @@ export default {
             msg += `\n${fleetList}`;
         }
 
-        const reply:InteractionReplyOptions = {
-            content: `\`\`\`\n${msg}\`\`\``,
-            ephemeral: ephemeral
-        };
-        
-        await interaction.editReply(reply);
-        return;
+
+        try {
+            const reply:InteractionReplyOptions = {
+                content: `\`\`\`\n${msg}\`\`\``,
+                ephemeral: ephemeral,
+            };
+    
+            await interaction.editReply(reply);
+            return;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        catch (err:any) {
+            const msg = HandleDiscordCommandError(err, app);
+
+            const reply:InteractionReplyOptions = {
+                content: `\`\`\`\n${msg}\`\`\``,
+                ephemeral: true,
+            };
+
+            await interaction.editReply(reply);
+            return;
+        }
     }
 };

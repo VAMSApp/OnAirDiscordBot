@@ -38,7 +38,7 @@ export interface IOnAir {
     getFlightDetail(flightId:string): Promise<OnAirFlight>;
     getEmployeeDetail(employeeId:string): Promise<OnAirEmployee>;
     getVADetail(): Promise<OnAirVirtualAirline>;
-    getVAFleet(): Promise<OnAirAircraft[]>;
+    getVAFleet(opts?:OnAirApiQueryOptions): Promise<OnAirAircraft[]>;
     getVAJobs(vaId?:string, completed?:boolean): Promise<OnAirJob[]>;
     getVAFlights(opts?:OnAirApiQueryOptions): Promise<OnAirFlight[]>;
     getVAMembers(opts?:OnAirApiQueryOptions): Promise<OnAirMember[]>;

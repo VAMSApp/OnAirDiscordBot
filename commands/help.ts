@@ -1,4 +1,5 @@
 import { IBot } from '@/interfaces';
+import HandleDiscordCommandError from '@/lib/HandleDiscordCommandError';
 import IsAuthorizedToRunCommand from '@/lib/IsAuthorizedToRunCommand';
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js';
 import { SlashCommand } from 'types';
@@ -71,13 +72,27 @@ const HelpCommand:SlashCommand = {
             + '  /jobs - shows all current jobs\n';
             + '```\n';
 
-            const reply:InteractionReplyOptions = {
-                content: msg,
-                ephemeral: ephemeral
-            };
-            
-            await interaction.editReply(reply);
-            return;
+            try {
+                const reply:InteractionReplyOptions = {
+                    content: `\`\`\`\n${msg}\`\`\``,
+                    ephemeral: ephemeral,
+                };
+        
+                await interaction.editReply(reply);
+                return;
+            }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            catch (err:any) {
+                const msg = HandleDiscordCommandError(err, app);
+    
+                const reply:InteractionReplyOptions = {
+                    content: `\`\`\`\n${msg}\`\`\``,
+                    ephemeral: true,
+                };
+    
+                await interaction.editReply(reply);
+                return;
+            }
         }
     }
 };

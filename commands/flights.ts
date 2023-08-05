@@ -4,6 +4,7 @@ import { Flight as OnAirFlight } from 'onair-api';
 import { IBot } from '../interfaces';
 import { FlightsList } from '../messages';
 import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
+import HandleDiscordCommandError from '@/lib/HandleDiscordCommandError';
 
 const FlightsCommand:SlashCommand = {
     name: 'flights',
@@ -40,8 +41,8 @@ const FlightsCommand:SlashCommand = {
         )
         .addIntegerOption(option =>
             option.setName('size')
-                .setDescription('How many results to show per page, default of 5, maximum of 20')
-                .setMaxValue(20)
+                .setDescription('How many results to show per page, default of 5, maximum of 10')
+                .setMaxValue(10)
                 .setMinValue(1)
                 .setRequired(false)
         )
@@ -63,11 +64,22 @@ const FlightsCommand:SlashCommand = {
             option.setName('sortby')
                 .setDescription('How to sort the results')
                 .setRequired(false)
+                .addChoices(
+                    { name: 'Company', value: 'company' },
+                    { name: 'Identifier', value: 'identifier' },
+                    { name: 'Status', value: 'status' },
+                    { name: 'Departure Airport', value: 'departure-airport' },
+                    { name: 'Arrival Airport', value: 'arrival-airport' },
+                )
         )
         .addStringOption(option =>
             option.setName('sortorder')
                 .setDescription('What order to sort the results')
                 .setRequired(false)
+                .addChoices(
+                    { name: 'Ascending', value: 'asc' },
+                    { name: 'Descending', value: 'desc' },
+                )
         )
         .addBooleanOption(option =>
             option.setName('ephemeral')
@@ -109,6 +121,8 @@ const FlightsCommand:SlashCommand = {
                 companyCode: companyCode,
                 showcompleted: showcompleted
             },
+            page: page,
+            limit: size,
             sortBy: sortBy,
             sortOrder: sortOrder,
         };
@@ -135,13 +149,27 @@ const FlightsCommand:SlashCommand = {
             msg += `\n${flightsList}`;
         }
 
-        const reply:InteractionReplyOptions = {
-            content: `\`\`\`\n${msg}\`\`\``,
-            ephemeral: ephemeral,
-        };
+        try {
+            const reply:InteractionReplyOptions = {
+                content: `\`\`\`\n${msg}\`\`\``,
+                ephemeral: ephemeral,
+            };
+    
+            await interaction.editReply(reply);
+            return;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        catch (err:any) {
+            const msg = HandleDiscordCommandError(err, app);
 
-        await interaction.editReply(reply);
-        return;
+            const reply:InteractionReplyOptions = {
+                content: `\`\`\`\n${msg}\`\`\``,
+                ephemeral: true,
+            };
+
+            await interaction.editReply(reply);
+            return;
+        }
     }
 };
 

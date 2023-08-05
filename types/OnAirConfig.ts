@@ -7,6 +7,8 @@ export interface OnAirApiConfig {
 }
 
 export type OnAirApiQueryOptions = {
+    limit?: number;
+    page?: number;
     filter?: {
         aircraftCode?: string;
         companyCode?: string;

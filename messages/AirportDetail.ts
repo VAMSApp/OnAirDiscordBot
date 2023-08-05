@@ -1,3 +1,4 @@
+import { ShortenState } from '../utils';
 import Table from 'easy-table';
 import {
     Airport as OnAirAirport,
@@ -61,7 +62,7 @@ export function AirportDetail(x:OnAirAirport):string|undefined {
     
     const Name = (x.Name) ? x.Name : '';
     const City = (x.City) ? x.City : '';
-    const State = (x.State) ? x.State : '';
+    const State = (x.State) ? ShortenState(x.State) : '';
     const CountryName = (x.CountryName) ? x.CountryName : '';
     const TransitionAltitude = (x.TransitionAltitude) ? x.TransitionAltitude : '';
     const Size = (x.Size) ? x.Size : '';

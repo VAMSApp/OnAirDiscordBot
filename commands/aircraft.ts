@@ -4,6 +4,7 @@ import { IBot } from '../interfaces';
 import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
 import { SlashCommand } from '../types';
 import { AircraftDetail } from '../messages';
+import HandleDiscordCommandError from '@/lib/HandleDiscordCommandError';
 
 
 const AircraftCommand:SlashCommand = {
@@ -81,13 +82,27 @@ const AircraftCommand:SlashCommand = {
             return;
         }
 
-        const reply:InteractionReplyOptions = {
-            content: `\`\`\`\n${msg}\`\`\``,
-            ephemeral: ephemeral,
-        };
+        try {
+            const reply:InteractionReplyOptions = {
+                content: `\`\`\`\n${msg}\`\`\``,
+                ephemeral: ephemeral,
+            };
+    
+            await interaction.editReply(reply);
+            return;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        catch (err:any) {
+            const msg = HandleDiscordCommandError(err, app);
 
-        await interaction.editReply(reply);
-        return;
+            const reply:InteractionReplyOptions = {
+                content: `\`\`\`\n${msg}\`\`\``,
+                ephemeral: true,
+            };
+
+            await interaction.editReply(reply);
+            return;
+        }
     }
 };
 

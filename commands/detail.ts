@@ -9,6 +9,7 @@ import { IBot } from '../interfaces';
 import { VADetail } from '../messages';
 import { SlashCommand } from 'types';
 import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
+import HandleDiscordCommandError from '@/lib/HandleDiscordCommandError';
 
 export interface VirtualAirlineDetail extends OnAirVirtualAirline {
     MemberCount:number;
@@ -84,12 +85,27 @@ const VADetailCommand:SlashCommand = {
             msg += `\n${VADetail(x)}`;
         }
 
-        const reply:InteractionReplyOptions = {
-            content: msg,
-            ephemeral: ephemeral,
-        };
-        
-        await interaction.editReply(reply);
+        try {
+            const reply:InteractionReplyOptions = {
+                content: `\`\`\`\n${msg}\`\`\``,
+                ephemeral: ephemeral,
+            };
+    
+            await interaction.editReply(reply);
+            return;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        catch (err:any) {
+            const msg = HandleDiscordCommandError(err, app);
+
+            const reply:InteractionReplyOptions = {
+                content: `\`\`\`\n${msg}\`\`\``,
+                ephemeral: true,
+            };
+
+            await interaction.editReply(reply);
+            return;
+        }
     }
 };
 

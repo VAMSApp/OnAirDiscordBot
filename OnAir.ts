@@ -232,8 +232,11 @@ class OnAir implements IOnAir {
      */
     async getVAFlights(opts?:OnAirApiQueryOptions) {
         const vaId:string = this.Config.keys.vaId || this.Config.keys.companyId;
+        const page:number = opts?.page || 1;
+        const limit:number = opts?.limit || 100;
 
-        let x = await this.Api.getVirtualAirlineFlights(vaId);
+        let x:OnAirFlight[] = await this.Api.getVirtualAirlineFlights(vaId, page, limit);
+
         if (opts?.filter) {
             const aircraftCode:string = opts.filter.aircraftCode as string;
             const companyCode:string = opts.filter.companyCode as string;
@@ -251,6 +254,46 @@ class OnAir implements IOnAir {
                     const filtered = (f.StartTime && !f.EndTime);
                     return filtered;
                 });
+            }
+        }
+        
+        if (opts?.sortBy) {
+            switch (opts.sortBy) {
+            case 'company':
+                x.sort((a:OnAirFlight, b:OnAirFlight) => {
+                    return (opts.sortOrder === 'asc')
+                        ? a.Company.AirlineCode.localeCompare(b.Company.AirlineCode)
+                        : b.Company.AirlineCode.localeCompare(a.Company.AirlineCode);
+                });
+                break;
+            case 'identifier':
+                x.sort((a:OnAirFlight, b:OnAirFlight) => {
+                    return (opts.sortOrder === 'asc')
+                        ? a.Aircraft.Identifier.localeCompare(b.Aircraft.Identifier)
+                        : b.Aircraft.Identifier.localeCompare(a.Aircraft.Identifier);
+                });
+                break;
+            case 'status':
+                x.sort((a:OnAirFlight, b:OnAirFlight) => {
+                    return (opts.sortOrder === 'asc')
+                        ? a.Aircraft.AircraftStatus - b.Aircraft.AircraftStatus
+                        : b.Aircraft.AircraftStatus - a.Aircraft.AircraftStatus;
+                });
+                break;
+            case 'departure-airport':
+                x.sort((a:OnAirFlight, b:OnAirFlight) => {
+                    return (opts.sortOrder === 'asc')
+                        ? a.DepartureAirport.ICAO.localeCompare(b.DepartureAirport.ICAO)
+                        : b.DepartureAirport.ICAO.localeCompare(a.DepartureAirport.ICAO);
+                });
+                break;
+            case 'arrival-airport':
+                x.sort((a:OnAirFlight, b:OnAirFlight) => {
+                    return (opts.sortOrder === 'asc')
+                        ? a.ArrivalIntendedAirport.ICAO.localeCompare(b.ArrivalIntendedAirport.ICAO)
+                        : b.ArrivalIntendedAirport.ICAO.localeCompare(a.ArrivalIntendedAirport.ICAO);
+                });
+                break;
             }
         }
         
@@ -324,8 +367,41 @@ class OnAir implements IOnAir {
      * @returns Promise<OnAirAircraft[]>
      * @todo add ability to query for a specific VA's fleet
      */
-    async getVAFleet():Promise<OnAirAircraft[]> {
+    async getVAFleet(opts?:OnAirApiQueryOptions):Promise<OnAirAircraft[]> {
         const x:OnAirAircraft[] = await this.Api.getVirtualAirlineFleet();
+        
+        if (opts?.sortBy) {
+            switch (opts.sortBy) {
+            case 'type':
+                x.sort((a:OnAirAircraft, b:OnAirAircraft) => {
+                    return (opts.sortOrder === 'asc')
+                        ? a.AircraftType.AircraftClass.ShortName.localeCompare(b.AircraftType.AircraftClass.ShortName)
+                        : b.AircraftType.AircraftClass.ShortName.localeCompare(a.AircraftType.AircraftClass.ShortName);
+                });
+                break;
+            case 'identifier':
+                x.sort((a:OnAirAircraft, b:OnAirAircraft) => {
+                    return (opts.sortOrder === 'asc')
+                        ? a.Identifier.localeCompare(b.Identifier)
+                        : b.Identifier.localeCompare(a.Identifier);
+                });
+                break;
+            case 'status':
+                x.sort((a:OnAirAircraft, b:OnAirAircraft) => {
+                    return (opts.sortOrder === 'asc')
+                        ? a.AircraftStatus - b.AircraftStatus
+                        : b.AircraftStatus - a.AircraftStatus;
+                });
+                break;
+            case 'airport':
+                x.sort((a:OnAirAircraft, b:OnAirAircraft) => {
+                    return (opts.sortOrder === 'asc')
+                        ? a.CurrentAirport.ICAO.localeCompare(b.CurrentAirport.ICAO)
+                        : b.CurrentAirport.ICAO.localeCompare(a.CurrentAirport.ICAO);
+                });
+                break;
+            }
+        }
         return x;
     }
 
