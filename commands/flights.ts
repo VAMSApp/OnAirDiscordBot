@@ -20,7 +20,7 @@ const FlightsCommand:SlashCommand = {
             },
             {
                 name: 'size',
-                description: 'How many results to show, maximum of 10',
+                description: 'How many results to show per page, default of 5, maximum of 20',
                 defaultValue: '5',
             },
             {
@@ -40,8 +40,8 @@ const FlightsCommand:SlashCommand = {
         )
         .addIntegerOption(option =>
             option.setName('size')
-                .setDescription('How many results to show, maximum of 10')
-                .setMaxValue(10)
+                .setDescription('How many results to show per page, default of 5, maximum of 20')
+                .setMaxValue(20)
                 .setMinValue(1)
                 .setRequired(false)
         )
@@ -73,6 +73,11 @@ const FlightsCommand:SlashCommand = {
             option.setName('ephemeral')
                 .setDescription('Whether to show the results in an ephemeral message')
                 .setRequired(false)
+        )
+        .addBooleanOption(option =>
+            option.setName('showcompleted')
+                .setDescription('Whether to show completed flights')
+                .setRequired(false),
         ),
     async execute(interaction:Interaction, app:IBot) {
         if (!interaction.isChatInputCommand()) return;
@@ -82,11 +87,12 @@ const FlightsCommand:SlashCommand = {
         }
         
         const page:number = interaction.options.getInteger('page') || 1;
-        let size:number = interaction.options.getInteger('size') || 5;
+        const size:number = interaction.options.getInteger('size') || 5;
         const aircraftCode:string|undefined = interaction.options.getString('aircraftcode') || undefined;
         const companyCode:string|undefined = interaction.options.getString('companycode') || undefined;
         const sortBy:string = interaction.options.getString('sortby') || 'StartTime';
         const sortOrder:string = interaction.options.getString('sortorder') || 'desc';
+        const showcompleted:boolean|undefined = interaction.options.getBoolean('showcompleted') || undefined;
         let ephemeral:boolean|null = interaction.options.getBoolean('ephemeral');
         
         if (ephemeral === null) {
@@ -101,6 +107,7 @@ const FlightsCommand:SlashCommand = {
             filter: {
                 aircraftCode: aircraftCode,
                 companyCode: companyCode,
+                showcompleted: showcompleted
             },
             sortBy: sortBy,
             sortOrder: sortOrder,
@@ -112,15 +119,9 @@ const FlightsCommand:SlashCommand = {
 
         if (x) {
 
-            if (size) {
-                if (size && size > 5) {
-                    size = 5;
-                }
-            }
-
             const slicedX:OnAirFlight[] = x.slice((page - 1) * size, page * size);
 
-            msg = `There ${(x.length > 1 ) ? 'are' : 'is'} currently ${x.length} active flight${(x.length > 1 ) ? 's' : ''} in the VA flight Log`;
+            msg = `There ${(x.length > 1 ) ? 'are' : 'is'} currently ${x.length} flight${(x.length > 1 ) ? 's' : ''} in the VA flight Log`;
 
             msg += `\nSorting by ${sortBy} in ${sortOrder} order`;
             msg += `\n\nShowing page ${page} of ${(Math.ceil(x.length / size) > 0) ? Math.ceil(x.length / size) : 1}`;
