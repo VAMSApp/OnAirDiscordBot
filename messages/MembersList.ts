@@ -11,7 +11,7 @@ export function MembersList (x:OnAirMember[]) {
         const companyName = `${e.Company.Name} (${e.Company.AirlineCode})`;
         const role  = `${e.VARole.Name} (${e.VARole.Permission})`;
         const paxCargo = `${e.TotalPAXsTransported}/${FormatNumberWithCommas(e.TotalCargosTransportedLbs.toFixed(2))}`;
-        const rep = `${(e.ReputationImpact*100).toFixed(2)}%`;
+        const rep = `${(e.Company.Reputation*100).toFixed(2)}%`;
         const numFlights = e.NumberOfFlights;
         // const humanizedLastFlight = (e.LastVAFlightDate) ? HumanizeDate(e.LastVAFlightDate) : 'Never';
         
