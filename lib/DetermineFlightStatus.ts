@@ -12,7 +12,6 @@ export function DetermineFlightStatus(f:Flight) {
     } = f; 
     let status = '';
 
-    
     // If the flight is not registered
     if (Registered === false && StartTime) {
         // then the flight is started

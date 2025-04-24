@@ -10,6 +10,7 @@ const {
     DISCORD_OWNERID,
     DISCORD_CHANNELID,
     DISCORD_FLEET_STATUS_CHANNELID,
+    DISCORD_FLIGHTS_STATUS_CHANNELID,
     ONAIR_COMPANYID,
     ONAIR_VAID,
     ONAIR_APIKEY,
@@ -22,6 +23,7 @@ if (!DISCORD_GUILDID) throw new Error('DISCORD_GUILDID is not set in .env');
 if (!DISCORD_OWNERID) throw new Error('DISCORD_OWNERID is not set in .env');
 if (!DISCORD_CHANNELID) throw new Error('DISCORD_CHANNELID is not set in .env');
 if (!DISCORD_FLEET_STATUS_CHANNELID) throw new Error('DISCORD_FLEET_STATUS_CHANNELID is not set in .env');
+if (!DISCORD_FLIGHTS_STATUS_CHANNELID) throw new Error('DISCORD_FLIGHTS_STATUS_CHANNELID is not set in .env');
 if (!ONAIR_COMPANYID) throw new Error('ONAIR_COMPANYID is not set in .env');
 if (!ONAIR_VAID) throw new Error('ONAIR_VAID is not set in .env');
 if (!ONAIR_APIKEY) throw new Error('ONAIR_APIKEY is not set in .env');
@@ -61,6 +63,11 @@ const config:BotConfig = {
                 interval: 60000, // time in milliseconds to wait before checking fleet status again
                 channelId: DISCORD_FLEET_STATUS_CHANNELID, // The channel to send fleet status messages to
             },
+            flights: {
+                enabled: true,
+                interval: 60000, // time in milliseconds to wait before checking flights status again
+                channelId: DISCORD_FLIGHTS_STATUS_CHANNELID, // The channel to send flights status messages to
+            }
         },
         keys: {
             companyId: ONAIR_COMPANYID, // obtain from the OnAir Company app, see wiki https://github.com/VAMSApp/OnAirDiscordBot/wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir

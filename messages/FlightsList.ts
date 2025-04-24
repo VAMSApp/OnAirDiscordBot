@@ -8,6 +8,8 @@ export function FlightsList (x:OnAirFlight[]):string|undefined {
     const t = new Table;
 
     x.forEach(function (f:OnAirFlight, i) {
+        if (!f) return;
+        if (!f.Aircraft) return;
         const identifier = f.Aircraft.Identifier;
         const departureAirport = (f.DepartureAirport) ? f.DepartureAirport.ICAO : '    ';
         const arrivalIntendedAirport = (f.ArrivalIntendedAirport) ? f.ArrivalIntendedAirport.ICAO : '    ';

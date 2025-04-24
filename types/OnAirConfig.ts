@@ -39,8 +39,13 @@ export type OnAirConfig = {
         fleet: {
             enabled: boolean,
             interval: number;
-            channelId: string;
-        };
+            channelId: string|null;
+        },
+        flights: {
+            enabled: boolean,
+            interval: number;
+            channelId: string|null;
+        }
     },
     sorting: {
         Members: string[];
