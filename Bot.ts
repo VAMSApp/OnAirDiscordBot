@@ -303,8 +303,6 @@ class Bot implements IBot {
                             const fleetList = FleetList(vaFleet);
                             msg += `\n${fleetList}`;
                             let formattedMessage = `\`\`\`\n${msg}\`\`\``;
-                            // send the updated at the end of the message
-                            formattedMessage += `\nFleet Status updated at ${new Date().toLocaleString()}`;
 
                             // If there's a last message, edit it. Otherwise, send a new message
                             if (lastMessage) {
