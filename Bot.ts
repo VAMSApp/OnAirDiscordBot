@@ -267,7 +267,7 @@ class Bot implements IBot {
                     return;
                 }
 
-                this.log.info(`Fleet status enabled, starting fleet status update. Updates will run every ${this.config.onair.status.fleet.interval/1000/60} minutes`);
+                this.log.info(`Fleet status enabled, starting fleet status update. Future updates will run every ${this.config.onair.status.fleet.interval/1000/60} minutes`);
                 const updateFleetStatus = async () => {
                     client
                         .channels
