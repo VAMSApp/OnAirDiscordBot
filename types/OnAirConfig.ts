@@ -35,6 +35,13 @@ export type OnAirPollingsConfig = {
 export type OnAirConfig = {
     keys: OnAirApiConfig;
     enabled: boolean;
+    status: {
+        fleet: {
+            enabled: boolean,
+            interval: number;
+            channelId: string;
+        };
+    },
     sorting: {
         Members: string[];
         Flights: string[];
