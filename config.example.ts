@@ -11,6 +11,8 @@ const {
     DISCORD_CHANNELID,
     DISCORD_FLEET_STATUS_CHANNELID,
     DISCORD_FLIGHTS_STATUS_CHANNELID,
+    DISCORD_FBOS_STATUS_CHANNELID,
+    DISCORD_MEMBERS_STATUS_CHANNELID,
     ONAIR_COMPANYID,
     ONAIR_VAID,
     ONAIR_APIKEY,
@@ -24,6 +26,8 @@ if (!DISCORD_OWNERID) throw new Error('DISCORD_OWNERID is not set in .env');
 if (!DISCORD_CHANNELID) throw new Error('DISCORD_CHANNELID is not set in .env');
 if (!DISCORD_FLEET_STATUS_CHANNELID) throw new Error('DISCORD_FLEET_STATUS_CHANNELID is not set in .env');
 if (!DISCORD_FLIGHTS_STATUS_CHANNELID) throw new Error('DISCORD_FLIGHTS_STATUS_CHANNELID is not set in .env');
+if (!DISCORD_FBOS_STATUS_CHANNELID) throw new Error('DISCORD_FBOS_STATUS_CHANNELID is not set in .env');
+if (!DISCORD_MEMBERS_STATUS_CHANNELID) throw new Error('DISCORD_MEMBERS_STATUS_CHANNELID is not set in .env');
 if (!ONAIR_COMPANYID) throw new Error('ONAIR_COMPANYID is not set in .env');
 if (!ONAIR_VAID) throw new Error('ONAIR_VAID is not set in .env');
 if (!ONAIR_APIKEY) throw new Error('ONAIR_APIKEY is not set in .env');
@@ -60,13 +64,23 @@ const config:BotConfig = {
         status: {
             fleet: {
                 enabled: true,
-                interval: 60000, // time in milliseconds to wait before checking fleet status again
+                interval: 60, // time in seconds to wait before checking fleet status again, defaults to every 60 seconds
                 channelId: DISCORD_FLEET_STATUS_CHANNELID, // The channel to send fleet status messages to
             },
             flights: {
                 enabled: true,
-                interval: 60000, // time in milliseconds to wait before checking flights status again
+                interval: 60, // time in seconds to wait before checking flights status again, defaults to every 60 seconds
                 channelId: DISCORD_FLIGHTS_STATUS_CHANNELID, // The channel to send flights status messages to
+            },
+            fbos: {
+                enabled: true,
+                interval: 60, // time in seconds to wait before checking fbos status again, defaults to every 60 seconds
+                channelId: DISCORD_FBOS_STATUS_CHANNELID, // The channel to send fleet status messages to
+            },
+            members: {
+                enabled: true,
+                interval: 60,  // time in seconds to wait before checking members status again, defaults to every 60 seconds
+                channelId: DISCORD_MEMBERS_STATUS_CHANNELID, // The channel to send fleet status messages to
             }
         },
         keys: {

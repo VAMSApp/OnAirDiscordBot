@@ -1,6 +1,6 @@
 import { ILogger, IOnAir } from '.';
 import { BotConfig, Command } from '../types';
-import { Client, Collection } from 'discord.js';
+import { Channel, Client, Collection, TextChannel } from 'discord.js';
 
 export interface IBot {
     config: BotConfig;
@@ -14,5 +14,6 @@ export interface IBot {
     login(): void;
     onReady(): void;
     getChannelId(channelName: string): string;
+    getChannel(channelId:string): Promise<Channel|TextChannel|null>
     getRoleId(roleName: string): string;
 }

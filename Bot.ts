@@ -10,7 +10,7 @@ import Logger from '@/utils/Logger';
 import { BotConfig, Command, SlashCommand, } from '@/types';
 import { IBot, ILogger, IOnAir } from '@/interfaces';
 import OnAir from '@/OnAir';
-import { Channel, Client, Collection, Interaction, REST, Routes, TextChannel, } from 'discord.js';
+import { Channel, Client, Collection, Interaction, Message, REST, Routes, TextChannel, } from 'discord.js';
 import { FleetList, FlightsList, OnReadyMessage } from '@/messages';
 import { readdirSync } from 'fs';
 import path from 'path';
@@ -239,154 +239,29 @@ class Bot implements IBot {
             if (this.config.discord.onConnectNotice === true) {
                 const readyMsg:string = OnReadyMessage(username);
                 const onConnectNoticeChannelId:string = this.getChannelId('OnConnectNoticeChannel');
-
-                client
-                    .channels
-                    .fetch(onConnectNoticeChannelId)
-                    .then((channel:Channel|null) => {
-                        if (channel === null) {
-                            this.log.error(`Unable to find channel with id ${onConnectNoticeChannelId}`);
-                            return;
-                        }
-
-                        const c:TextChannel = channel as TextChannel;
-                        c.send(readyMsg);
-
-                    })
-                    .catch((err:Error) => {
-                        this.log.error(`Error sending OnConnectNotice: ${err}`);
-                    });
-            }
-            
-            // Execute immediately
-            if (this.config.onair.status.fleet.enabled) {
-                const fleetStatusChannelId:string|null = this.config.onair.status.fleet.channelId;
-
-                if (!fleetStatusChannelId) {
-                    this.log.error('Fleet status channel ID not found in config, exiting.');
+                const channel: TextChannel|null = await this.getChannel(onConnectNoticeChannelId) as TextChannel|null;
+                
+                if (channel === null) {
+                    this.log.error(`Unable to find channel with id ${onConnectNoticeChannelId}`);
                     return;
                 }
 
-                this.log.info(`Fleet status enabled, starting fleet status update. Future updates will run every ${this.config.onair.status.fleet.interval/1000/60} minutes`);
-                const updateFleetStatus = async () => {
-                    client
-                        .channels
-                        .fetch(fleetStatusChannelId)
-                        .then(async (channel:Channel|null) => {
-                            if (channel === null) {
-                                this.log.error(`Unable to find channel with id ${fleetStatusChannelId}`);
-                                return;
-                            }
-                            const c:TextChannel = channel as TextChannel;
-                            
-                            // Get the last message in the channel
-                            const messages = await c.messages.fetch({ limit: 1 });
-                            const lastMessage = messages.first();
-
-                            let msg = '';
-
-                            // Get and send new fleet status
-                            const vaFleet = await this.OnAir.getVAFleet();
-
-                            if (!vaFleet) msg = 'No fleet found';
-                
-                            msg = 'There ';
-                
-                            if (vaFleet.length <= 0) {
-                                msg += 'are no aircraft in the VA fleet yet';
-                            } else if (vaFleet.length == 1) {
-                                msg += `is ${vaFleet.length} aircraft currently in the VA fleet`;
-                            } else {
-                                msg += `are ${vaFleet.length} aircraft currently in the VA fleet`;
-                            }
-                
-                            const fleetList = FleetList(vaFleet);
-                            msg += `\n${fleetList}`;
-                            let formattedMessage = `\`\`\`\n${msg}\`\`\``;
-
-                            // If there's a last message, edit it. Otherwise, send a new message
-                            if (lastMessage) {
-                                await lastMessage.edit(formattedMessage);
-                            } else {
-                                await c.send(formattedMessage);
-                            }
-        
-                        })
-                        .catch((err:Error) => {
-                            this.log.error(`Error sending OnConnectNotice: ${err}`);
-                        });
-                };
-
-                // Execute immediately
-                updateFleetStatus();
-                // Then set up the interval
-                setInterval(updateFleetStatus, this.config.onair.status.fleet.interval);
+                await channel.send(readyMsg);
             }
 
-            if (this.config.onair.status.flights.enabled) {
-                const flightsStatusChannelId: string|null = this.config.onair.status.flights.channelId;
-
-                if (!flightsStatusChannelId) {
-                    this.log.error('Flights status channel ID not found in config, exiting.');
-                    return;
-                }
-                this.log.info(`Flights status enabled, starting flights status update. Future updates will run every ${this.config.onair.status.flights.interval/1000/60} minutes`);
-                const updateFlightsStatus = async () => {
-                    client
-                        .channels
-                        .fetch(flightsStatusChannelId)
-                        .then(async (channel:Channel|null) => {
-                            this.log.debug(`Updating flights status`);
-
-                            if (channel === null) {
-                                this.log.error(`Unable to find channel with id ${flightsStatusChannelId}`);
-                                return;
-                            }
-
-                            const c:TextChannel = channel as TextChannel;
-
-                            // Get the last message in the channel
-                            const messages = await c.messages.fetch({ limit: 1 });
-                            const lastMessage = messages.first();
-
-                            let msg = '';
-
-                            // Get and send new fleet status
-                            const x: OnAirFlight[] = await this.OnAir.getVAFlights();
-
-                            const slicedX:OnAirFlight[] = x.slice((1 - 1) * 10, 1 * 10);
-                            const flightsList:string|undefined = FlightsList(slicedX);
-
-                            if (slicedX.length <= 0) {
-                                msg += 'are no flights in progress';
-                            } else if (slicedX.length == 1) {
-                                msg += `is ${slicedX.length} flight currently in progress`;
-                            } else {
-                                msg += `are ${slicedX.length} flights currently in progress`;
-                            }
-                
-                            msg += `\n${flightsList}`;
-                            let formattedMessage = `\`\`\`\n${msg}\`\`\``;
-
-                            // If there's a last message, edit it. Otherwise, send a new message
-                            if (lastMessage) {
-                                await lastMessage.edit(formattedMessage);
-                            } else {
-                                await c.send(formattedMessage);
-                            }
-        
-                        })
-                        .catch((err:Error) => {
-                            this.log.error(`Error sending OnConnectNotice: ${err}`);
-                        });
-                }
-
-                // Execute immediately
-                updateFlightsStatus();
-                // Then set up the interval
-                setInterval(updateFlightsStatus, this.config.onair.status.flights.interval);
-            }
+            this.OnAir.loadVAStatusChannels();
         });
+    }
+
+    getChannel(channelId:string): Promise<Channel|null> {
+        const channel: Promise<Channel | null> = this.client.channels.fetch(channelId);
+
+        if (!channel) {
+            this.log.error(`Unable to find channel with id ${channelId}`);
+            return Promise.reject(null);
+        }
+
+        return Promise.resolve(channel);
     }
 
     /**

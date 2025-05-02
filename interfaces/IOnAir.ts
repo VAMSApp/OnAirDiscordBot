@@ -9,6 +9,7 @@ import {
     Company as OnAirCompany,
     VARole as OnAirVARole,
     People as OnAirEmployee,
+    Fbo as OnAirFbo,
     IOnAirApi,
 } from 'onair-api';
 import { OnAirApiQueryOptions, } from 'types';
@@ -18,8 +19,8 @@ import {
 } from '.';
 
 export interface IOnAir {
-    App:IBot;
-    Api:IOnAirApi;
+    bot:IBot;
+    api:IOnAirApi;
     VirtualAirline:OnAirVirtualAirline|null;
     Notifications:OnAirNotification[]|null;
     Members:OnAirMember[]|null;
@@ -43,6 +44,11 @@ export interface IOnAir {
     getVAFlights(opts?:OnAirApiQueryOptions): Promise<OnAirFlight[]>;
     getVAMembers(opts?:OnAirApiQueryOptions): Promise<OnAirMember[]>;
     getVANotifications(): Promise<OnAirNotification[]>;
-    loadVAFleet(): Promise<OnAirAircraft[]>;
+    getVAFBOs(): Promise<OnAirFbo[]>;
     getAircraftDetailByIdentifier(identifier:string): Promise<OnAirAircraft|undefined>;
+    refreshVAFleetStatusChannel(): Promise<void>;
+    refreshVAFlightsStatusChannel(): Promise<void>;
+    refreshVAFBOsStatusChannel(): Promise<void>;
+    refreshVAMembersStatusChannel(): Promise<void>;
+    loadVAStatusChannels(): Promise<void>
 }

@@ -3,13 +3,28 @@ import Table from 'easy-table';
 import { Member as OnAirMember } from 'onair-api';
 import { FormatNumberWithCommas } from '../utils/FormatNumber';
 
+function buildRoleName (role: string, permission: number) {
+    let emoji = '👤'; // default member emoji
+        
+    switch(permission) {
+        case 0:
+            emoji = '👑'; // crown for owner
+            break;
+        case 100: 
+            emoji = '👔'; // tie for manager
+            break;
+    }
+
+    return `${emoji} ${role}`;
+}
+
 export function MembersList (x:OnAirMember[]) {
     if (!x || x.length <= 0) return;
 
     const t = new Table;
     x.forEach(function (e:OnAirMember, i:number) {
         const companyName = `${e.Company.Name} (${e.Company.AirlineCode})`;
-        const role  = `${e.VARole.Name} (${e.VARole.Permission})`;
+        const role = buildRoleName(e.VARole.Name, e.VARole.Permission);
         const paxCargo = `${e.TotalPAXsTransported}/${FormatNumberWithCommas(e.TotalCargosTransportedLbs.toFixed(2))}`;
         const rep = `${(e.Company.Reputation*100).toFixed(2)}%`;
         const numFlights = e.NumberOfFlights;

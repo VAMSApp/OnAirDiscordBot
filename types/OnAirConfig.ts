@@ -32,21 +32,23 @@ export type OnAirPollingsConfig = {
     VAMembers: OnAirPollingConfig;
 };
 
+export type OnAirStatusType = {
+    enabled: boolean;
+    interval: number;
+    channelId: string|null;
+}
+
+export type OnAirStatus = {
+    fleet?: OnAirStatusType;
+    flights?: OnAirStatusType;
+    fbos?: OnAirStatusType;
+    members?: OnAirStatusType;
+}
+
 export type OnAirConfig = {
     keys: OnAirApiConfig;
     enabled: boolean;
-    status: {
-        fleet: {
-            enabled: boolean,
-            interval: number;
-            channelId: string|null;
-        },
-        flights: {
-            enabled: boolean,
-            interval: number;
-            channelId: string|null;
-        }
-    },
+    status?: OnAirStatus;
     sorting: {
         Members: string[];
         Flights: string[];
