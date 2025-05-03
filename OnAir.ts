@@ -17,7 +17,7 @@ import OnAirApi, {
 } from 'onair-api';
 import { ILogger, IOnAir, IBot, } from './interfaces';
 import { OnAirApiConfig, OnAirApiQueryOptions, OnAirConfig, OnAirStatus, OnAirStatusType, VirtualAirline } from './types';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, Status, TextChannel } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, Collection, Message, Status, TextChannel } from 'discord.js';
 import { FBOList, FleetList, FlightsList, MembersList } from './messages';
 
 export type ProcessRecordError = {
@@ -502,7 +502,7 @@ class OnAir implements IOnAir {
             
             const generatePageContent = (page: number) => {
                 let msg = '';
-                const perPage = 10;
+                const perPage = status.pageSize || 10;
                 const slicedFlights = x.slice((page - 1) * perPage, page * perPage);
                 const totalPages = Math.ceil(x.length / perPage);
                 
@@ -554,7 +554,7 @@ class OnAir implements IOnAir {
 
             // Create button collector
             const collector = message.createMessageComponentCollector({ 
-                time: refreshInterval 
+                time: refreshInterval * 1000 // Convert seconds to milliseconds
             });
 
             let currentPage = initialPage;
@@ -616,10 +616,22 @@ class OnAir implements IOnAir {
             return;
         }
 
-        const refreshInterval = status.interval;
+        const refreshInterval = status.interval * 1000 || 60000;
 
         const refreshIntervalInMin = refreshInterval / 60;
         this.log.info(`VA FBOs Status refresh enabled. Starting the first VA status refresh now, future refreshes will run every ${refreshIntervalInMin} ${(refreshIntervalInMin > 1) ? 'minutes.' : 'minute.'}`);
+
+        // const channel: TextChannel | null = await this.bot.getChannel(fbosStatusChannelId) as TextChannel | null;
+        // // delete all messages in the channel on first run.
+        // if (channel === null) {
+        //     this.log.error(`Unable to find channel with id ${fbosStatusChannelId}`);
+        //     return;
+        // }
+
+        // const messages: Collection<string, Message<true>> = await channel.messages.fetch({ limit: 100 });
+        // messages.forEach(async (message: Message<true>) => {
+        //     await message.delete();
+        // });
 
         const updateFBOsStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(fbosStatusChannelId) as TextChannel | null;
@@ -633,32 +645,98 @@ class OnAir implements IOnAir {
             const messages = await channel.messages.fetch({ limit: 1 });
             const lastMessage = messages.first();
 
-            let msg = '';
-
             // Get and send new fleet status
             const x: OnAirFbo[] = await this.getVAFBOs();
-            const slicedX:OnAirFbo[] = x.slice((1 - 1) * 10, 1 * 10);
-            const fboList = FBOList(slicedX);
 
-            if (x.length <= 0) {
-                msg += 'The VA does not currently own any FBOs.';
-            } else if (x.length == 1) {
-                msg += `The VA owns ${x.length} FBO.`;
-            } else {
-                msg += `The VA owns ${x.length} FBOs.`;
-            }
-            msg += `\n\n${fboList}`;
+            const generatePageContent = (page: number) => {
+                let msg = '';
+                const perPage = status.pageSize || 5;
+                const slicedFBOs = x.slice((page - 1) * perPage, page * perPage);
+                const totalPages = Math.ceil(x.length / perPage);
+                
+                const fboList = FBOList(slicedFBOs);
 
-            msg = this.addStatusFooter(msg, status);
+                if (x.length <= 0) {
+                    msg += 'The VA does not currently own any FBOs.';
+                } else if (x.length == 1) {
+                    msg += `The VA owns ${x.length} FBO.`;
+                } else {
+                    msg += `The VA owns ${x.length} FBOs.`;
+                }
 
-            let formattedMessage = `\`\`\`\n${msg}\`\`\``;
+                msg += ` (Page ${page} of ${totalPages})`;
+                msg += `\n\n${fboList}`;
+                msg = this.addStatusFooter(msg, status);
+                
+                return `\`\`\`\n${msg}\`\`\``;
+            };
+
+            // Create pagination buttons
+            const row = new ActionRowBuilder<ButtonBuilder>()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('first')
+                        .setLabel('⏮️ First')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId('previous')
+                        .setLabel('◀️ Previous')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId('next')
+                        .setLabel('Next ▶️')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId('last')
+                        .setLabel('Last ⏭️')
+                        .setStyle(ButtonStyle.Primary)
+                );
+
+            const initialPage = 1;
+            const content = generatePageContent(initialPage);
 
             // If there's a last message, edit it. Otherwise, send a new message
-            if (lastMessage) {
-                await lastMessage.edit(formattedMessage);
-            } else {
-                await channel.send(formattedMessage);
-            }
+            const message = lastMessage ? 
+                await lastMessage.edit({ content, components: [row] }) :
+                await channel.send({ content, components: [row] });
+
+            // Create button collector
+            const collector = message.createMessageComponentCollector({ 
+                time: refreshInterval
+            });
+
+            let currentPage = initialPage;
+            const totalPages = Math.ceil(x.length / 10);
+
+            collector.on('collect', async interaction => {
+                switch(interaction.customId) {
+                    case 'first':
+                        currentPage = 1;
+                        break;
+                    case 'previous':
+                        currentPage = Math.max(1, currentPage - 1);
+                        break;
+                    case 'next':
+                        currentPage = Math.min(totalPages, currentPage + 1);
+                        break;
+                    case 'last':
+                        currentPage = totalPages;
+                        break;
+                }
+
+                await interaction.update({ 
+                    content: generatePageContent(currentPage),
+                    components: [row]
+                });
+            });
+
+            collector.on('end', () => {
+                // Remove buttons when collector expires
+                message.edit({ 
+                    content: generatePageContent(currentPage),
+                    components: [] 
+                });
+            });
         }
 
         // Execute immediately
@@ -690,7 +768,7 @@ class OnAir implements IOnAir {
 
         const refreshIntervalInMin = refreshInterval / 1000 / 60; // convert to minutes
         this.log.info(`VA Members Status refresh enabled. Starting the first VA status refresh now, future refreshes will run every ${refreshIntervalInMin} ${(refreshIntervalInMin > 1) ? 'minutes.' : 'minute.'}`);
-        
+
         const updateMembersStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(membersStatusChannelId) as TextChannel | null;
             if (channel === null) {
