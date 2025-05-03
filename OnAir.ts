@@ -690,6 +690,7 @@ class OnAir implements IOnAir {
 
         const refreshIntervalInMin = refreshInterval / 1000 / 60; // convert to minutes
         this.log.info(`VA Members Status refresh enabled. Starting the first VA status refresh now, future refreshes will run every ${refreshIntervalInMin} ${(refreshIntervalInMin > 1) ? 'minutes.' : 'minute.'}`);
+        
         const updateMembersStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(membersStatusChannelId) as TextChannel | null;
             if (channel === null) {
@@ -702,15 +703,50 @@ class OnAir implements IOnAir {
             let msg = '';
             // Get and send new fleet status
             const x: OnAirMember[] = await this.getVAMembers();
-            const slicedX:OnAirMember[] = x.slice((1 - 1) * 10, 1 * 10);
-            const membersList:string|undefined = MembersList(slicedX);
-            if (slicedX.length <= 0) {
+            
+            // Get sort column from config if specified, default to company name
+            const sortColumn = (status as OnAirStatusType).sortColumn || 'Company';
+            
+            // Sort members array based on the specified column
+            x.sort((a, b) => {
+                switch(sortColumn) {
+                    case 'Role':
+                        return a.VARole.Permission - b.VARole.Permission;
+                    case 'Reputation':
+                        return b.Company.Reputation - a.Company.Reputation;
+                    case 'Flights':
+                        return b.NumberOfFlights - a.NumberOfFlights;
+                    case 'Hours':
+                        return b.FlightHours - a.FlightHours;
+                    case 'LastFlight':
+                        return new Date(b.LastVAFlightDate).getTime() - new Date(a.LastVAFlightDate).getTime();
+                    case 'Pax':
+                        // Sort by total passengers transported
+                        return b.TotalPAXsTransported - a.TotalPAXsTransported;
+                    case 'Cargo':
+                        // Sort by total cargo transported
+                        return b.TotalCargosTransportedLbs - a.TotalCargosTransportedLbs;
+                    case 'Pax & Cargo':
+                        // Sort by combined total of passengers and cargo
+                        const totalA = a.TotalPAXsTransported + a.TotalCargosTransportedLbs;
+                        const totalB = b.TotalPAXsTransported + b.TotalCargosTransportedLbs;
+                        return totalB - totalA;
+                    case 'Company':
+                    default:
+                        return a.Company.Name.localeCompare(b.Company.Name);
+                }
+            });
+
+            const membersList:string|undefined = MembersList(x);
+
+            if (x.length <= 0) {
                 msg += 'There are no members in the VA.';
-            } else if (slicedX.length == 1) {
-                msg += `There is ${slicedX.length} member in the VA.`;
+            } else if (x.length == 1) {
+                msg += `There is ${x.length} member in the VA. (Sorted by ${sortColumn})`;
             } else {
-                msg += `There are ${slicedX.length} members in the VA.`;
+                msg += `There are ${x.length} members in the VA. (Sorted by ${sortColumn})`;
             }
+
             msg += `\n\n${membersList}`;
             msg = this.addStatusFooter(msg, status);
             let formattedMessage = `\`\`\`\n${msg}\`\`\``;
@@ -729,6 +765,11 @@ class OnAir implements IOnAir {
     }
 
     async loadVAStatusChannels(): Promise<void> {
+        if (!this.config.status) {
+            this.log.debug('loadVAStatusChannels()::skipping, status config is missing. Check the config.ts file.');
+            return;
+        }
+        
         this.refreshVAFleetStatusChannel();
         this.refreshVAFlightsStatusChannel();
         this.refreshVAFBOsStatusChannel();

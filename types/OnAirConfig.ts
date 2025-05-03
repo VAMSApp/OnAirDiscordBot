@@ -36,6 +36,7 @@ export type OnAirStatusType = {
     enabled: boolean;
     interval: number;
     channelId: string|null;
+    sortColumn?: string;
 }
 
 export type OnAirStatus = {

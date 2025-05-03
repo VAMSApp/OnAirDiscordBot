@@ -66,21 +66,25 @@ const config:BotConfig = {
                 enabled: true,
                 interval: 60, // time in seconds to wait before checking fleet status again, defaults to every 60 seconds
                 channelId: DISCORD_FLEET_STATUS_CHANNELID, // The channel to send fleet status messages to
+                sortColumn: 'Company',
             },
             flights: {
                 enabled: true,
                 interval: 60, // time in seconds to wait before checking flights status again, defaults to every 60 seconds
                 channelId: DISCORD_FLIGHTS_STATUS_CHANNELID, // The channel to send flights status messages to
+                sortColumn: 'Company',
             },
             fbos: {
                 enabled: true,
                 interval: 60, // time in seconds to wait before checking fbos status again, defaults to every 60 seconds
                 channelId: DISCORD_FBOS_STATUS_CHANNELID, // The channel to send fleet status messages to
+                sortColumn: 'Company',
             },
             members: {
                 enabled: true,
                 interval: 60,  // time in seconds to wait before checking members status again, defaults to every 60 seconds
                 channelId: DISCORD_MEMBERS_STATUS_CHANNELID, // The channel to send fleet status messages to
+                sortColumn: 'Role',
             }
         },
         keys: {
