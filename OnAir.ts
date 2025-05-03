@@ -407,9 +407,8 @@ class OnAir implements IOnAir {
         const refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
 
         const refreshIntervalInMin = refreshInterval / 1000 / 60; // convert to minutes
-        this.log.info(`VA Fleet status refresh enabled. Starting the first VA fleet status refresh now, future refreshes will run every ${refreshIntervalInMin} ${(refreshIntervalInMin > 1) ? 'minutes.' : 'minute.'}`);
+        this.log.info(`VA Fleet status refresh enabled. Starting the first VA fleet status refresh now, future refreshes will run every ${(refreshIntervalInMin > 1) ? `${refreshIntervalInMin} minutes.` : 'minute.'}`);
 
-        
         const refreshVAFleetStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(fleetStatusChannelId) as TextChannel | null;
     
@@ -483,7 +482,7 @@ class OnAir implements IOnAir {
         const refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
 
         const refreshIntervalInMin = refreshInterval / 1000 / 60; // convert to minutes
-        this.log.info(`VA Flights Status refresh enabled. Starting the first VA status refresh now, future refreshes will run every ${refreshIntervalInMin} ${(refreshIntervalInMin > 1) ? 'minutes.' : 'minute.'}`);
+        this.log.info(`VA Flights Status refresh enabled. Starting the first VA Flights refresh now, future refreshes will run every ${(refreshIntervalInMin > 1) ? `${refreshIntervalInMin} minutes.` : 'minute.'}`);
 
         const updateFlightsStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(flightsStatusChannelId) as TextChannel | null;
@@ -618,8 +617,8 @@ class OnAir implements IOnAir {
 
         const refreshInterval = status.interval * 1000 || 60000;
 
-        const refreshIntervalInMin = refreshInterval / 60;
-        this.log.info(`VA FBOs Status refresh enabled. Starting the first VA status refresh now, future refreshes will run every ${refreshIntervalInMin} ${(refreshIntervalInMin > 1) ? 'minutes.' : 'minute.'}`);
+        const refreshIntervalInMin = refreshInterval / 1000 / 60; // convert to minutes
+        this.log.info(`VA FBOs Status refresh enabled. Starting the first VA FBO refresh now, future refreshes will run every ${(refreshIntervalInMin > 1) ? `${refreshIntervalInMin} minutes.` : 'minute.'}`);
 
         // const channel: TextChannel | null = await this.bot.getChannel(fbosStatusChannelId) as TextChannel | null;
         // // delete all messages in the channel on first run.
@@ -640,6 +639,7 @@ class OnAir implements IOnAir {
                 this.log.error(`Unable to find channel with id ${fbosStatusChannelId}`);
                 return;
             }
+            this.log.info(`refreshVAFBOsStatusChannel()::refreshing FBOs status in channel #${channel.name}`);
 
             // Get the last message in the channel
             const messages = await channel.messages.fetch({ limit: 1 });
@@ -667,6 +667,12 @@ class OnAir implements IOnAir {
                 msg += ` (Page ${page} of ${totalPages})`;
                 msg += `\n\n${fboList}`;
                 msg = this.addStatusFooter(msg, status);
+                msg += `\n\nLegend:`;
+                msg += `\n- 🚧: Workshop Under Construction`
+                msg += `\n- ✅: Fuel Selling Enabled`
+                msg += `\n- ❌: Fuel Selling Disabled`
+                msg += `\n- ⛽: 100LL Fuel`
+                msg += `\n- ✈️⛽: Jet Fuel`
                 
                 return `\`\`\`\n${msg}\`\`\``;
             };
@@ -767,7 +773,7 @@ class OnAir implements IOnAir {
         const refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
 
         const refreshIntervalInMin = refreshInterval / 1000 / 60; // convert to minutes
-        this.log.info(`VA Members Status refresh enabled. Starting the first VA status refresh now, future refreshes will run every ${refreshIntervalInMin} ${(refreshIntervalInMin > 1) ? 'minutes.' : 'minute.'}`);
+        this.log.info(`VA Members Status refresh enabled. Starting the first VA status refresh now, future refreshes will run every ${(refreshIntervalInMin > 1) ? `${refreshIntervalInMin} minutes.` : 'minute.'}`);
 
         const updateMembersStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(membersStatusChannelId) as TextChannel | null;
@@ -786,7 +792,7 @@ class OnAir implements IOnAir {
             const sortColumn = (status as OnAirStatusType).sortColumn || 'Company';
             
             // Sort members array based on the specified column
-            x.sort((a, b) => {
+            const sortedX = x.sort((a, b) => {
                 switch(sortColumn) {
                     case 'Role':
                         return a.VARole.Permission - b.VARole.Permission;
@@ -815,7 +821,7 @@ class OnAir implements IOnAir {
                 }
             });
 
-            const membersList:string|undefined = MembersList(x);
+            const membersList:string|undefined = MembersList(sortedX);
 
             if (x.length <= 0) {
                 msg += 'There are no members in the VA.';
