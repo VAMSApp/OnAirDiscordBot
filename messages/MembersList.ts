@@ -36,7 +36,7 @@ export function MembersList (x:OnAirMember[]) {
         t.cell('Cargo', totalCargo);
         t.cell('Total Earned Credits', totalEarnedCredits);
         t.cell('Rep', rep);
-        t.cell('Total # Flights (Flight Hours)', `${numFlights} (${flightHours.toFixed(2)})`);
+        t.cell('# Flights (hrs)', `${numFlights} (${flightHours.toFixed(2)})`);
         t.cell('Last VA Flight', humanizedLastFlight);
         // t.cell('Last Flight', humanizedLastFlight);
         t.newRow();
