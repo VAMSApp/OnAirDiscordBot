@@ -36,7 +36,14 @@ export function FBOList (x:OnAirFbo[]):string|void {
         t.newRow();
     });
     
-    response = t.toString();
+    const tableStr = t.toString();
+    response += `\n\n${tableStr}`;
+    response += `\nLegend:`;
+    response += `\n- 🚧: Workshop Under Construction`
+    response += `\n- ✅: Fuel Selling Enabled`
+    response += `\n- ❌: Fuel Selling Disabled`
+    response += `\n- ⛽: 100LL Fuel`
+    response += `\n- ✈️⛽: Jet Fuel`
     
     return response;
 }

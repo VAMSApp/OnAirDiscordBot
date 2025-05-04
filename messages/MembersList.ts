@@ -7,6 +7,7 @@ import { BuildVARoleName } from '@/lib';
 export function MembersList (x:OnAirMember[]) {
 
     if (!x || x.length <= 0) return;
+    let response = '';
 
     const t = new Table;
     x.forEach(function (e:OnAirMember, i:number) {
@@ -41,6 +42,8 @@ export function MembersList (x:OnAirMember[]) {
         // t.cell('Last Flight', humanizedLastFlight);
         t.newRow();
     });
-    
-    return t.toString();
+    const tableStr = t.toString();
+
+    response += `\n${tableStr}`;
+    return response;
 }

@@ -197,23 +197,6 @@ class Bot implements IBot {
     }
 
     /**
-     * getChannelId()
-     * Gets the channel ID from the config file
-     * 
-     * by a given channel name.
-     * @param channelName string | The name of the channel to get the ID for
-     * @returns string
-     */
-    getChannelId(channelName:string):string {
-        if (!this.config.discord) {
-            throw new Error('No Discord config provided, exiting.');
-        }
-
-        const channelId:string = this.config.discord.channels[channelName];
-        return channelId;
-    }
-
-    /**
      * onReady()
      * Handles the onReady event for the Discord client
      * 
@@ -236,23 +219,48 @@ class Bot implements IBot {
                 throw new Error('No Discord config provided, exiting.');
             }
 
-            if (this.config.discord.onConnectNotice === true) {
-                const readyMsg:string = OnReadyMessage(username);
-                const onConnectNoticeChannelId:string = this.getChannelId('OnConnectNoticeChannel');
-                const channel: TextChannel|null = await this.getChannel(onConnectNoticeChannelId) as TextChannel|null;
-                
-                if (channel === null) {
-                    this.log.error(`Unable to find channel with id ${onConnectNoticeChannelId}`);
-                    return;
-                }
+            this.OnAir.loadVAStatusChannels();
 
-                await channel.send(readyMsg);
+            if (this.config.discord.onConnectNotice === true) {
+                this.sendOnConnectNotice();
             }
 
-            this.OnAir.loadVAStatusChannels();
+            return;
         });
     }
 
+    async sendOnConnectNotice(): Promise<void> {
+        const readyMsg:string = OnReadyMessage(this.client.user?.username || 'OnAirTrackerBot');
+
+        const onConnectNoticeChannelId:string|undefined = this.config.discord.onConnectNoticeChannelId;
+        if (!onConnectNoticeChannelId) {
+            this.log.error('No channel ID provided for onConnectNotice, exiting.');
+            return;
+        }
+
+        const channel: TextChannel|null = await this.getChannel(onConnectNoticeChannelId) as TextChannel|null;
+        
+        if (channel === null) {
+            this.log.error(`Unable to find channel with id ${onConnectNoticeChannelId}`);
+            return;
+        }
+        
+        const onConnectNoticeAutoDelete:boolean = this.config.discord.onConnectNoticeAutoDelete;
+        const onConnectNoticeAutoDeleteAfter:number = this.config.discord.onConnectNoticeAutoDeleteAfter || 10000;
+
+        this.log.info(`Sending onConnectNotice to channel ${channel.name} (${channel.id}).`);
+        const msg:Message = await channel.send(readyMsg);
+
+        if (onConnectNoticeAutoDelete) {
+            this.log.info(`Will auto delete the onConnectNotice message after ${onConnectNoticeAutoDeleteAfter}ms.`);
+            setTimeout(() => {
+                msg.delete();
+                this.log.info(`Deleted onConnectNotice message after ${onConnectNoticeAutoDeleteAfter}ms.`);
+            }, onConnectNoticeAutoDeleteAfter);
+        }
+        return;
+    }
+    
     getChannel(channelId:string): Promise<Channel|null> {
         const channel: Promise<Channel | null> = this.client.channels.fetch(channelId);
 

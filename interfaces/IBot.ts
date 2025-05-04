@@ -13,7 +13,6 @@ export interface IBot {
     deployCommands(): Promise<void>;
     login(): void;
     onReady(): void;
-    getChannelId(channelName: string): string;
     getChannel(channelId:string): Promise<Channel|TextChannel|null>
     getRoleId(roleName: string): string;
 }

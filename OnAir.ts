@@ -19,6 +19,7 @@ import { ILogger, IOnAir, IBot, } from './interfaces';
 import { OnAirApiConfig, OnAirApiQueryOptions, OnAirConfig, OnAirStatus, OnAirStatusType, VirtualAirline } from './types';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, Collection, Message, Status, TextChannel } from 'discord.js';
 import { FBOList, FleetList, FlightsList, MembersList } from './messages';
+import { FormatTimeInterval } from './utils';
 
 export type ProcessRecordError = {
     error?: Error|string|null;
@@ -31,14 +32,14 @@ class OnAir implements IOnAir {
     public log:ILogger;
     public api:OnAirApi;
     public VirtualAirline:OnAirVirtualAirline|null = null;
-    public _VirtualAirline:VirtualAirline|null = null;
     public Notifications:OnAirNotification[]|null = null;
     public Members:OnAirMember[]|null = null;
     public Flights:OnAirFlight[]|null = null;
     public Jobs:OnAirJob[]|null = null;
     public Fleet:OnAirAircraft[] = [];
     public VARoles:OnAirVARole[] = [];
-    
+    public FBOs:OnAirFbo[] = [];
+
     constructor(config:OnAirConfig, app:IBot) {
         if (!config) throw new Error('No OnAir config provided, exiting.');
         if (!app) throw new Error('No Bot Context provided, exiting.');
@@ -404,10 +405,14 @@ class OnAir implements IOnAir {
             return;
         }
         
-        const refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
+        let refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
 
-        const refreshIntervalInMin = refreshInterval / 1000 / 60; // convert to minutes
-        this.log.info(`VA Fleet status refresh enabled. Starting the first VA fleet status refresh now, future refreshes will run every ${(refreshIntervalInMin > 1) ? `${refreshIntervalInMin} minutes.` : 'minute.'}`);
+        if (refreshInterval < 30000) {
+            this.log.warn(`VA Fleet refresh interval is too short (${status.interval}s), setting to minimum of 30 seconds.`);
+            refreshInterval = 30000;
+        }
+
+        this.log.info(`VA Fleet status refresh enabled. Starting the first VA fleet status refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
 
         const refreshVAFleetStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(fleetStatusChannelId) as TextChannel | null;
@@ -424,7 +429,9 @@ class OnAir implements IOnAir {
             let msg = '';
 
             // Get and send new fleet status
-            const vaFleet = await this.getVAFleet();
+            this.Fleet = await this.getVAFleet();
+
+            let vaFleet:OnAirAircraft[] = this.Fleet;
 
             if (!vaFleet) msg = 'No fleet found';
 
@@ -479,10 +486,14 @@ class OnAir implements IOnAir {
             return;
         }
 
-        const refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
+        let refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
 
-        const refreshIntervalInMin = refreshInterval / 1000 / 60; // convert to minutes
-        this.log.info(`VA Flights Status refresh enabled. Starting the first VA Flights refresh now, future refreshes will run every ${(refreshIntervalInMin > 1) ? `${refreshIntervalInMin} minutes.` : 'minute.'}`);
+        if (refreshInterval < 30000) {
+            this.log.warn(`VA Flights refresh interval is too short (${status.interval}s), setting to minimum of 30 seconds.`);
+            refreshInterval = 30000;
+        }
+
+        this.log.info(`VA Flights Status refresh enabled. Starting the first VA Flights refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
 
         const updateFlightsStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(flightsStatusChannelId) as TextChannel | null;
@@ -497,8 +508,10 @@ class OnAir implements IOnAir {
             const lastMessage = messages.first();
 
             // Get flights data
-            const x: OnAirFlight[] = await this.getVAFlights();
-            
+            this.Flights = await this.getVAFlights();
+
+            const x: OnAirFlight[] = this.Flights;
+
             const generatePageContent = (page: number) => {
                 let msg = '';
                 const perPage = status.pageSize || 10;
@@ -615,10 +628,13 @@ class OnAir implements IOnAir {
             return;
         }
 
-        const refreshInterval = status.interval * 1000 || 60000;
+        let refreshInterval = status.interval * 1000 || 60000;
+        if (refreshInterval < 30000) {
+            this.log.warn(`VA FBOs refresh interval is too short (${status.interval}s), setting to minimum of 30 seconds.`);
+            refreshInterval = 30000;
+        }
 
-        const refreshIntervalInMin = refreshInterval / 1000 / 60; // convert to minutes
-        this.log.info(`VA FBOs Status refresh enabled. Starting the first VA FBO refresh now, future refreshes will run every ${(refreshIntervalInMin > 1) ? `${refreshIntervalInMin} minutes.` : 'minute.'}`);
+        this.log.info(`VA FBOs Status refresh enabled. Starting the first VA FBO refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
 
         // const channel: TextChannel | null = await this.bot.getChannel(fbosStatusChannelId) as TextChannel | null;
         // // delete all messages in the channel on first run.
@@ -646,7 +662,9 @@ class OnAir implements IOnAir {
             const lastMessage = messages.first();
 
             // Get and send new fleet status
-            const x: OnAirFbo[] = await this.getVAFBOs();
+            this.FBOs = await this.getVAFBOs();
+
+            const x: OnAirFbo[] = this.FBOs;
 
             const generatePageContent = (page: number) => {
                 let msg = '';
@@ -665,14 +683,8 @@ class OnAir implements IOnAir {
                 }
 
                 msg += ` (Page ${page} of ${totalPages})`;
-                msg += `\n\n${fboList}`;
+                msg += fboList;
                 msg = this.addStatusFooter(msg, status);
-                msg += `\n\nLegend:`;
-                msg += `\n- 🚧: Workshop Under Construction`
-                msg += `\n- ✅: Fuel Selling Enabled`
-                msg += `\n- ❌: Fuel Selling Disabled`
-                msg += `\n- ⛽: 100LL Fuel`
-                msg += `\n- ✈️⛽: Jet Fuel`
                 
                 return `\`\`\`\n${msg}\`\`\``;
             };
@@ -770,10 +782,14 @@ class OnAir implements IOnAir {
             return;
         }
 
-        const refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
+        let refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
 
-        const refreshIntervalInMin = refreshInterval / 1000 / 60; // convert to minutes
-        this.log.info(`VA Members Status refresh enabled. Starting the first VA status refresh now, future refreshes will run every ${(refreshIntervalInMin > 1) ? `${refreshIntervalInMin} minutes.` : 'minute.'}`);
+        if (refreshInterval < 30000) {
+            this.log.warn(`VA Members refresh interval is too short (${refreshInterval}ms), setting to 30 seconds.`);
+            refreshInterval = 3000;
+        }
+
+        this.log.info(`VA Members Status refresh enabled. Starting the first VA status refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
 
         const updateMembersStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(membersStatusChannelId) as TextChannel | null;
@@ -781,12 +797,16 @@ class OnAir implements IOnAir {
                 this.log.error(`Unable to find channel with id ${membersStatusChannelId}`);
                 return;
             }
+
             // Get the last message in the channel
             const messages = await channel.messages.fetch({ limit: 1 });
             const lastMessage = messages.first();
             let msg = '';
+
             // Get and send new fleet status
-            const x: OnAirMember[] = await this.getVAMembers();
+            this.Members = await this.getVAMembers();
+
+            const x: OnAirMember[] = this.Members;
             
             // Get sort column from config if specified, default to company name
             const sortColumn = (status as OnAirStatusType).sortColumn || 'Company';
@@ -831,7 +851,7 @@ class OnAir implements IOnAir {
                 msg += `There are ${x.length} members in the VA. (Sorted by ${sortColumn})`;
             }
 
-            msg += `\n\n${membersList}`;
+            msg += membersList;
             msg = this.addStatusFooter(msg, status);
             let formattedMessage = `\`\`\`\n${msg}\`\`\``;
             // If there's a last message, edit it. Otherwise, send a new message
@@ -866,14 +886,8 @@ class OnAir implements IOnAir {
         const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' } as Intl.DateTimeFormatOptions;
         const dateTimeString = date.toLocaleDateString('en-US', options).replace(', ', ' ');
 
-        const refreshIntervalInMin = interval / 60;
-        let msgInterval = '';
-
-        if (refreshIntervalInMin > 1) {
-            msgInterval = `Every ${refreshIntervalInMin} minutes`;
-        } else {
-            msgInterval = 'Every minute';
-        }
+        let msgInterval = `Every ${FormatTimeInterval(interval*1000)}`;
+        msg += '\n----';
         msg += `\nLast refreshed: ${dateTimeString}`;
         msg += `\nRefresh interval: ${msgInterval}`;
 

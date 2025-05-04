@@ -9,11 +9,9 @@ export type DiscordConfig = {
     onConnectNotice: boolean;
     onConnectNoticeAutoDelete: boolean;
     onConnectNoticeAutoDeleteAfter: number;
+    onConnectNoticeChannelId?: string|undefined;
     intents: GatewayIntentBits[];
-    owners: string[];
-    channels: {
-        [key: string]: string;
-    };
+    owner: string;
     roles: RoleList|undefined;
 }
 

@@ -4,7 +4,12 @@ import { DetermineAircraftStatus, } from '../lib';
 
 export function FleetList (x:OnAirAircraft[]) {
     if (!x) return;
-    if (x.length <= 0) return 'No aircraft in fleet';
+    let response = '';
+
+    if (x.length <= 0) {
+        response = 'No aircraft in fleet';
+        return response;
+    }
 
     const t = new Table;
     
@@ -31,5 +36,9 @@ export function FleetList (x:OnAirAircraft[]) {
         
     });
 
+    
+    const tableStr = t.toString();
+    response += `\n\n${tableStr}`;
+    
     return t.toString();
 }
