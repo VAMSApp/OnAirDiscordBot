@@ -12,7 +12,7 @@ import { IBot, ILogger, IOnAir } from '@/interfaces';
 import OnAir from '@/OnAir';
 import { Channel, Client, Collection, Interaction, Message, REST, Routes, TextChannel, } from 'discord.js';
 import { FleetList, FlightsList, OnReadyMessage } from '@/messages';
-import { readdirSync } from 'fs';
+import { read, readdirSync } from 'fs';
 import path from 'path';
 import { eachSeries } from 'async';
 import { Flight as OnAirFlight, Aircraft as OnAirAircraft } from 'onair-api';
@@ -230,8 +230,10 @@ class Bot implements IBot {
     }
 
     async sendOnConnectNotice(): Promise<void> {
-        const readyMsg:string = OnReadyMessage(this.client.user?.username || 'OnAirTrackerBot');
-
+        let msg = '';
+        let readyMsg:string = OnReadyMessage(this.client.user?.username || 'OnAirTrackerBot');
+        msg += readyMsg;
+        
         const onConnectNoticeChannelId:string|undefined = this.config.discord.onConnectNoticeChannelId;
         if (!onConnectNoticeChannelId) {
             this.log.error('No channel ID provided for onConnectNotice, exiting.');
@@ -246,18 +248,44 @@ class Bot implements IBot {
         }
         
         const onConnectNoticeAutoDelete:boolean = this.config.discord.onConnectNoticeAutoDelete;
-        const onConnectNoticeAutoDeleteAfter:number = this.config.discord.onConnectNoticeAutoDeleteAfter || 10000;
+        const onConnectNoticeAutoDeleteAfter:number = this.config.discord.onConnectNoticeAutoDeleteAfter || 60000;
 
-        this.log.info(`Sending onConnectNotice to channel ${channel.name} (${channel.id}).`);
-        const msg:Message = await channel.send(readyMsg);
+        if (onConnectNoticeAutoDelete && onConnectNoticeAutoDeleteAfter ) {
+            msg += `\n\nThis message will self-destruct in ${onConnectNoticeAutoDeleteAfter/1000} seconds.`;
+        }
+
+        this.log.info(`Sending onConnectNotice to channel '${channel.name}' (${channel.id}).`);
+        const message:Message = await channel.send(msg);
+
+        let intervalId: NodeJS.Timeout | string | number | undefined = undefined;
 
         if (onConnectNoticeAutoDelete) {
-            this.log.info(`Will auto delete the onConnectNotice message after ${onConnectNoticeAutoDeleteAfter}ms.`);
+            this.log.info(`Will auto delete the onConnectNotice message after ${onConnectNoticeAutoDeleteAfter/1000} seconds.`);
+            // update the number of seconds left every second
+            if (onConnectNoticeAutoDeleteAfter >= 10000) {
+                let deleteIntervalInSeconds = onConnectNoticeAutoDeleteAfter/1000;
+
+                intervalId = setInterval(() => {
+                    const secondsLeft:number = deleteIntervalInSeconds--;
+
+                    if (secondsLeft <= 0) {
+                        clearInterval(intervalId);
+                    } else {
+                        msg = readyMsg;
+                        msg += `\n\nThis message will self-destruct in ${secondsLeft} seconds.`;
+
+                        message.edit(msg);
+                    }
+                }, 1000);
+            }
+
             setTimeout(() => {
-                msg.delete();
-                this.log.info(`Deleted onConnectNotice message after ${onConnectNoticeAutoDeleteAfter}ms.`);
+                message.delete();
+                clearInterval(intervalId);
+                this.log.info(`Deleted onConnectNotice message after ${onConnectNoticeAutoDeleteAfter/1000} seconds.`);
             }, onConnectNoticeAutoDeleteAfter);
         }
+
         return;
     }
     
