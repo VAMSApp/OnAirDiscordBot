@@ -488,9 +488,9 @@ class OnAir implements IOnAir {
 
         let refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
 
-        if (refreshInterval < 30000) {
-            this.log.warn(`VA Flights refresh interval is too short (${status.interval}s), setting to minimum of 30 seconds.`);
-            refreshInterval = 30000;
+        if (refreshInterval < 15000) {
+            this.log.warn(`VA Flights refresh interval is too short (${status.interval}s), setting to minimum of 15 seconds.`);
+            refreshInterval = 15000;
         }
 
         this.log.info(`VA Flights Status refresh enabled. Starting the first VA Flights refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
