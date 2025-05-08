@@ -888,7 +888,7 @@ class OnAir implements IOnAir {
 
         let msgInterval = `Every ${FormatTimeInterval(interval*1000)}`;
         msg += '\n----';
-        msg += `\nLast refreshed: ${dateTimeString}`;
+        msg += `\nLast refreshed: ${dateTimeString} (UTC)`;
         msg += `\nRefresh interval: ${msgInterval}`;
 
         return msg;
