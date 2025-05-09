@@ -11,12 +11,12 @@ There are now two ways you can start using the bot
 *Note:* This assumes that your intended system already has node.js version `^18.16` installed
 - clone the repository `git clone git@github.com:mikedevita/onairdiscordbot.git`
 - install the required nodejs modules `npm i`
-- copy `config.ts.example` to `config.ts`
-- fill out `config.ts` with required information
-  - Ensure to update `discord_token`, `discord_clientId`, `discord_clientSecret`, `discord_guildId`, with values from Discord developer website, see [this]([wiki/Creating-Your-Discord-bot](wiki/How-to-register-a-new-discord-bot)) wiki for more info
-  - Ensure to update the `owners` and `channels` objects
+- copy `.example-env` to `.env`
+- fill out `.env` with required information
+  - Ensure to update `DISCORD_TOKEN`, `DISCORD_CLIENTID`, `DISCORD_GUILDID`, with values from Discord developer website, see [this]([wiki/Creating-Your-Discord-bot](wiki/How-to-register-a-new-discord-bot)) wiki for more info
+  - Ensure to update the `DISCORD_OWNERID` and `DISCORD_[FLEET,FLIGHTS,FBOS,MEMBERS]_STATUS_CHANNELID` objects
   - ensure the bot is granted the `bot` and `applications.commands` scopes in the Discord developer website
-  - Update `companyId`, `vAId`, `apiKey` in the `onAir` object with values from the OnAir companion app, see [this]([wiki/Obtaining-Your-OnAir-Credentials](wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir)) wiki for more info
+  - Update `ONAIR_COMPANYID`, `ONAIR_VAID`, `ONAIR_APIKEY` in the `onAir` object with values from the OnAir companion app, see [this]([wiki/Obtaining-Your-OnAir-Credentials](wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir)) wiki for more info
 - finally, run the bot by executing `npm start`
 
 By default the Bot should send a message to the channelId defined in Your discord Server when it comes online. Simply interact with the bot using one of the commands in the [Commands](#bot-commands) section below.
@@ -26,6 +26,51 @@ By default the Bot should send a message to the channelId defined in Your discor
   -  **requires:** docker on the intended system
 - how to use docker-compose to start the docker container, [docker-compose example](wiki/Docker‐compose-example)
   -  **requires:** docker and docker-compose on the intended system
+
+#### Quick Start with Docker
+1. Copy the example environment file and rename it to `.env`:
+```bash
+cp .example-env .env
+```
+
+2. Edit the `.env` file and replace all `###_REPLACE_WITH_YOUR_DATA_###` values with your actual configuration values.
+
+3. Pull and run the Docker image:
+```bash
+docker pull mikedevita/onairdiscordbot:latest
+docker run -d --env-file .env mikedevita/onairdiscordbot:latest
+```
+
+4. To check the logs:
+```bash
+docker logs $(docker ps -q -f ancestor=mikedevita/onairdiscordbot:latest)
+```
+
+5. To stop the bot:
+```bash
+docker stop $(docker ps -q -f ancestor=mikedevita/onairdiscordbot:latest)
+```
+
+#### Docker Environment Variables
+All environment variables from your `.env` file will be passed to the container. The bot will automatically configure itself based on these variables.
+
+#### Docker Compose (Alternative Method)
+Create a `docker-compose.yml` file:
+```yaml
+version: '3'
+services:
+  onair-bot:
+    image: mikedevita/onairdiscordbot:latest
+    container_name: onairdiscordbot
+    env_file:
+      - .env
+    restart: unless-stopped
+```
+
+Then run:
+```bash
+docker-compose up -d
+```
 
 ## Planned Features
 - [ ] Add cash flow related commands to indicate income vs expense and profit margins, see [#2](issues/2) for more information
@@ -38,12 +83,13 @@ Are welcome, simply submit an issue
 
 ## Help & Support
 
-feel free to reach out to me on discord with any questions about the bot, my discord username is `ndboost`. I also idle in the #web-apis channel on the [OnAir company's official discord server](https://discord.com/invite/WY5htXu)
+feel free to reach out to me on discord with any questions about the bot, my discord username is `ndboost`.
+
+I also idle in the `#web-apis` channel on [OnAir company's official discord server](https://discord.com/invite/WY5htXu).
 
 ## Bot Hosting and Paid Support
 
-If you are interested in having this bot hosted for you or would like to pay for additional features or support, please feel free to reach out to me on discord, my username is `ndboost` to discuss your requirements.
-
+If you are interested in having this bot hosted for you or would like to pay for additional features & support, please reach out to me via discord to discuss your requirements and get things setup, my username is `ndboost`.
 
 ## Bot Commands
 All command responses are ephemeral by default, meaning only the user who executed the command can see the response. This can be changed by passing the `ephemeral` param to any command, see [Virtual Airline Details](#virtual-airline-details-detail-ephemeral) for an example.
@@ -243,3 +289,61 @@ Showing page 1 of 10
 5  N4816Y    PNAS     ✅ Completed    2022-10-19T00:52:14.89   2022-10-19T00:55:41.97   VDPP    VDKC
 ```
 
+
+
+## Bot OnAir Status Feed
+
+The bot can automatically update status information for your OnAir company in designated Discord channels. This feature provides real-time updates about your fleet, flights, FBOs, and members at configurable intervals.
+
+### Status Feed Configuration
+
+Each status feed can be configured independently in your `.env` file:
+
+#### Fleet Status Feed
+```
+DISCORD_FLEET_STATUS_ENABLED=true
+DISCORD_FLEET_STATUS_CHANNELID=your_channel_id
+DISCORD_FLEET_STATUS_INTERVAL=300000  # Update interval in milliseconds (5 minutes)
+DISCORD_FLEET_STATUS_SORTCOLUMN=name  # Column to sort by
+DISCORD_FLEET_STATUS_PAGESIZE=5       # Number of items per page
+```
+
+#### Flights Status Feed
+```
+DISCORD_FLIGHTS_STATUS_ENABLED=true
+DISCORD_FLIGHTS_STATUS_CHANNELID=your_channel_id
+DISCORD_FLIGHTS_STATUS_INTERVAL=300000  # Update interval in milliseconds (5 minutes)
+DISCORD_FLIGHTS_STATUS_SORTCOLUMN=startTime  # Column to sort by
+DISCORD_FLIGHTS_STATUS_PAGESIZE=5          # Number of items per page
+```
+
+#### FBOs Status Feed
+```
+DISCORD_FBOS_STATUS_ENABLED=true
+DISCORD_FBOS_STATUS_CHANNELID=your_channel_id
+DISCORD_FBOS_STATUS_INTERVAL=300000  # Update interval in milliseconds (5 minutes)
+DISCORD_FBOS_STATUS_SORTCOLUMN=name  # Column to sort by
+DISCORD_FBOS_STATUS_PAGESIZE=5       # Number of items per page
+```
+
+#### Members Status Feed
+```
+DISCORD_MEMBERS_STATUS_ENABLED=true
+DISCORD_MEMBERS_STATUS_CHANNELID=your_channel_id
+DISCORD_MEMBERS_STATUS_INTERVAL=300000  # Update interval in milliseconds (5 minutes)
+DISCORD_MEMBERS_STATUS_SORTCOLUMN=name  # Column to sort by
+DISCORD_MEMBERS_STATUS_PAGESIZE=5       # Number of items per page
+```
+
+### Features
+- Automatic updates at configurable intervals
+- Customizable sorting and pagination
+- Individual channel for each status type
+- Enable/disable each feed independently
+- Configurable update intervals (in milliseconds)
+
+### Best Practices
+- Set reasonable update intervals to avoid rate limiting
+- Use dedicated channels for each status type
+- Consider your server's size when setting page sizes
+- Monitor your bot's performance and adjust intervals accordingly
