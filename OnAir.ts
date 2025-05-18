@@ -457,79 +457,88 @@ class OnAir implements IOnAir {
                     msg += `There are ${x.length} aircraft currently in the ${this.config.opMode || 'VA'} fleet`;
                 }
 
-                msg += ` (Page ${page} of ${totalPages})`;
+                // Only show page information if there's more than one page
+                if (totalPages > 1) {
+                    msg += ` (Page ${page} of ${totalPages})`;
+                }
                 msg += `\n\n${fleetList}`;
                 msg = this.addStatusFooter(msg, status);
                 
                 return `\`\`\`\n${msg}\`\`\``;
             };
 
-            // Create pagination buttons
-            const row = new ActionRowBuilder<ButtonBuilder>()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('first')
-                        .setLabel('⏮️ First')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId('previous')
-                        .setLabel('◀️ Previous')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId('next')
-                        .setLabel('Next ▶️')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId('last')
-                        .setLabel('Last ⏭️')
-                        .setStyle(ButtonStyle.Primary)
-                );
-
             const initialPage = 1;
+            const totalPages = Math.ceil(x.length / (status.pageSize || 10));
             const content = generatePageContent(initialPage);
+
+            // Only create buttons if there's more than one page
+            let components: ActionRowBuilder<ButtonBuilder>[] = [];
+            if (totalPages > 1) {
+                const row = new ActionRowBuilder<ButtonBuilder>()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('first')
+                            .setLabel('⏮️ First')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId('previous')
+                            .setLabel('◀️ Previous')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId('next')
+                            .setLabel('Next ▶️')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId('last')
+                            .setLabel('Last ⏭️')
+                            .setStyle(ButtonStyle.Primary)
+                    );
+                components = [row];
+            }
 
             // If there's a last message, edit it. Otherwise, send a new message
             const message = lastMessage ? 
-                await lastMessage.edit({ content, components: [row] }) :
-                await channel.send({ content, components: [row] });
+                await lastMessage.edit({ content, components }) :
+                await channel.send({ content, components });
 
-            // Create button collector
-            const collector = message.createMessageComponentCollector({ 
-                time: refreshInterval
-            });
-
-            let currentPage = initialPage;
-            const totalPages = Math.ceil(x.length / (status.pageSize || 10));
-
-            collector.on('collect', async interaction => {
-                switch(interaction.customId) {
-                    case 'first':
-                        currentPage = 1;
-                        break;
-                    case 'previous':
-                        currentPage = Math.max(1, currentPage - 1);
-                        break;
-                    case 'next':
-                        currentPage = Math.min(totalPages, currentPage + 1);
-                        break;
-                    case 'last':
-                        currentPage = totalPages;
-                        break;
-                }
-
-                await interaction.update({ 
-                    content: generatePageContent(currentPage),
-                    components: [row]
+            // Only create collector if there's more than one page
+            if (totalPages > 1) {
+                const collector = message.createMessageComponentCollector({ 
+                    time: refreshInterval
                 });
-            });
 
-            collector.on('end', () => {
-                // Remove buttons when collector expires
-                message.edit({ 
-                    content: generatePageContent(currentPage),
-                    components: [] 
+                let currentPage = initialPage;
+
+                collector.on('collect', async interaction => {
+                    switch(interaction.customId) {
+                        case 'first':
+                            currentPage = 1;
+                            break;
+                        case 'previous':
+                            currentPage = Math.max(1, currentPage - 1);
+                            break;
+                        case 'next':
+                            currentPage = Math.min(totalPages, currentPage + 1);
+                            break;
+                        case 'last':
+                            currentPage = totalPages;
+                            break;
+                    }
+
+                    await interaction.update({ 
+                        content: generatePageContent(currentPage),
+                        components: components
+                    });
                 });
-            });
+
+                collector.on('end', () => {
+                    // Remove buttons when collector expires
+                    message.edit({ 
+                        content: generatePageContent(currentPage),
+                        components: [] 
+                    });
+                });
+            }
         }
 
         // Execute immediately
@@ -832,18 +841,6 @@ class OnAir implements IOnAir {
 
         this.log.info(`${this.config.opMode || 'VA'} FBOs Status refresh enabled. Starting the first ${this.config.opMode || 'VA'} FBO refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
 
-        // const channel: TextChannel | null = await this.bot.getChannel(fbosStatusChannelId) as TextChannel | null;
-        // // delete all messages in the channel on first run.
-        // if (channel === null) {
-        //     this.log.error(`Unable to find channel with id ${fbosStatusChannelId}`);
-        //     return;
-        // }
-
-        // const messages: Collection<string, Message<true>> = await channel.messages.fetch({ limit: 100 });
-        // messages.forEach(async (message: Message<true>) => {
-        //     await message.delete();
-        // });
-
         const updateFBOsStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(fbosStatusChannelId) as TextChannel | null;
     
@@ -878,79 +875,88 @@ class OnAir implements IOnAir {
                     msg += `The VA owns ${x.length} FBOs.`;
                 }
 
-                msg += ` (Page ${page} of ${totalPages})`;
+                // Only show page information if there's more than one page
+                if (totalPages > 1) {
+                    msg += ` (Page ${page} of ${totalPages})`;
+                }
                 msg += fboList;
                 msg = this.addStatusFooter(msg, status);
                 
                 return `\`\`\`\n${msg}\`\`\``;
             };
 
-            // Create pagination buttons
-            const row = new ActionRowBuilder<ButtonBuilder>()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('first')
-                        .setLabel('⏮️ First')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId('previous')
-                        .setLabel('◀️ Previous')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId('next')
-                        .setLabel('Next ▶️')
-                        .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                        .setCustomId('last')
-                        .setLabel('Last ⏭️')
-                        .setStyle(ButtonStyle.Primary)
-                );
-
             const initialPage = 1;
+            const totalPages = Math.ceil(x.length / (status.pageSize || 5));
             const content = generatePageContent(initialPage);
+
+            // Only create buttons if there's more than one page
+            let components: ActionRowBuilder<ButtonBuilder>[] = [];
+            if (totalPages > 1) {
+                const row = new ActionRowBuilder<ButtonBuilder>()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('first')
+                            .setLabel('⏮️ First')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId('previous')
+                            .setLabel('◀️ Previous')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId('next')
+                            .setLabel('Next ▶️')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId('last')
+                            .setLabel('Last ⏭️')
+                            .setStyle(ButtonStyle.Primary)
+                    );
+                components = [row];
+            }
 
             // If there's a last message, edit it. Otherwise, send a new message
             const message = lastMessage ? 
-                await lastMessage.edit({ content, components: [row] }) :
-                await channel.send({ content, components: [row] });
+                await lastMessage.edit({ content, components }) :
+                await channel.send({ content, components });
 
-            // Create button collector
-            const collector = message.createMessageComponentCollector({ 
-                time: refreshInterval
-            });
-
-            let currentPage = initialPage;
-            const totalPages = Math.ceil(x.length / 10);
-
-            collector.on('collect', async interaction => {
-                switch(interaction.customId) {
-                    case 'first':
-                        currentPage = 1;
-                        break;
-                    case 'previous':
-                        currentPage = Math.max(1, currentPage - 1);
-                        break;
-                    case 'next':
-                        currentPage = Math.min(totalPages, currentPage + 1);
-                        break;
-                    case 'last':
-                        currentPage = totalPages;
-                        break;
-                }
-
-                await interaction.update({ 
-                    content: generatePageContent(currentPage),
-                    components: [row]
+            // Only create collector if there's more than one page
+            if (totalPages > 1) {
+                const collector = message.createMessageComponentCollector({ 
+                    time: refreshInterval
                 });
-            });
 
-            collector.on('end', () => {
-                // Remove buttons when collector expires
-                message.edit({ 
-                    content: generatePageContent(currentPage),
-                    components: [] 
+                let currentPage = initialPage;
+
+                collector.on('collect', async interaction => {
+                    switch(interaction.customId) {
+                        case 'first':
+                            currentPage = 1;
+                            break;
+                        case 'previous':
+                            currentPage = Math.max(1, currentPage - 1);
+                            break;
+                        case 'next':
+                            currentPage = Math.min(totalPages, currentPage + 1);
+                            break;
+                        case 'last':
+                            currentPage = totalPages;
+                            break;
+                    }
+
+                    await interaction.update({ 
+                        content: generatePageContent(currentPage),
+                        components: components
+                    });
                 });
-            });
+
+                collector.on('end', () => {
+                    // Remove buttons when collector expires
+                    message.edit({ 
+                        content: generatePageContent(currentPage),
+                        components: [] 
+                    });
+                });
+            }
         }
 
         // Execute immediately
