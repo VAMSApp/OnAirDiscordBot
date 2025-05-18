@@ -1,8 +1,19 @@
 version: '3'
 services:
+  autoheal:
+    deploy:
+      replicas: 1
+    image: willfarrell/autoheal:latest
+    network_mode: none
+    restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock
   bot:
     image: mikedevita/onairdiscordbot:latest
     container_name: onairdiscordbot
+    labels:
+      autoheal: true
     # use external .env file
     env_file: .env
     # or pass environment variables directly in by defining them like so. (Make sure toe remove the env_file line above.)
