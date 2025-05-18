@@ -1016,7 +1016,7 @@ class OnAir implements IOnAir {
             const sortColumn = (status as OnAirStatusType).sortColumn || 'Company';
             
             // Sort members array based on the specified column
-            const sortedX = x.sort((a, b) => {
+            const sortedX = x.sort((a:OnAirMember, b:OnAirMember) => {
                 switch(sortColumn) {
                     case 'Role':
                         return a.VARole.Permission - b.VARole.Permission;
@@ -1040,6 +1040,8 @@ class OnAir implements IOnAir {
                         const totalB = b.TotalPAXsTransported + b.TotalCargosTransportedLbs;
                         return totalB - totalA;
                     case 'Company':
+                    case 'Earnings':
+                        return b.TotalEarnedCredits - a.TotalEarnedCredits;
                     default:
                         return a.Company.Name.localeCompare(b.Company.Name);
                 }
