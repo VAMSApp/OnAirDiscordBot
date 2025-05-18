@@ -1,9 +1,8 @@
 import { Interaction, InteractionReplyOptions, SlashCommandBooleanOption, SlashCommandBuilder, SlashCommandStringOption, } from 'discord.js';
-import { Airport as OnAirAirport } from 'onair-api';
-import { IBot } from '../interfaces';
-import { AirportDetail } from '../messages';
-import { SlashCommand, } from '../types';
-import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
+import { IBot } from '@/interfaces';
+import { AirportDetail } from '@/messages';
+import { OnAirAirport, SlashCommand } from '@/types';
+import IsAuthorizedToRunCommand from '@/lib/IsAuthorizedToRunCommand';
 
 const AirportCommand:SlashCommand = {
     name: 'airport',

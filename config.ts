@@ -1,6 +1,6 @@
 import { GatewayIntentBits } from 'discord.js';
 import * as dotenv from 'dotenv';
-import { BotConfig } from './types';
+import { BotConfig, OnAirOperationMode, } from './types';
 dotenv.config();
 
 const {
@@ -32,9 +32,15 @@ const {
     DISCORD_MEMBERS_STATUS_INTERVAL,
     DISCORD_MEMBERS_STATUS_SORTCOLUMN,
     DISCORD_MEMBERS_STATUS_PAGESIZE,
+    DISCORD_DETAIL_STATUS_ENABLED,
+    DISCORD_DETAIL_STATUS_INTERVAL,
+    DISCORD_DETAIL_STATUS_CHANNELID,
     ONAIR_COMPANYID,
     ONAIR_VAID,
     ONAIR_APIKEY,
+    ONAIR_OPERATION_MODE,
+    LOG_LEVEL,
+    DISCORD_ONAIR_SLASH_CMNDS_ENABLED,
 } = process.env;
 
 
@@ -70,6 +76,8 @@ const config:BotConfig = {
     },
     onair: {
         enabled: true,
+        opMode: ONAIR_OPERATION_MODE as OnAirOperationMode || 'VA',
+        enabledCommands: (DISCORD_ONAIR_SLASH_CMNDS_ENABLED) ? DISCORD_ONAIR_SLASH_CMNDS_ENABLED.split(',') : [],
         status: {
             fleet: {
                 enabled: (DISCORD_FLEET_STATUS_ENABLED === 'true'), // set to true to enable refresh, false to disable
@@ -99,6 +107,11 @@ const config:BotConfig = {
                 sortColumn: DISCORD_MEMBERS_STATUS_SORTCOLUMN,
                 pageSize: (DISCORD_MEMBERS_STATUS_PAGESIZE) ? parseInt(DISCORD_MEMBERS_STATUS_PAGESIZE) : 10,
             },
+            detail: {
+                enabled: (DISCORD_DETAIL_STATUS_ENABLED === 'true'), // set to true to enable refresh, false to disable
+                interval: (DISCORD_DETAIL_STATUS_INTERVAL) ? parseInt(DISCORD_DETAIL_STATUS_INTERVAL) : 10, // time in seconds to wait before refreshing again, defaults to every 60 seconds
+                channelId: DISCORD_DETAIL_STATUS_CHANNELID,
+            }
         },
         keys: {
             companyId: ONAIR_COMPANYID, // obtain from the OnAir Company app, see wiki https://github.com/VAMSApp/OnAirDiscordBot/wiki/How-to-obtain-CompanyID,-VirtualAirlineID,-ApiKey-from-OnAir
@@ -112,9 +125,13 @@ const config:BotConfig = {
         }
     },
     log: {
-        logLevel: 'info',
+        logLevel: LOG_LEVEL || 'info',
         logToConsole: true,
     },
 };
+
+if (ONAIR_OPERATION_MODE === 'Company') {
+    config.onair.keys.vaId = config.onair.keys.companyId;
+}
 
 export default config;

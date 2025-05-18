@@ -2,69 +2,57 @@ import {
     BalanceSheetResponse,
     VirtualAirlineResponse,
     FlightResponse,
-    FlightsResponse,
-    AircraftResponse,
-    AircraftEngineResponse,
-    AircraftEnginesResponse,
-    AircraftTypeResponse,
-    AircraftClassResponse,
-    FleetResponse,
     AirportResponse,
-    AirportsResponse,
     FboResponse,
-    FbosResponse,
     CompanyResponse,
-    CompaniesResponse,
-    MissionFlightTracksResponse,
     JobResponse,
-    JobsResponse,
     CashFlowResponse,
     MemberResponse,
-    MembersResponse,
     FlightTrackResponse,
-    FlightTracksResponse,
     NotificationResponse,
     EmployeeResponse,
-    EmployeesResponse,
     ShareHolderResponse,
-    ShareHoldersResponse,
     WorkOrderResponse,
-    WorkOrdersResponse,
     VARoleResponse,
-    VARolesResponse,
+    Notification,
+    VARole,
+    Fbo,
+    Aircraft,
+    Airport,
+    Flight,
+    VirtualAirline,
+    Member,
+    Company,
+    People,
+    Job,
 } from 'onair-api';
-import { Aircraft, AircraftClass, AircraftEngine, AircraftType } from 'types';
 
-export declare type OnAirBalanceSheetResponse = BalanceSheetResponse 
-export declare type OnAirVirtualAirlineResponse = VirtualAirlineResponse 
-export declare type OnAirFlightResponse = FlightResponse 
-export declare type OnAirFlightsResponse = FlightsResponse 
-export declare type OnAirAircraftResponse = Aircraft
-export declare type OnAirAircraftEngineResponse = AircraftEngine
-export declare type OnAirAircraftEnginesResponse = AircraftEngine[]
-export declare type OnAirAircraftTypeResponse = AircraftType
-export declare type OnAirAircraftClassResponse = AircraftClass
-export declare type OnAirFleetResponse = FleetResponse 
-export declare type OnAirAirportResponse = AirportResponse 
-export declare type OnAirAirportsResponse = AirportsResponse 
-export declare type OnAirFboResponse = FboResponse 
-export declare type OnAirFbosResponse = FbosResponse 
-export declare type OnAirCompanyResponse = CompanyResponse 
-export declare type OnAirCompaniesResponse = CompaniesResponse 
-export declare type OnAirMissionFlightTracksResponse = MissionFlightTracksResponse 
-export declare type OnAirJobResponse = JobResponse 
-export declare type OnAirJobsResponse = JobsResponse 
-export declare type OnAirCashFlowResponse = CashFlowResponse 
-export declare type OnAirMemberResponse = MemberResponse 
-export declare type OnAirMembersResponse = MembersResponse 
-export declare type OnAirFlightTrackResponse = FlightTrackResponse 
-export declare type OnAirFlightTracksResponse = FlightTracksResponse 
-export declare type OnAirNotificationResponse = NotificationResponse 
-export declare type OnAirEmployeeResponse = EmployeeResponse 
-export declare type OnAirEmployeesResponse = EmployeesResponse 
-export declare type OnAirShareHolderResponse = ShareHolderResponse 
-export declare type OnAirShareHoldersResponse = ShareHoldersResponse 
-export declare type OnAirWorkOrderResponse = WorkOrderResponse 
-export declare type OnAirWorkOrdersResponse = WorkOrdersResponse 
-export declare type OnAirVARoleResponse = VARoleResponse 
-export declare type OnAirVARolesResponse = VARolesResponse 
+export type OnAirAircraft = Aircraft;
+export type OnAirFlight = Flight;
+export type OnAirVirtualAirline = VirtualAirline;
+export type OnAirMember = Member;
+export type OnAirCompany = Company;
+export type OnAirEmployee = People;
+export type OnAirNotification = Notification;
+export type OnAirVARole = VARole;
+export type OnAirFbo = Fbo;
+export type OnAirJob = Job;
+export type OnAirBalanceSheet = BalanceSheetResponse;
+export type OnAirAirport = Airport;
+
+export type OnAirVirtualAirlineDetail = OnAirVirtualAirline & {
+    MemberCount:number;
+    Members: OnAirMember[]
+    FleetCount:number;
+    FlightCount:number;
+    FlightHours:number;
+}
+
+export type OnAirCompanyDetail = OnAirCompany & {
+    EmployeeCount:number;
+    Employees: OnAirEmployee[]
+    FleetCount:number;
+    FlightCount:number;
+    FlightHours:number;
+}
+

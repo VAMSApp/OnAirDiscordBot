@@ -1,9 +1,8 @@
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder } from 'discord.js';
-import { Aircraft as OnAirAircraft, } from 'onair-api';
-import { IBot } from '../interfaces';
-import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
-import { SlashCommand } from '../types';
-import { AircraftDetail } from '../messages';
+import { IBot } from '@/interfaces';
+import IsAuthorizedToRunCommand from '@/lib/IsAuthorizedToRunCommand';
+import { OnAirAircraft, SlashCommand } from '@/types';
+import { AircraftDetail } from '@/messages';
 
 
 const AircraftCommand:SlashCommand = {

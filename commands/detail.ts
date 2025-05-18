@@ -1,26 +1,12 @@
 import { Interaction, InteractionReplyOptions, SlashCommandBuilder, } from 'discord.js';
-import {
-    Aircraft as OnAirAircraft,
-    Flight as OnAirFlight,
-    VirtualAirline as OnAirVirtualAirline,
-    Member as OnAirMember,
-} from 'onair-api';
-import { IBot } from '../interfaces';
-import { VADetail } from '../messages';
-import { SlashCommand } from 'types';
-import IsAuthorizedToRunCommand from '../lib/IsAuthorizedToRunCommand';
-
-export interface VirtualAirlineDetail extends OnAirVirtualAirline {
-    MemberCount:number;
-    Members: OnAirMember[]
-    FleetCount:number;
-    FlightCount:number;
-    FlightHours:number;
-}
+import { IBot } from '@/interfaces';
+import { CompanyDetail, VADetail } from '@/messages';
+import { SlashCommand, OnAirVirtualAirline, OnAirMember, OnAirAircraft, OnAirFlight, OnAirVirtualAirlineDetail, OnAirCompany, OnAirCompanyDetail, OnAirEmployee } from '@/types';
+import IsAuthorizedToRunCommand from '@/lib/IsAuthorizedToRunCommand';
 
 const VADetailCommand:SlashCommand = {
     name: 'detail',
-    description: 'OnAir VA detail',
+    description: 'OnAir VA or Company detail',
     roleName: 'member',
     help: {
         name: 'detail',
@@ -35,7 +21,7 @@ const VADetailCommand:SlashCommand = {
     },
     data: new SlashCommandBuilder()
         .setName('detail')
-        .setDescription('OnAir VA detail')
+        .setDescription('OnAir VA or Company detail')
         .addBooleanOption(option =>
             option.setName('ephemeral')
                 .setDescription('Whether to show the results in an ephemeral message')
@@ -56,32 +42,62 @@ const VADetailCommand:SlashCommand = {
 
         let msg = '';
     
-        const va:OnAirVirtualAirline = await app.OnAir.getVADetail();
-        const members:OnAirMember[] = await app.OnAir.getVAMembers();
-        const fleet:OnAirAircraft[] = await app.OnAir.getVAFleet();
-        const flights:OnAirFlight[] = await app.OnAir.getVAFlights();
-        
-        const flightHours:number = flights.reduce((a:number, b:OnAirFlight) => {
-            if (b.AirborneTime) {
-                return a + parseFloat(b.AirborneTime);
-            }
+        if (app.config.onair.opMode === 'VA') {
+            const va:OnAirVirtualAirline = await app.OnAir.getVADetail();
+            const members:OnAirMember[] = await app.OnAir.getVAMembers();
+            const fleet:OnAirAircraft[] = await app.OnAir.getVAFleet();
+            const flights:OnAirFlight[] = await app.OnAir.getVAFlights();
+            
+            const flightHours:number = flights.reduce((a:number, b:OnAirFlight) => {
+                if (b.AirborneTime) {
+                    return a + parseFloat(b.AirborneTime);
+                }
 
-            return a;
-        }, 0);
+                return a;
+            }, 0);
                 
-        const x:VirtualAirlineDetail = {
-            ...va,
-            MemberCount: members.length,
-            Members: members,
-            FleetCount: fleet.length || 0,
-            FlightCount: flights.length || 0,
-            FlightHours: flightHours,
-        };
+            const x:OnAirVirtualAirlineDetail = {
+                ...va,
+                MemberCount: members.length,
+                Members: members,
+                FleetCount: fleet.length || 0,
+                FlightCount: flights.length || 0,
+                FlightHours: flightHours,
+            };
 
-        if (!x) msg = 'No VA found';
+            if (!x) msg = 'No VA found';
 
-        if (x) {
-            msg += `\n${VADetail(x)}`;
+            if (x) {
+                msg += `\n${VADetail(x)}`;
+            }
+        } else {
+            const company:OnAirCompany = await app.OnAir.getCompanyDetail();
+            const fleet:OnAirAircraft[] = await app.OnAir.getCompanyFleet();
+            const flights:OnAirFlight[] = await app.OnAir.getCompanyFlights();
+            const employees:OnAirEmployee[] = await app.OnAir.getCompanyEmployees();
+            
+            const flightHours:number = flights.reduce((a:number, b:OnAirFlight) => {
+                if (b.AirborneTime) {
+                    return a + parseFloat(b.AirborneTime);
+                }
+
+                return a;
+            }, 0);
+            
+            const x:OnAirCompanyDetail = {
+                ...company,
+                EmployeeCount: employees.length,
+                Employees: employees,
+                FleetCount: fleet.length || 0,
+                FlightCount: flights.length || 0,
+                FlightHours: flightHours,
+            };
+
+            if (!x) msg = 'No company found';
+
+            if (x) {
+                msg += `\n${CompanyDetail(x)}`;
+            }
         }
 
         const reply:InteractionReplyOptions = {

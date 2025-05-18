@@ -11,17 +11,17 @@ import { BotConfig, Command, SlashCommand, } from '@/types';
 import { IBot, ILogger, IOnAir } from '@/interfaces';
 import OnAir from '@/OnAir';
 import { Channel, Client, Collection, Interaction, Message, REST, Routes, TextChannel, } from 'discord.js';
-import { FleetList, FlightsList, OnReadyMessage } from '@/messages';
-import { read, readdirSync } from 'fs';
+import { OnReadyMessage } from '@/messages';
+import { readdirSync } from 'fs';
 import path from 'path';
 import { eachSeries } from 'async';
-import { Flight as OnAirFlight, Aircraft as OnAirAircraft } from 'onair-api';
 
 class Bot implements IBot {
     private AppToken:string;
     private ClientId:string;
     private GuildId:string;
     public commands: Collection<string, Command>;
+    public slashCommands: SlashCommand[] = [];
 
     public log: ILogger;
     public config: BotConfig;
@@ -48,14 +48,15 @@ class Bot implements IBot {
         });
 
         this.commands = new Collection();
-
+        this._handleOnClientReady = this._handleOnClientReady.bind(this);
+        this.getRoleId = this.getRoleId.bind(this);
+        
         this.log.info('Initializing Discord Client');
 
         this.loadCommands();
         this.deployCommands();
         this.login();
         this.onReady();
-        this.getRoleId = this.getRoleId.bind(this);
     }
     
     /**
@@ -71,42 +72,55 @@ class Bot implements IBot {
             if (!this.config.discord) {
                 return reject(new Error('No Discord config provided, exiting.'));
             }
-            
-            const commands = readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.ts'));
-            this.log.info(`Loading ${commands.length} commands`);
-            
+
+            const enabledCommandNames: string[] = ['help'];
+
+            if (process.env.NODE_ENV === 'development') {
+                enabledCommandNames.push('dev');
+            }
+
+            enabledCommandNames.push(...this.config.onair.enabledCommands);
+
+            const commandFilePaths = readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.ts') && enabledCommandNames.includes(file.replace('.ts', '')));
+            this.log.info(`Loading ${commandFilePaths.length} commands`);
+
             // copilot: using async eachSeries, loop through each file in the commands folder and load it
-            eachSeries(commands, (file, cb) => {
+            eachSeries(commandFilePaths, (commandFilePath:string, cb): void => {
                 // load the command file from the 'commands' folder
                 // eslint-disable-next-line @typescript-eslint/no-var-requires
-                const command = require(path.join(__dirname, 'commands', file)).default;
-                if (!command) return cb(new Error(`No command found in ${file}`));
-
+                const command = require(path.join(__dirname, 'commands', commandFilePath)).default;
+                if (!command) throw new Error(`No command found in ${commandFilePath}`);
+        
                 const {
                     name, // pull the command name from the data object
                 } = command.data;
-
+        
                 // if the name exists
-                if (name) {
-                    // log that we're loading the command 'name'
-                    // set the command in the collection
-                    this.log.debug(`✅ Loading Command: ${name}`);
-                    this.commands.set(name, command);
-                    return cb();
-                // otherwise
-                } else {
+                if (!name) {
                     // just continue along...
                     this.log.debug(`❌ Skipping Command: ${name}`);
                     return cb();
+                } else if (!enabledCommandNames.includes(name)) {
+                    this.log.debug(`❌ Skipping Command: ${name}, slash command is disabled in config.`);
+                    return cb();
                 }
-            }, (err) => {
-                // if there's an error, reject the promise
-                if (err) {
-                    return reject(err);
-                }
-                // otherwise, resolve the promise
+
+                // log that we're loading the command 'name'
+                // set the command in the collection
+                this.log.debug(`Loading Command: ${name}...`);
                 
-                return resolve();
+                this.commands.set(name, command);
+                this.slashCommands.push(command.data.toJSON());
+        
+                this.log.debug(`✅ Loaded Command: ${name}`);
+        
+                return cb();
+            }, (err:Error | null | undefined): void => {
+                if (err) {
+                    this.log.error(`Error loading command $: ${err.message}`);
+                }
+
+                return;
             });
 
             this.client.on('interactionCreate', async (interaction:Interaction) => {
@@ -125,9 +139,10 @@ class Bot implements IBot {
                 }
             });
 
-            this.log.info(`✅ Loaded ${commands.length} slash commands`);
+            this.log.info(`✅ Loaded ${commandFilePaths.length} slash commands`);
         });
     }
+   
 
     /**
      * deployCommands()
@@ -138,44 +153,30 @@ class Bot implements IBot {
      * @todo Add sub-folder handling so commands can be split up into sub-folders
      */
     async deployCommands(): Promise<void> {
-        const commands:SlashCommand[] = [];
-        const commandFiles:string[] = readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.ts'));
+        if (this.slashCommands.length === 0) {
+            this.log.debug('No slash commands to deploy.');
+            return;
+        }
 
-        eachSeries(commandFiles, (file, cb) => {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const command = require(`./commands/${file}`).default;
-            if (!command) return cb();
-
-            this.log.debug(`Deploying slash command: /${command.data.name}`);
-            commands.push(command.data.toJSON());
-            return cb();
-        }, async (err) => {
-            // if there's an error, reject the promise
-            if (err) {
-                return err;
+        const rest = new REST({ version: '10' }).setToken(this.AppToken);
+        
+        try {
+            this.log.debug('Started reloading slash commands.');
+    
+            await rest.put(
+                Routes.applicationGuildCommands(this.ClientId, this.GuildId),
+                { body: this.slashCommands },
+            );
+    
+            this.log.info('✅ Reloaded slash commands.');
+        } catch (error:unknown) {
+            if (error instanceof Error) {
+                const msg = error.message as string;
+                this.log.error(msg);
+            } else {
+                this.log.error('Unknown error occurred while reloading slash commands.');
             }
-
-            const rest = new REST({ version: '10' }).setToken(this.AppToken);
-        
-
-            try {
-                this.log.debug('Started reloading slash commands.');
-        
-                await rest.put(
-                    Routes.applicationGuildCommands(this.ClientId, this.GuildId),
-                    { body: commands },
-                );
-        
-                this.log.info('✅ Reloaded slash commands.');
-            } catch (error:unknown) {
-                if (error instanceof Error) {
-                    const msg = error.message as string;
-                    this.log.error(msg);
-                } else {
-                    this.log.error('Unknown error occurred while reloading slash commands.');
-                }
-            }
-        });
+        }
     }
 
     /**
@@ -196,6 +197,25 @@ class Bot implements IBot {
         });
     }
 
+    private _handleOnClientReady(client:Client): void {
+        const discordServerName = client.guilds.cache.map(g => g.name).join('\n');
+        const username = client.user?.username || 'OnAirTrackerBot';
+
+        this.log.info(`Logged into the ${discordServerName} discord server as ${username}`);
+        
+        if (!this.config.discord) {
+            throw new Error('No Discord config provided, exiting.');
+        }
+
+        this.OnAir.loadStatusChannels();
+
+        if (this.config.discord.onConnectNotice === true) {
+            this.sendOnConnectNotice();
+        }
+
+        return;
+    }
+
     /**
      * onReady()
      * Handles the onReady event for the Discord client
@@ -209,31 +229,16 @@ class Bot implements IBot {
         }
 
         
-        this.client.on('ready', async (client:Client) => {
-            const discordServerName = client.guilds.cache.map(g => g.name).join('\n');
-            const username = client.user?.username || 'OnAirTrackerBot';
-
-            this.log.info(`Logged into the ${discordServerName} discord server as ${username}`);
-            
-            if (!this.config.discord) {
-                throw new Error('No Discord config provided, exiting.');
-            }
-
-            this.OnAir.loadVAStatusChannels();
-
-            if (this.config.discord.onConnectNotice === true) {
-                this.sendOnConnectNotice();
-            }
-
-            return;
-        });
+        this.client.on('ready', this._handleOnClientReady);
     }
 
     async sendOnConnectNotice(): Promise<void> {
         let msg = '';
+        const opMode = this.config.onair.opMode;
         let readyMsg:string = OnReadyMessage(this.client.user?.username || 'OnAirTrackerBot');
+        readyMsg += `\nOnAirTrackerBot is currently in ${opMode} mode.`;
+
         msg += readyMsg;
-        
         const onConnectNoticeChannelId:string|undefined = this.config.discord.onConnectNoticeChannelId;
         if (!onConnectNoticeChannelId) {
             this.log.error('No channel ID provided for onConnectNotice, exiting.');
@@ -289,15 +294,25 @@ class Bot implements IBot {
         return;
     }
     
-    getChannel(channelId:string): Promise<Channel|null> {
-        const channel: Promise<Channel | null> = this.client.channels.fetch(channelId);
+    async getChannel(channelId:string): Promise<Channel | null> {
+        const channel: Channel | null = await this.client.channels.fetch(channelId);
 
         if (!channel) {
             this.log.error(`Unable to find channel with id ${channelId}`);
-            return Promise.reject(null);
+            return null;
         }
 
-        return Promise.resolve(channel);
+        return channel;
+    }
+
+    async sendMessageToChannel(channelId:string, message:string): Promise<Message<true>|undefined> {
+        const channel: TextChannel | null = await this.getChannel(channelId) as TextChannel | null;
+        if (channel === null) {
+            this.log.error(`Unable to find channel with id ${channelId}`);
+            return undefined;
+        }
+
+        return channel.send(message);
     }
 
     /**

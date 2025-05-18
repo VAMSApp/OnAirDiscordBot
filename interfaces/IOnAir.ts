@@ -34,21 +34,22 @@ export interface IOnAir {
     getCompanyJobs(): Promise<OnAirJob[]>;
     getCompanyNotifications(): Promise<OnAirNotification[]> 
     getCompanyFlights(opts?:OnAirApiQueryOptions): Promise<OnAirFlight[]>;
-    getCompanyDetail(companyId:string): Promise<OnAirCompany>;
+    getCompanyDetail(companyId?:string): Promise<OnAirCompany>;
+    getCompanyEmployees(companyId?:string):Promise<OnAirEmployee[]>;
     getAircraftDetail(aircraftId:string): Promise<OnAirAircraft>;
     getFlightDetail(flightId:string): Promise<OnAirFlight>;
     getEmployeeDetail(employeeId:string): Promise<OnAirEmployee>;
     getVADetail(): Promise<OnAirVirtualAirline>;
+    getVAMembers(opts?:OnAirApiQueryOptions): Promise<OnAirMember[]>;
     getVAFleet(): Promise<OnAirAircraft[]>;
     getVAJobs(vaId?:string, completed?:boolean): Promise<OnAirJob[]>;
     getVAFlights(opts?:OnAirApiQueryOptions): Promise<OnAirFlight[]>;
-    getVAMembers(opts?:OnAirApiQueryOptions): Promise<OnAirMember[]>;
     getVANotifications(): Promise<OnAirNotification[]>;
     getVAFBOs(): Promise<OnAirFbo[]>;
     getAircraftDetailByIdentifier(identifier:string): Promise<OnAirAircraft|undefined>;
-    refreshVAFleetStatusChannel(): Promise<void>;
-    refreshVAFlightsStatusChannel(): Promise<void>;
-    refreshVAFBOsStatusChannel(): Promise<void>;
+    refreshFleetStatusChannel(): Promise<void>;
+    refreshFlightsStatusChannel(): Promise<void>;
+    refreshFBOsStatusChannel(): Promise<void>;
     refreshVAMembersStatusChannel(): Promise<void>;
-    loadVAStatusChannels(): Promise<void>
+    loadStatusChannels(): Promise<void>
 }

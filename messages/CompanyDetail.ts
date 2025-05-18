@@ -1,12 +1,14 @@
-import { OnAirVirtualAirlineDetail } from '@/types';
+import { OnAirCompanyDetail, } from '@/types';
 import { DetermineWorld } from '@/lib';
 import { FormatDate, FormatNumberWithCommas, HumanizeDate } from '@/utils';
 
-export function VADetail(x:OnAirVirtualAirlineDetail) {
+export function CompanyDetail(x:OnAirCompanyDetail) {
     if (!x) return;
     let detail = '';
+
     const createdOn = (x.CreationDate) ? FormatDate(x.CreationDate, 'MMMM Do YYYY') : 'Unknown';
     const lastConnection = (x.LastConnection) ? HumanizeDate(x.LastConnection) : 'Unknown';
+    
     detail += `\n**[${x.AirlineCode}] ${x.Name} Details**\n`;
     detail += '```';
     detail += `  Level: ${x.Level}\n`;
@@ -16,8 +18,8 @@ export function VADetail(x:OnAirVirtualAirlineDetail) {
     detail += `  Created On: ${createdOn}\n`;
     detail += `  Last Connected: ${lastConnection}\n`;
 
-    if (x.MemberCount) {
-        detail += `  Members: ${x.MemberCount}\n`;
+    if (x.EmployeeCount) {
+        detail += `  Members: ${x.EmployeeCount}\n`;
     }
 
     if (x.FleetCount) {

@@ -5,20 +5,11 @@
  * OnAir API Wrapper, Processor, and Translator for Discord Bot
  * @author Mike DeVita <mike@devita.co>
  */
-import OnAirApi, {
-    Aircraft as OnAirAircraft, Airport as OnAirAirport,
-    Company as OnAirCompany, Flight as OnAirFlight,
-    People as OnAirEmployee,
-    Job as OnAirJob, Member as OnAirMember,
-    Notification as OnAirNotification,
-    VARole as OnAirVARole,
-    VirtualAirline as OnAirVirtualAirline,
-    Fbo as OnAirFbo,
-} from 'onair-api';
+import OnAirApi from 'onair-api';
 import { ILogger, IOnAir, IBot, } from './interfaces';
-import { OnAirApiConfig, OnAirApiQueryOptions, OnAirConfig, OnAirStatus, OnAirStatusType, VirtualAirline } from './types';
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Client, Collection, Message, Status, TextChannel } from 'discord.js';
-import { FBOList, FleetList, FlightsList, MembersList } from './messages';
+import { OnAirAircraft, OnAirAirport, OnAirApiConfig, OnAirApiQueryOptions, OnAirCompany, OnAirCompanyDetail, OnAirConfig, OnAirEmployee, OnAirFbo, OnAirFlight, OnAirJob, OnAirMember, OnAirNotification, OnAirStatusType, OnAirVARole, OnAirVirtualAirline, OnAirVirtualAirlineDetail } from './types';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel } from 'discord.js';
+import { CompanyDetail, FBOList, FleetList, FlightsList, MembersList, VADetail } from './messages';
 import { FormatTimeInterval } from './utils';
 
 export type ProcessRecordError = {
@@ -60,22 +51,25 @@ class OnAir implements IOnAir {
 
         this.api = new OnAirApi(onAirConfig);
 
-        this.getVADetail = this.getVADetail.bind(this);
-        this.getAirportByICAO = this.getAirportByICAO.bind(this);
-        this.getAircraftDetail = this.getAircraftDetail.bind(this);
-        this.getFlightDetail = this.getFlightDetail.bind(this);
-        this.getEmployeeDetail = this.getEmployeeDetail.bind(this);
-        this.getCompanyFleet = this.getCompanyFleet.bind(this);
-        this.getVAJobs = this.getVAJobs.bind(this);
-        this.getCompanyDetail = this.getCompanyDetail.bind(this);
-        this.getVAFlights = this.getVAFlights.bind(this);
-        this.getVAMembers = this.getVAMembers.bind(this);
-        this.getCompanyFlights = this.getCompanyFlights.bind(this);
-        this.getVANotifications = this.getVANotifications.bind(this);
-        this.getVAFBOs = this.getVAFBOs.bind(this);
+        this.getVADetail                   = this.getVADetail.bind(this);
+        this.getAirportByICAO              = this.getAirportByICAO.bind(this);
+        this.getAircraftDetail             = this.getAircraftDetail.bind(this);
+        this.getFlightDetail               = this.getFlightDetail.bind(this);
+        this.getEmployeeDetail             = this.getEmployeeDetail.bind(this);
+        this.getCompanyFleet               = this.getCompanyFleet.bind(this);
+        this.getVAJobs                     = this.getVAJobs.bind(this);
+        this.getCompanyDetail              = this.getCompanyDetail.bind(this);
+        this.getVAFlights                  = this.getVAFlights.bind(this);
+        this.getCompanyEmployees           = this.getCompanyEmployees.bind(this);
+        this.getVAMembers                  = this.getVAMembers.bind(this);
+        this.getCompanyFlights             = this.getCompanyFlights.bind(this);
+        this.getVANotifications            = this.getVANotifications.bind(this);
+        this.getVAFBOs                     = this.getVAFBOs.bind(this);
         this.getAircraftDetailByIdentifier = this.getAircraftDetailByIdentifier.bind(this);
-        this.refreshVAFleetStatusChannel = this.refreshVAFleetStatusChannel.bind(this);
-        this.refreshVAFlightsStatusChannel = this.refreshVAFlightsStatusChannel.bind(this);
+        this.refreshFleetStatusChannel     = this.refreshFleetStatusChannel.bind(this);
+        this.refreshFlightsStatusChannel   = this.refreshFlightsStatusChannel.bind(this);
+        this.refreshDetailStatusChannel    = this.refreshDetailStatusChannel.bind(this);
+        this._updateDetailStatus           = this._updateDetailStatus.bind(this);
     }
 
     
@@ -150,8 +144,14 @@ class OnAir implements IOnAir {
      * @returns Promise<OnAirAircraft[]>
      * @throws string
      */
-    async getCompanyFleet(companyId?:string):Promise<OnAirAircraft[]> {
-        const x:OnAirAircraft[] = await this.api.getCompanyFleet(companyId);
+    async getCompanyFleet(companyId:string = this.config.keys.companyId):Promise<OnAirAircraft[]> {
+        const x:OnAirAircraft[] = await this.api.getCompanyFleet(companyId)
+        .then((fleet: OnAirAircraft[]) => {
+            return fleet.filter((a: OnAirAircraft) => {
+                return a.CurrentCompanyId === companyId || a.RentCompanyId === companyId;
+            });
+        });
+
         return x;
     }
 
@@ -186,6 +186,12 @@ class OnAir implements IOnAir {
         return x;
     }
 
+    async getCompanyEmployees(companyId?:string):Promise<OnAirEmployee[]> {
+        const x:OnAirEmployee[] = await this.api.getCompanyEmployees(companyId);
+
+        return x;
+    }
+
     /**
      * getCompanyJobs()
      * Queries the OnAir Api for the instantiated company or a specific company's jobs
@@ -207,7 +213,7 @@ class OnAir implements IOnAir {
      * @param companyId string |? the Id of the company to get the details for
      * @returns Promise<OnAirCompany>
      */
-    async getCompanyDetail(companyId?:string):Promise<OnAirCompany> {
+    async getCompanyDetail(companyId:string = this.config.keys.companyId):Promise<OnAirCompany> {
         const x:OnAirCompany = await this.api.getCompany(companyId) as OnAirCompany;
         return x;
     }
@@ -220,10 +226,9 @@ class OnAir implements IOnAir {
      * @param companyId string |? the Id of the company to get the notifications for
      * @returns Promise<OnAirNotification[]>
      */
-    async getCompanyNotifications(companyId?:string): Promise<OnAirNotification[]> {
-        const id = (companyId) ? companyId : this.config.keys.companyId;
-        this.log.debug(`getCompanyNotifications()::prerequest ${id}`);
-        const x:OnAirNotification[] = await this.api.getCompanyNotifications(id);
+    async getCompanyNotifications(companyId:string = this.config.keys.companyId): Promise<OnAirNotification[]> {
+        this.log.debug(`getCompanyNotifications()::prerequest ${companyId}`);
+        const x:OnAirNotification[] = await this.api.getCompanyNotifications(companyId);
         return x;
     }
 
@@ -271,8 +276,8 @@ class OnAir implements IOnAir {
      * @returns Promise<OnAirJob[]>
      * @todo add ability to query for a specific VA's jobs
      */
-    async getVAJobs(vaId?:string, completed = false):Promise<OnAirJob[]> {
-        const x:OnAirJob[] = await this.api.getVirtualAirlineJobs(undefined, completed);
+    async getVAJobs(vaId:string = this.config.keys.vaId, completed = false):Promise<OnAirJob[]> {
+        const x:OnAirJob[] = await this.api.getVirtualAirlineJobs(vaId, completed);
         return x;
     }
     
@@ -330,8 +335,13 @@ class OnAir implements IOnAir {
      * @returns Promise<OnAirAircraft[]>
      * @todo add ability to query for a specific VA's fleet
      */
-    async getVAFleet():Promise<OnAirAircraft[]> {
-        this.Fleet = await this.api.getVirtualAirlineFleet();
+    async getVAFleet(vaId:string = this.config.keys.vaId):Promise<OnAirAircraft[]> {
+        this.Fleet = await this.api.getVirtualAirlineFleet(vaId)
+        .then((fleet: OnAirAircraft[]) => {
+            return fleet.filter((a: OnAirAircraft) => {
+                return a.CurrentCompanyId === vaId || a.RentCompanyId === vaId;
+            });
+        });
 
         return this.Fleet;
     }
@@ -386,19 +396,19 @@ class OnAir implements IOnAir {
         return x;
     }
 
-    async refreshVAFleetStatusChannel(): Promise<void> {
+    async refreshFleetStatusChannel(): Promise<void> {
         const status: OnAirStatusType|undefined = this.config.status?.fleet;
         if (!status) {
-            this.log.debug('refreshVAFleetStatusChannel()::skipping, fleet status config is missing. Check the config.ts file.');
+            this.log.debug('refreshFleetStatusChannel()::skipping, fleet status config is missing. Check the config.ts file.');
             return;
         }
 
         if (!status.enabled) {
-            this.log.debug('refreshVAFleetStatusChannel()::skipping, fleet status is disabled');
+            this.log.debug('refreshFleetStatusChannel()::skipping, fleet status is disabled');
             return;
         }
 
-        const fleetStatusChannelId:string|null = status.channelId;
+        const fleetStatusChannelId:string|null|undefined = status.channelId;
 
         if (!fleetStatusChannelId) {
             this.log.error('Fleet status channel ID not found in config, aborting refresh.');
@@ -408,13 +418,13 @@ class OnAir implements IOnAir {
         let refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
 
         if (refreshInterval < 30000) {
-            this.log.warn(`VA Fleet refresh interval is too short (${status.interval}s), setting to minimum of 30 seconds.`);
+            this.log.warn(`${this.config.opMode || 'VA'} Fleet refresh interval is too short (${status.interval}s), setting to minimum of 30 seconds.`);
             refreshInterval = 30000;
         }
 
-        this.log.info(`VA Fleet status refresh enabled. Starting the first VA fleet status refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
+        this.log.info(`${this.config.opMode || 'VA'} Fleet status refresh enabled. Starting the first ${this.config.opMode || 'VA'} fleet status refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
 
-        const refreshVAFleetStatus = async () => {
+        const refreshFleetStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(fleetStatusChannelId) as TextChannel | null;
     
             if (channel === null) {
@@ -426,60 +436,245 @@ class OnAir implements IOnAir {
             const messages = await channel.messages.fetch({ limit: 1 });
             const lastMessage = messages.first();
 
-            let msg = '';
-
             // Get and send new fleet status
             this.Fleet = await this.getVAFleet();
 
-            let vaFleet:OnAirAircraft[] = this.Fleet;
+            const x: OnAirAircraft[] = this.Fleet;
 
-            if (!vaFleet) msg = 'No fleet found';
+            const generatePageContent = (page: number) => {
+                let msg = '';
+                const perPage = status.pageSize || 10;
+                const slicedFleet = x.slice((page - 1) * perPage, page * perPage);
+                const totalPages = Math.ceil(x.length / perPage);
+                
+                const fleetList = FleetList(slicedFleet);
 
-            msg = 'There ';
+                if (x.length <= 0) {
+                    msg += `There are no aircraft in the ${this.config.opMode || 'VA'} fleet yet`;
+                } else if (x.length == 1) {
+                    msg += `There is ${x.length} aircraft currently in the ${this.config.opMode || 'VA'} fleet`;
+                } else {
+                    msg += `There are ${x.length} aircraft currently in the ${this.config.opMode || 'VA'} fleet`;
+                }
 
-            if (vaFleet.length <= 0) {
-                msg += 'are no aircraft in the VA fleet yet';
-            } else if (vaFleet.length == 1) {
-                msg += `is ${vaFleet.length} aircraft currently in the VA fleet`;
-            } else {
-                msg += `are ${vaFleet.length} aircraft currently in the VA fleet`;
-            }
+                msg += ` (Page ${page} of ${totalPages})`;
+                msg += `\n\n${fleetList}`;
+                msg = this.addStatusFooter(msg, status);
+                
+                return `\`\`\`\n${msg}\`\`\``;
+            };
 
-            const fleetList = FleetList(vaFleet);
-            msg += `\n\n${fleetList}`;
+            // Create pagination buttons
+            const row = new ActionRowBuilder<ButtonBuilder>()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('first')
+                        .setLabel('⏮️ First')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId('previous')
+                        .setLabel('◀️ Previous')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId('next')
+                        .setLabel('Next ▶️')
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setCustomId('last')
+                        .setLabel('Last ⏭️')
+                        .setStyle(ButtonStyle.Primary)
+                );
 
-            msg = this.addStatusFooter(msg, status);
+            const initialPage = 1;
+            const content = generatePageContent(initialPage);
 
-            // refresh interval
-            let formattedMessage = `\`\`\`\n${msg}\`\`\``;
             // If there's a last message, edit it. Otherwise, send a new message
-            if (lastMessage) {
-                await lastMessage.edit(formattedMessage);
-            } else {
-                await channel.send(formattedMessage);
-            }
+            const message = lastMessage ? 
+                await lastMessage.edit({ content, components: [row] }) :
+                await channel.send({ content, components: [row] });
+
+            // Create button collector
+            const collector = message.createMessageComponentCollector({ 
+                time: refreshInterval
+            });
+
+            let currentPage = initialPage;
+            const totalPages = Math.ceil(x.length / (status.pageSize || 10));
+
+            collector.on('collect', async interaction => {
+                switch(interaction.customId) {
+                    case 'first':
+                        currentPage = 1;
+                        break;
+                    case 'previous':
+                        currentPage = Math.max(1, currentPage - 1);
+                        break;
+                    case 'next':
+                        currentPage = Math.min(totalPages, currentPage + 1);
+                        break;
+                    case 'last':
+                        currentPage = totalPages;
+                        break;
+                }
+
+                await interaction.update({ 
+                    content: generatePageContent(currentPage),
+                    components: [row]
+                });
+            });
+
+            collector.on('end', () => {
+                // Remove buttons when collector expires
+                message.edit({ 
+                    content: generatePageContent(currentPage),
+                    components: [] 
+                });
+            });
         }
 
         // Execute immediately
-        refreshVAFleetStatus();
-
+        refreshFleetStatus();
         // Then set up the interval
-        setInterval(refreshVAFleetStatus, refreshInterval);
+        setInterval(refreshFleetStatus, refreshInterval);
     }
 
-    async refreshVAFlightsStatusChannel(): Promise<void> {
-        const status: OnAirStatusType|undefined = this.config.status?.flights;
+    async refreshDetailStatusChannel(): Promise<void> {
+        const status: OnAirStatusType|undefined = this.config.status?.detail;
         if (!status) {
-            this.log.debug('refreshVAFlightsStatusChannel()::skipping, flights status config is missing. Check the config.ts file.');
+            this.log.debug('refreshDetailStatusChannel()::skipping, detail status config is missing. Check the config.ts file.');
             return;
         }
 
         if (!status.enabled) {
-            this.log.debug('refreshVAFlightsStatusChannel()::skipping, flights status is disabled');
+            this.log.debug('refreshDetailStatusChannel()::skipping, detail status is disabled');
             return;
         }
 
-        const flightsStatusChannelId:string|null = status.channelId;
+        const detailStatusChannelId:string|null|undefined = status.channelId;
+
+        if (!detailStatusChannelId) {
+            this.log.error(`${this.config.opMode || 'VA'} detail status channel ID not found in config, aborting refresh.`);
+            return;
+        }
+
+        let refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
+
+        if (refreshInterval < 15000) {
+            this.log.warn(`${this.config.opMode || 'VA'} detail status refresh interval is too short (${status.interval}s), setting to minimum of 30 seconds.`);
+            refreshInterval = 15000;
+        }
+
+        this.log.info(`${this.config.opMode || 'VA'} detail status refresh enabled. Starting the first ${this.config.opMode || 'VA'} detail status refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
+
+        const updateDetailStatus = async () => {
+            await this._updateDetailStatus(detailStatusChannelId);
+        }
+
+        // Execute immediately
+        await updateDetailStatus();
+
+        // Then set up the interval
+        setInterval(updateDetailStatus, refreshInterval);
+    }
+
+    private async _updateDetailStatus(channelId:string): Promise<void> {
+        const channel: TextChannel | null = await this.bot.getChannel(channelId) as TextChannel | null;
+    
+        if (channel === null) {
+            this.log.error(`Unable to find channel with id ${channelId}`);
+            return;
+        }
+
+        // Get the last message in the channel
+        const messages = await channel.messages.fetch({ limit: 1 });
+        const lastMessage = messages.first();
+
+        let msg = '';
+
+        let x: OnAirCompanyDetail|OnAirVirtualAirlineDetail|undefined = undefined;
+        let detail: OnAirCompany|OnAirVirtualAirline|undefined = undefined;
+        let fleet:OnAirAircraft[] = [];
+        let flights:OnAirFlight[] = [];
+        let members:OnAirMember[] = [];
+        let employees:OnAirEmployee[] = [];
+
+        // Get the detail for the company or VA
+        if (this.config.opMode === 'Company') {
+            detail = await this.getCompanyDetail();
+            fleet = await this.getCompanyFleet();
+            flights = await this.getCompanyFlights();
+            employees = await this.getCompanyEmployees();
+
+            const flightHours:number = flights.reduce((a:number, b:OnAirFlight) => {
+                if (b.AirborneTime) {
+                    return a + parseFloat(b.AirborneTime);
+                }
+    
+                return a;
+            }, 0);
+            
+            x = {
+                ...detail,
+                EmployeeCount: employees.length,
+                Employees: employees,
+                FleetCount: fleet.length || 0,
+                FlightCount: flights.length || 0,
+                FlightHours: flightHours,
+            }
+
+            msg = CompanyDetail(x as OnAirCompanyDetail) || '';
+
+        } else {
+            detail = await this.getVADetail();
+            fleet = await this.getVAFleet();
+            flights = await this.getVAFlights();
+            members = await this.getVAMembers();
+        
+            const flightHours:number = flights.reduce((a:number, b:OnAirFlight) => {
+                if (b.AirborneTime) {
+                    return a + parseFloat(b.AirborneTime);
+                }
+    
+                return a;
+            }, 0);
+
+            x = {
+                ...detail,
+                MemberCount: members.length,
+                Members: members,
+                FleetCount: fleet.length || 0,
+                FlightCount: flights.length || 0,
+                FlightHours: flightHours,
+            }
+
+            msg = VADetail(x as OnAirVirtualAirlineDetail) || '';
+        }
+        
+        if (!x) {
+            msg += 'There is no company detail available.';
+        }
+
+        // If there's a last message, edit it. Otherwise, send a new message
+        if (lastMessage) {
+            await lastMessage.edit(msg);
+        } else {
+            await channel.send(msg);
+        }
+    }
+
+    async refreshFlightsStatusChannel(): Promise<void> {
+        const status: OnAirStatusType|undefined = this.config.status?.flights;
+        if (!status) {
+            this.log.debug('refreshFlightsStatusChannel()::skipping, flights status config is missing. Check the config.ts file.');
+            return;
+        }
+
+        if (!status.enabled) {
+            this.log.debug('refreshFlightsStatusChannel()::skipping, flights status is disabled');
+            return;
+        }
+
+        const flightsStatusChannelId:string|null|undefined = status.channelId;
 
         if (!flightsStatusChannelId) {
             this.log.error('Flights status channel ID not found in config, aborting refresh.');
@@ -489,11 +684,11 @@ class OnAir implements IOnAir {
         let refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
 
         if (refreshInterval < 15000) {
-            this.log.warn(`VA Flights refresh interval is too short (${status.interval}s), setting to minimum of 15 seconds.`);
+            this.log.warn(`${this.config.opMode || 'VA'} Flights refresh interval is too short (${status.interval}s), setting to minimum of 15 seconds.`);
             refreshInterval = 15000;
         }
 
-        this.log.info(`VA Flights Status refresh enabled. Starting the first VA Flights refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
+        this.log.info(`${this.config.opMode || 'VA'} Flights Status refresh enabled. Starting the first ${this.config.opMode || 'VA'} Flights refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
 
         const updateFlightsStatus = async () => {
             const channel: TextChannel | null = await this.bot.getChannel(flightsStatusChannelId) as TextChannel | null;
@@ -511,6 +706,7 @@ class OnAir implements IOnAir {
             this.Flights = await this.getVAFlights();
 
             const x: OnAirFlight[] = this.Flights;
+            const inProgressFlights: OnAirFlight[] = x.filter((f:OnAirFlight) => f.Registered !== true && !f.CancelReason);
 
             const generatePageContent = (page: number) => {
                 let msg = '';
@@ -609,19 +805,19 @@ class OnAir implements IOnAir {
         setInterval(updateFlightsStatus, refreshInterval);
     }
 
-    async refreshVAFBOsStatusChannel(): Promise<void> {
+    async refreshFBOsStatusChannel(): Promise<void> {
         const status: OnAirStatusType|undefined = this.config.status?.fbos;
         if (!status) {
-            this.log.debug('refreshVAFBOsStatusChannel()::skipping, fbos status config is missing. Check the config.ts file.');
+            this.log.debug('refreshFBOsStatusChannel()::skipping, fbos status config is missing. Check the config.ts file.');
             return;
         }
 
         if (!status.enabled) {
-            this.log.debug('refreshVAFBOsStatusChannel()::skipping, fbos status is disabled');
+            this.log.debug('refreshFBOsStatusChannel()::skipping, fbos status is disabled');
             return;
         }
 
-        const fbosStatusChannelId:string|null = status.channelId;
+        const fbosStatusChannelId:string|null|undefined = status.channelId;
         
         if (!fbosStatusChannelId) {
             this.log.error('FBOs status channel ID not found in config, aborting refresh.');
@@ -634,7 +830,7 @@ class OnAir implements IOnAir {
             refreshInterval = 30000;
         }
 
-        this.log.info(`VA FBOs Status refresh enabled. Starting the first VA FBO refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
+        this.log.info(`${this.config.opMode || 'VA'} FBOs Status refresh enabled. Starting the first ${this.config.opMode || 'VA'} FBO refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
 
         // const channel: TextChannel | null = await this.bot.getChannel(fbosStatusChannelId) as TextChannel | null;
         // // delete all messages in the channel on first run.
@@ -655,7 +851,7 @@ class OnAir implements IOnAir {
                 this.log.error(`Unable to find channel with id ${fbosStatusChannelId}`);
                 return;
             }
-            this.log.info(`refreshVAFBOsStatusChannel()::refreshing FBOs status in channel #${channel.name}`);
+            this.log.info(`refreshFBOsStatusChannel()::refreshing FBOs status in channel #${channel.name}`);
 
             // Get the last message in the channel
             const messages = await channel.messages.fetch({ limit: 1 });
@@ -775,10 +971,18 @@ class OnAir implements IOnAir {
             return;
         }
 
-        const membersStatusChannelId:string|null = status.channelId;
+        const membersStatusChannelId:string|null|undefined = status.channelId;
 
         if (!membersStatusChannelId) {
             this.log.error('Members status channel ID not found in config, aborting refresh.');
+            return;
+        }
+
+        if (this.config.opMode !== 'VA') {
+            this.log.debug('refreshVAMembersStatusChannel()::skipping, members status is not enabled for this mode.');
+            let msg = 'Bot is running in Company mode. Member status refresh is not enabled for this mode. Please set the ONAIR_OPERATION_MODE to VA to enable.';
+
+            this.bot.sendMessageToChannel(membersStatusChannelId, `\`\`\`\n${msg}\`\`\``)
             return;
         }
 
@@ -868,15 +1072,16 @@ class OnAir implements IOnAir {
         setInterval(updateMembersStatus, refreshInterval);
     }
 
-    async loadVAStatusChannels(): Promise<void> {
+    async loadStatusChannels(): Promise<void> {
         if (!this.config.status) {
-            this.log.debug('loadVAStatusChannels()::skipping, status config is missing. Check the config.ts file.');
+            this.log.debug('loadStatusChannels()::skipping, status config is missing. Check the config.ts file.');
             return;
         }
         
-        this.refreshVAFleetStatusChannel();
-        this.refreshVAFlightsStatusChannel();
-        this.refreshVAFBOsStatusChannel();
+        this.refreshDetailStatusChannel();
+        this.refreshFleetStatusChannel();
+        this.refreshFlightsStatusChannel();
+        this.refreshFBOsStatusChannel();
         this.refreshVAMembersStatusChannel();
     }
 

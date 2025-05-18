@@ -35,7 +35,7 @@ export type OnAirPollingsConfig = {
 export type OnAirStatusType = {
     enabled: boolean;
     interval: number;
-    channelId: string|null;
+    channelId: string|null|undefined;
     sortColumn?: string;
     pageSize?: number;
 }
@@ -45,12 +45,34 @@ export type OnAirStatus = {
     flights?: OnAirStatusType;
     fbos?: OnAirStatusType;
     members?: OnAirStatusType;
+    detail?: OnAirStatusType;
+}
+
+export type OnAirOperationMode = 'VA' | 'Company';
+
+export type OnAirCommandConfig = {
+    enabled: boolean;
+}
+
+export type OnAirCommandsConfig = {
+    aircraft: OnAirCommandConfig;
+    airport: OnAirCommandConfig;
+    detail: OnAirCommandConfig;
+    fbo: OnAirCommandConfig;
+    fboJobs: OnAirCommandConfig;
+    fbos: OnAirCommandConfig;
+    fleet: OnAirCommandConfig;
+    flights: OnAirCommandConfig;
+    jobs: OnAirCommandConfig;
+    members: OnAirCommandConfig;
 }
 
 export type OnAirConfig = {
     keys: OnAirApiConfig;
     enabled: boolean;
     status?: OnAirStatus;
+    opMode?: OnAirOperationMode;
+    enabledCommands: string[];
     sorting: {
         Members: string[];
         Flights: string[];

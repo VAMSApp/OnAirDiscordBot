@@ -1,6 +1,6 @@
 {
   "name": "onairdiscordbot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Discord.js bot written in TypeScript with OnAir Company interactions",
   "author": {
     "name": "Mike DeVita",
