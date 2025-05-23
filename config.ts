@@ -35,6 +35,11 @@ const {
     DISCORD_DETAIL_STATUS_ENABLED,
     DISCORD_DETAIL_STATUS_INTERVAL,
     DISCORD_DETAIL_STATUS_CHANNELID,
+    DISCORD_JOBS_STATUS_CHANNELID,
+    DISCORD_JOBS_STATUS_ENABLED,
+    DISCORD_JOBS_STATUS_INTERVAL,
+    DISCORD_JOBS_STATUS_SORTCOLUMN,
+    DISCORD_JOBS_STATUS_PAGESIZE,
     ONAIR_COMPANYID,
     ONAIR_VAID,
     ONAIR_APIKEY,
@@ -53,6 +58,7 @@ if (!DISCORD_FLEET_STATUS_CHANNELID) throw new Error('DISCORD_FLEET_STATUS_CHANN
 if (!DISCORD_FLIGHTS_STATUS_CHANNELID) throw new Error('DISCORD_FLIGHTS_STATUS_CHANNELID is not set in .env');
 if (!DISCORD_FBOS_STATUS_CHANNELID) throw new Error('DISCORD_FBOS_STATUS_CHANNELID is not set in .env');
 if (!DISCORD_MEMBERS_STATUS_CHANNELID) throw new Error('DISCORD_MEMBERS_STATUS_CHANNELID is not set in .env');
+if (!DISCORD_JOBS_STATUS_CHANNELID) throw new Error('DISCORD_JOBS_STATUS_CHANNELID is not set in .env');
 if (!ONAIR_COMPANYID) throw new Error('ONAIR_COMPANYID is not set in .env');
 if (!ONAIR_VAID) throw new Error('ONAIR_VAID is not set in .env');
 if (!ONAIR_APIKEY) throw new Error('ONAIR_APIKEY is not set in .env');
@@ -106,6 +112,13 @@ const config:BotConfig = {
                 channelId: DISCORD_MEMBERS_STATUS_CHANNELID,
                 sortColumn: DISCORD_MEMBERS_STATUS_SORTCOLUMN,
                 pageSize: (DISCORD_MEMBERS_STATUS_PAGESIZE) ? parseInt(DISCORD_MEMBERS_STATUS_PAGESIZE) : 10,
+            },
+            jobs: {
+                enabled: (DISCORD_JOBS_STATUS_ENABLED === 'true'), // set to true to enable refresh, false to disable
+                interval: (DISCORD_JOBS_STATUS_INTERVAL) ? parseInt(DISCORD_JOBS_STATUS_INTERVAL) : 10, // time in seconds to wait before refreshing again, defaults to every 60 seconds
+                channelId: DISCORD_JOBS_STATUS_CHANNELID,
+                sortColumn: DISCORD_JOBS_STATUS_SORTCOLUMN,
+                pageSize: (DISCORD_JOBS_STATUS_PAGESIZE) ? parseInt(DISCORD_JOBS_STATUS_PAGESIZE) : 10,
             },
             detail: {
                 enabled: (DISCORD_DETAIL_STATUS_ENABLED === 'true'), // set to true to enable refresh, false to disable

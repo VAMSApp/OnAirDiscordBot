@@ -293,7 +293,7 @@ Showing page 1 of 10
 
 ## Bot OnAir Status Feed
 
-The bot can automatically update status information for your OnAir company in designated Discord channels. This feature provides real-time updates about your fleet, flights, FBOs, and members at configurable intervals.
+The bot can automatically update status information for your OnAir company in designated Discord channels. This feature provides real-time updates about your fleet, flights, FBOs, jobs, and members at configurable intervals.
 
 ### Status Feed Configuration
 
@@ -333,6 +333,14 @@ DISCORD_MEMBERS_STATUS_CHANNELID=your_channel_id
 DISCORD_MEMBERS_STATUS_INTERVAL=300000  # Update interval in milliseconds (5 minutes)
 DISCORD_MEMBERS_STATUS_SORTCOLUMN=name  # Column to sort by
 DISCORD_MEMBERS_STATUS_PAGESIZE=5       # Number of items per page
+
+#### Jobs Status Feed
+```
+DISCORD_JOBS_STATUS_ENABLED=true
+DISCORD_JOBS_STATUS_CHANNELID=your_channel_id
+DISCORD_JOBS_STATUS_INTERVAL=300000  # Update interval in milliseconds (5 minutes)
+DISCORD_JOBS_STATUS_SORTCOLUMN=name  # Column to sort by
+DISCORD_JOBS_STATUS_PAGESIZE=5       # Number of items per page
 ```
 
 ### Features

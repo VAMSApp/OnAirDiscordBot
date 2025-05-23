@@ -9,7 +9,7 @@ import OnAirApi from 'onair-api';
 import { ILogger, IOnAir, IBot, } from './interfaces';
 import { OnAirAircraft, OnAirAirport, OnAirApiConfig, OnAirApiQueryOptions, OnAirCompany, OnAirCompanyDetail, OnAirConfig, OnAirEmployee, OnAirFbo, OnAirFlight, OnAirJob, OnAirMember, OnAirNotification, OnAirStatusType, OnAirVARole, OnAirVirtualAirline, OnAirVirtualAirlineDetail } from './types';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel } from 'discord.js';
-import { CompanyDetail, FBOList, FleetList, FlightsList, MembersList, VADetail } from './messages';
+import { CompanyDetail, FBOList, FleetList, FlightsList, JobsList, MembersList, VADetail } from './messages';
 import { FormatTimeInterval } from './utils';
 
 export type ProcessRecordError = {
@@ -200,7 +200,7 @@ class OnAir implements IOnAir {
      * @param companyId string |? the Id of the company to get the jobs for
      * @returns 
      */
-    async getCompanyJobs(companyId?:string):Promise<OnAirJob[]> {
+    async getCompanyJobs(companyId:string = this.config.keys.companyId):Promise<OnAirJob[]> {
         const x:OnAirJob[] = await this.api.getCompanyJobs(companyId);
         return x;
     }
@@ -1080,6 +1080,161 @@ class OnAir implements IOnAir {
         setInterval(updateMembersStatus, refreshInterval);
     }
 
+    async refreshJobsStatusChannel(): Promise<void> {
+        const status: OnAirStatusType|undefined = this.config.status?.jobs;
+        if (!status) {
+            this.log.debug('refreshJobsStatusChannel()::skipping, jobs status config is missing. Check the config.ts file.');
+            return;
+        }
+
+        if (!status.enabled) {
+            this.log.debug('refreshJobsStatusChannel()::skipping, jobs status is disabled');
+            return;
+        }
+
+        const jobsStatusChannelId:string|null|undefined = status.channelId;
+        if (!jobsStatusChannelId) {
+            this.log.error('Jobs status channel ID not found in config, aborting refresh.');
+            return;
+        }
+
+        let refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
+
+        if (refreshInterval < 30000) {
+            this.log.warn(`VA Jobs refresh interval is too short (${refreshInterval}ms), setting to 30 seconds.`);
+            refreshInterval = 3000;
+        }
+
+        this.log.info(`VA Jobs Status refresh enabled. Starting the first VA status refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
+
+        const updateJobsStatus = async () => {
+            const channel: TextChannel | null = await this.bot.getChannel(jobsStatusChannelId) as TextChannel | null;
+            if (channel === null) {
+                this.log.error(`Unable to find channel with id ${jobsStatusChannelId}`);
+                return;
+            }
+
+            // Get the last message in the channel
+            const messages = await channel.messages.fetch({ limit: 1 });
+            const lastMessage = messages.first();
+            let msg = '';
+            
+            // Get and send new jobs status
+            if (this.config.opMode === 'VA') {
+                this.Jobs = await this.getVAJobs();
+            } else {
+                this.Jobs = await this.getCompanyJobs();
+            }
+
+            const x: OnAirJob[] = this.Jobs;
+
+            const generatePageContent = (page: number) => {
+                let msg = '';
+                const perPage = status.pageSize || 5;
+                const slicedJobs = x.slice((page - 1) * perPage, page * perPage);
+                const totalPages = Math.ceil(x.length / perPage);
+                
+                const jobList = JobsList(slicedJobs);
+
+                if (x.length <= 0) {
+                    msg += `There are no pending/in-progress jobs in the ${this.config.opMode || 'VA'}.`;
+                } else if (x.length == 1) {
+                    msg += `There is ${x.length} pending/in-progress job in the ${this.config.opMode || 'VA'}.`;
+                } else {
+                    msg += `There are ${x.length} jobs in the ${this.config.opMode || 'VA'}.`;
+                }
+
+                // Only show page information if there's more than one page
+                if (totalPages > 1) {
+                    msg += ` (Page ${page} of ${totalPages})`;  
+                }
+
+                msg += `\n${jobList}`;
+                msg = this.addStatusFooter(msg, status);
+                
+                return `\`\`\`\n${msg}\`\`\``;
+            }
+
+            const initialPage = 1;
+            const totalPages = Math.ceil(x.length / (status.pageSize || 5));
+            const content = generatePageContent(initialPage);
+            
+            // Only create buttons if there's more than one page
+            let components: ActionRowBuilder<ButtonBuilder>[] = [];
+            if (totalPages > 1) {
+                const row = new ActionRowBuilder<ButtonBuilder>()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('first')
+                            .setLabel('⏮️ First')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId('previous')
+                            .setLabel('◀️ Previous')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId('next')
+                            .setLabel('Next ▶️')
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
+                            .setCustomId('last')
+                            .setLabel('Last ⏭️')
+                            .setStyle(ButtonStyle.Primary)
+                    );
+                components = [row];
+            }
+
+            // If there's a last message, edit it. Otherwise, send a new message
+            const message = lastMessage ? 
+                await lastMessage.edit({ content, components }) :
+                await channel.send({ content, components });
+
+            // Only create collector if there's more than one page
+            if (totalPages > 1) {
+                const collector = message.createMessageComponentCollector({ 
+                    time: refreshInterval
+                });
+
+                let currentPage = initialPage;
+
+                collector.on('collect', async interaction => {
+                    switch(interaction.customId) {
+                        case 'first':
+                            currentPage = 1;
+                            break;
+                        case 'previous':
+                            currentPage = Math.max(1, currentPage - 1);
+                            break;
+                        case 'next':
+                            currentPage = Math.min(totalPages, currentPage + 1);
+                            break;
+                        case 'last':
+                            currentPage = totalPages;
+                            break;
+                    }
+
+                    await interaction.update({ 
+                        content: generatePageContent(currentPage),
+                        components: components
+                    });
+                });
+
+                collector.on('end', () => {
+                    // Remove buttons when collector expires
+                    message.edit({ 
+                        content: generatePageContent(currentPage),
+                        components: [] 
+                    });
+                });
+            }
+        }
+
+        // Execute immediately
+        updateJobsStatus();
+        // Then set up the interval
+        setInterval(updateJobsStatus, refreshInterval);
+    }
+
     async loadStatusChannels(): Promise<void> {
         if (!this.config.status) {
             this.log.debug('loadStatusChannels()::skipping, status config is missing. Check the config.ts file.');
@@ -1091,6 +1246,7 @@ class OnAir implements IOnAir {
         this.refreshFlightsStatusChannel();
         this.refreshFBOsStatusChannel();
         this.refreshVAMembersStatusChannel();
+        this.refreshJobsStatusChannel();
     }
 
     addStatusFooter(msg: string, { interval }: OnAirStatusType): string {

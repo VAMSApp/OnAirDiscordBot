@@ -46,6 +46,7 @@ export type OnAirStatus = {
     fbos?: OnAirStatusType;
     members?: OnAirStatusType;
     detail?: OnAirStatusType;
+    jobs?: OnAirStatusType;
 }
 
 export type OnAirOperationMode = 'VA' | 'Company';
