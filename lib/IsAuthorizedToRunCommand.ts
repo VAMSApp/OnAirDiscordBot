@@ -11,8 +11,8 @@ export default function IsAuthorizedToRunCommand(cmd:SlashCommand, interaction:I
     const roleId:string = app.getRoleId(roleName);
     
     // ensure the interacting user has the matching Id for the 'owner' role in config.ts
-    const isVAOwner = memberRoles.some((value:Role, key:string) => key === roleId);
-    if (isVAOwner) {
+    const isVAMember = memberRoles.some((value:Role, key:string) => key === roleId);
+    if (isVAMember) {
         isAuthorized = true;
     }
     
