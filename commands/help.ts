@@ -69,6 +69,7 @@ const HelpCommand:SlashCommand = {
             + '  /members - show all VA members\n';
             + '  /detail - show details for the VA\n';
             + '  /jobs - shows all current jobs\n';
+            + '  /fbos - shows all current FBOs\n';
             + '```\n';
 
             const reply:InteractionReplyOptions = {
