@@ -11,6 +11,12 @@ import { OnAirAircraft, OnAirAirport, OnAirApiConfig, OnAirApiQueryOptions, OnAi
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, TextChannel } from 'discord.js';
 import { CompanyDetail, FBOList, FleetList, FlightsList, JobsList, MembersList, VADetail } from './messages';
 import { FormatTimeInterval } from './utils';
+import { MembersRefresher } from './refreshers/MembersRefresher';
+import { JobsRefresher } from './refreshers/JobsRefresher';
+import { DetailRefresher } from './refreshers/DetailRefresher';
+import { FleetRefresher } from './refreshers/FleetRefresher';
+import { FBOsRefresher } from './refreshers/FBOsRefresher';
+import { FlightsRefresher } from './refreshers/FlightsRefresher';
 
 export type ProcessRecordError = {
     error?: Error|string|null;
@@ -57,6 +63,7 @@ class OnAir implements IOnAir {
         this.getFlightDetail               = this.getFlightDetail.bind(this);
         this.getEmployeeDetail             = this.getEmployeeDetail.bind(this);
         this.getCompanyFleet               = this.getCompanyFleet.bind(this);
+        this.getCompanyFBOs                = this.getCompanyFBOs.bind(this);
         this.getVAJobs                     = this.getVAJobs.bind(this);
         this.getCompanyDetail              = this.getCompanyDetail.bind(this);
         this.getVAFlights                  = this.getVAFlights.bind(this);
@@ -69,7 +76,6 @@ class OnAir implements IOnAir {
         this.refreshFleetStatusChannel     = this.refreshFleetStatusChannel.bind(this);
         this.refreshFlightsStatusChannel   = this.refreshFlightsStatusChannel.bind(this);
         this.refreshDetailStatusChannel    = this.refreshDetailStatusChannel.bind(this);
-        this._updateDetailStatus           = this._updateDetailStatus.bind(this);
     }
 
     
@@ -229,6 +235,12 @@ class OnAir implements IOnAir {
     async getCompanyNotifications(companyId:string = this.config.keys.companyId): Promise<OnAirNotification[]> {
         this.log.debug(`getCompanyNotifications()::prerequest ${companyId}`);
         const x:OnAirNotification[] = await this.api.getCompanyNotifications(companyId);
+        return x;
+    }
+
+    async getCompanyFBOs(companyId = this.config.keys.companyId): Promise<OnAirFbo[]> {
+        const x:OnAirFbo[] = await this.api.getCompanyFbos(companyId);
+        
         return x;
     }
 
@@ -396,7 +408,7 @@ class OnAir implements IOnAir {
         return x;
     }
 
-    async refreshFleetStatusChannel(): Promise<void> {
+    private async _refreshFleetStatusChannel(): Promise<void> {
         const status: OnAirStatusType|undefined = this.config.status?.fleet;
         if (!status) {
             this.log.debug('refreshFleetStatusChannel()::skipping, fleet status config is missing. Check the config.ts file.');
@@ -547,131 +559,7 @@ class OnAir implements IOnAir {
         setInterval(refreshFleetStatus, refreshInterval);
     }
 
-    async refreshDetailStatusChannel(): Promise<void> {
-        const status: OnAirStatusType|undefined = this.config.status?.detail;
-        if (!status) {
-            this.log.debug('refreshDetailStatusChannel()::skipping, detail status config is missing. Check the config.ts file.');
-            return;
-        }
-
-        if (!status.enabled) {
-            this.log.debug('refreshDetailStatusChannel()::skipping, detail status is disabled');
-            return;
-        }
-
-        const detailStatusChannelId:string|null|undefined = status.channelId;
-
-        if (!detailStatusChannelId) {
-            this.log.error(`${this.config.opMode || 'VA'} detail status channel ID not found in config, aborting refresh.`);
-            return;
-        }
-
-        let refreshInterval = status.interval * 1000 || 60000; // default to 1 minute
-
-        if (refreshInterval < 15000) {
-            this.log.warn(`${this.config.opMode || 'VA'} detail status refresh interval is too short (${status.interval}s), setting to minimum of 30 seconds.`);
-            refreshInterval = 15000;
-        }
-
-        this.log.info(`${this.config.opMode || 'VA'} detail status refresh enabled. Starting the first ${this.config.opMode || 'VA'} detail status refresh now, future refreshes will run every ${FormatTimeInterval(refreshInterval)}.`);
-
-        const updateDetailStatus = async () => {
-            await this._updateDetailStatus(detailStatusChannelId);
-        }
-
-        // Execute immediately
-        await updateDetailStatus();
-
-        // Then set up the interval
-        setInterval(updateDetailStatus, refreshInterval);
-    }
-
-    private async _updateDetailStatus(channelId:string): Promise<void> {
-        const channel: TextChannel | null = await this.bot.getChannel(channelId) as TextChannel | null;
-    
-        if (channel === null) {
-            this.log.error(`Unable to find channel with id ${channelId}`);
-            return;
-        }
-
-        // Get the last message in the channel
-        const messages = await channel.messages.fetch({ limit: 1 });
-        const lastMessage = messages.first();
-
-        let msg = '';
-
-        let x: OnAirCompanyDetail|OnAirVirtualAirlineDetail|undefined = undefined;
-        let detail: OnAirCompany|OnAirVirtualAirline|undefined = undefined;
-        let fleet:OnAirAircraft[] = [];
-        let flights:OnAirFlight[] = [];
-        let members:OnAirMember[] = [];
-        let employees:OnAirEmployee[] = [];
-
-        // Get the detail for the company or VA
-        if (this.config.opMode === 'Company') {
-            detail = await this.getCompanyDetail();
-            fleet = await this.getCompanyFleet();
-            flights = await this.getCompanyFlights();
-            employees = await this.getCompanyEmployees();
-
-            const flightHours:number = flights.reduce((a:number, b:OnAirFlight) => {
-                if (b.AirborneTime) {
-                    return a + parseFloat(b.AirborneTime);
-                }
-    
-                return a;
-            }, 0);
-            
-            x = {
-                ...detail,
-                EmployeeCount: employees.length,
-                Employees: employees,
-                FleetCount: fleet.length || 0,
-                FlightCount: flights.length || 0,
-                FlightHours: flightHours,
-            }
-
-            msg = CompanyDetail(x as OnAirCompanyDetail) || '';
-
-        } else {
-            detail = await this.getVADetail();
-            fleet = await this.getVAFleet();
-            flights = await this.getVAFlights();
-            members = await this.getVAMembers();
-        
-            const flightHours:number = flights.reduce((a:number, b:OnAirFlight) => {
-                if (b.AirborneTime) {
-                    return a + parseFloat(b.AirborneTime);
-                }
-    
-                return a;
-            }, 0);
-
-            x = {
-                ...detail,
-                MemberCount: members.length,
-                Members: members,
-                FleetCount: fleet.length || 0,
-                FlightCount: flights.length || 0,
-                FlightHours: flightHours,
-            }
-
-            msg = VADetail(x as OnAirVirtualAirlineDetail) || '';
-        }
-        
-        if (!x) {
-            msg += 'There is no company detail available.';
-        }
-
-        // If there's a last message, edit it. Otherwise, send a new message
-        if (lastMessage) {
-            await lastMessage.edit(msg);
-        } else {
-            await channel.send(msg);
-        }
-    }
-
-    async refreshFlightsStatusChannel(): Promise<void> {
+    private async _refreshFlightsStatusChannel(): Promise<void> {
         const status: OnAirStatusType|undefined = this.config.status?.flights;
         if (!status) {
             this.log.debug('refreshFlightsStatusChannel()::skipping, flights status config is missing. Check the config.ts file.');
@@ -712,10 +600,24 @@ class OnAir implements IOnAir {
             const lastMessage = messages.first();
 
             // Get flights data
-            this.Flights = await this.getVAFlights();
+            const jobs = await this.getVAJobs();
+            const flights = await this.getVAFlights();
+            
+            // Filter flights to only include those associated with VA jobs
+            this.Flights = flights?.filter((f: OnAirFlight) => 
+                jobs.some((j: OnAirJob) => {
+                    const cargoMatch = j.Cargos?.some(c => c.CurrentAircraftId === f.AircraftId);
+                    const charterMatch = j.Charters?.some(c => c.CurrentAircraftId === f.AircraftId);
+                    return cargoMatch || charterMatch;
+                })
+            ) ?? [];
 
-            const x: OnAirFlight[] = this.Flights;
-            const inProgressFlights: OnAirFlight[] = x.filter((f:OnAirFlight) => f.Registered !== true && !f.CancelReason);
+            // Use filtered flights instead of this.Flights which can be null
+            const inProgressFlights = this.Flights.filter((f: OnAirFlight) => 
+                f.Registered !== true && !f.CancelReason
+            );
+
+            const x = this.Flights;
 
             const generatePageContent = (page: number) => {
                 let msg = '';
@@ -814,7 +716,7 @@ class OnAir implements IOnAir {
         setInterval(updateFlightsStatus, refreshInterval);
     }
 
-    async refreshFBOsStatusChannel(): Promise<void> {
+    private async _refreshFBOsStatusChannel(): Promise<void> {
         const status: OnAirStatusType|undefined = this.config.status?.fbos;
         if (!status) {
             this.log.debug('refreshFBOsStatusChannel()::skipping, fbos status config is missing. Check the config.ts file.');
@@ -965,7 +867,7 @@ class OnAir implements IOnAir {
         setInterval(updateFBOsStatus, refreshInterval);
     }
 
-    async refreshVAMembersStatusChannel(): Promise<void> {
+    private async _refreshVAMembersStatusChannel(): Promise<void> {
         const status: OnAirStatusType|undefined = this.config.status?.members;
         if (!status) {
             this.log.debug('refreshVAMembersStatusChannel()::skipping, members status config is missing. Check the config.ts file.');
@@ -1080,7 +982,7 @@ class OnAir implements IOnAir {
         setInterval(updateMembersStatus, refreshInterval);
     }
 
-    async refreshJobsStatusChannel(): Promise<void> {
+    private async _refreshJobsStatusChannel(): Promise<void> {
         const status: OnAirStatusType|undefined = this.config.status?.jobs;
         if (!status) {
             this.log.debug('refreshJobsStatusChannel()::skipping, jobs status config is missing. Check the config.ts file.');
@@ -1233,6 +1135,42 @@ class OnAir implements IOnAir {
         updateJobsStatus();
         // Then set up the interval
         setInterval(updateJobsStatus, refreshInterval);
+    }
+
+    async refreshFlightsStatusChannel(): Promise<void> {
+        const refresher = new FlightsRefresher(this.bot);
+        
+        await refresher.start();
+    }
+
+    async refreshFBOsStatusChannel(): Promise<void> {
+        const refresher = new FBOsRefresher(this.bot);
+        
+        await refresher.start();
+    }
+
+    async refreshDetailStatusChannel(): Promise<void> {
+        const refresher = new DetailRefresher(this.bot);
+        
+        await refresher.start();
+    }
+
+    async refreshJobsStatusChannel(): Promise<void> {
+        const refresher = new JobsRefresher(this.bot);
+        
+        await refresher.start();
+    }
+
+    async refreshVAMembersStatusChannel(): Promise<void> {
+        const refresher = new MembersRefresher(this.bot);
+        
+        await refresher.start();
+    }
+
+    async refreshFleetStatusChannel(): Promise<void> {
+        const refresher = new FleetRefresher(this.bot);
+        
+        await refresher.start();
     }
 
     async loadStatusChannels(): Promise<void> {

@@ -36,6 +36,7 @@ export interface IOnAir {
     getCompanyFlights(opts?:OnAirApiQueryOptions): Promise<OnAirFlight[]>;
     getCompanyDetail(companyId?:string): Promise<OnAirCompany>;
     getCompanyEmployees(companyId?:string):Promise<OnAirEmployee[]>;
+    getCompanyFBOs(companyId?:string): Promise<OnAirFbo[]>
     getAircraftDetail(aircraftId:string): Promise<OnAirAircraft>;
     getFlightDetail(flightId:string): Promise<OnAirFlight>;
     getEmployeeDetail(employeeId:string): Promise<OnAirEmployee>;
