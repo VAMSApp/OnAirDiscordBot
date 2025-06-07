@@ -5,3 +5,5 @@ repos
 schedules
 translators
 events
+
+/prisma/prisma

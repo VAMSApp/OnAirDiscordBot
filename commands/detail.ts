@@ -43,7 +43,7 @@ const VADetailCommand:SlashCommand = {
         let msg = '';
     
         if (app.config.onair.opMode === 'VA') {
-            const va:OnAirVirtualAirline = await app.OnAir.getVADetail();
+            const va:OnAirVirtualAirline = await app.OnAir.getVADetail() as OnAirVirtualAirline;
             const members:OnAirMember[] = await app.OnAir.getVAMembers();
             const fleet:OnAirAircraft[] = await app.OnAir.getVAFleet();
             const flights:OnAirFlight[] = await app.OnAir.getVAFlights();

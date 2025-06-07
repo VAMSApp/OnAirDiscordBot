@@ -38,6 +38,10 @@ export type OnAirStatusType = {
     channelId: string|null|undefined;
     sortColumn?: string;
     pageSize?: number;
+    flightNotifications?: {
+        enabled: boolean;
+        channelId: string|null|undefined;
+    }
 }
 
 export type OnAirStatus = {
@@ -47,6 +51,8 @@ export type OnAirStatus = {
     members?: OnAirStatusType;
     detail?: OnAirStatusType;
     jobs?: OnAirStatusType;
+    va?: OnAirStatusType;
+    company?: OnAirStatusType;
 }
 
 export type OnAirOperationMode = 'VA' | 'Company';

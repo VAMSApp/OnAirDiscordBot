@@ -29,7 +29,13 @@ import {
 
 export type OnAirAircraft = Aircraft;
 export type OnAirFlight = Flight;
-export type OnAirVirtualAirline = VirtualAirline;
+export type OnAirVirtualAirline = VirtualAirline & {
+    ComputedAircraftsCount: number;
+    ComputedNumberOfFlights30Days: number;
+    ComputedNumberOfFlightHours30Days: number;
+    ComputedMostUsedAirports: string;
+    ComputedMemberCount: number;
+};
 export type OnAirMember = Member;
 export type OnAirCompany = Company;
 export type OnAirEmployee = People;

@@ -15,6 +15,7 @@ import { OnReadyMessage } from '@/messages';
 import { readdirSync } from 'fs';
 import path from 'path';
 import { eachSeries } from 'async';
+import DB, { IDatabaseRepositories } from './db';
 
 class Bot implements IBot {
     private AppToken:string;
@@ -28,6 +29,8 @@ class Bot implements IBot {
     public OnAir: IOnAir;
     public client: Client;
 
+    public DB: IDatabaseRepositories;
+
     constructor(config:BotConfig) {    
         if (!config) throw new Error('No config provided, exiting.');
         this.config = config;
@@ -39,6 +42,8 @@ class Bot implements IBot {
         this.GuildId = this.config.discord.guildId;
 
         this.log = new Logger(this.config.log);
+
+        this.DB = DB;
 
         this.OnAir = new OnAir(this.config.onair, this as IBot);
         this.client = new Client({

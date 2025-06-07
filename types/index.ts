@@ -39,7 +39,7 @@ export * from './VirtualAirline';
 export * from './SerializedResponse';
 export * from './HumanizedResponse';
 export * from './OmittedResponse';
-export * from './InputResponse';
 export * from './OnAirResponses';
 export * from './OnAirEvent';
 export * from './SlashCommand';
+export * from './FlightState';

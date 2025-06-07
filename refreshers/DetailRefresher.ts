@@ -1,12 +1,13 @@
 // Company or VA details refresher
 
-import { OnAirAircraft, OnAirCompany, OnAirCompanyDetail, OnAirEmployee, OnAirFlight, OnAirMember, OnAirStatusType, OnAirVirtualAirline, OnAirVirtualAirlineDetail } from "@/types";
+import { Company, CreateVirtualAirline, OnAirAircraft, OnAirCompany, OnAirCompanyDetail, OnAirEmployee, OnAirFlight, OnAirMember, OnAirStatusType, OnAirVirtualAirline, OnAirVirtualAirlineDetail, VirtualAirline } from "@/types";
 import BaseRefresher, { IRefresher } from "./BaseRefresher";
 import { Message, TextChannel } from "discord.js";
 import { IBot } from "@/interfaces";
 import { FormatTimeInterval } from "@/utils";
 import { VADetail } from "@/messages";
 import { CompanyDetail } from "@/messages";
+import { CreateVirtualAirlineDto } from "@/db/VirtualAirlineRepo";
 
 export class DetailRefresher extends BaseRefresher<OnAirCompany|OnAirVirtualAirline> implements IRefresher<OnAirCompany|OnAirVirtualAirline> {
     private data: OnAirCompanyDetail|OnAirVirtualAirlineDetail|undefined = undefined;
@@ -73,7 +74,7 @@ export class DetailRefresher extends BaseRefresher<OnAirCompany|OnAirVirtualAirl
 
         // Get the detail for the company or VA
         if (this.config.opMode === 'Company') {
-            detail = await this.bot.OnAir.getCompanyDetail();
+            detail = await this.bot.OnAir.getCompanyDetail() as OnAirCompany| undefined;
             fleet = await this.bot.OnAir.getCompanyFleet();
             flights = await this.bot.OnAir.getCompanyFlights();
             employees = await this.bot.OnAir.getCompanyEmployees();
@@ -86,17 +87,19 @@ export class DetailRefresher extends BaseRefresher<OnAirCompany|OnAirVirtualAirl
                 return a;
             }, 0);
             
-            x = {
-                ...detail,
+            const _detail: OnAirCompanyDetail = {
+                ...(detail as OnAirCompany),
                 EmployeeCount: employees.length,
                 Employees: employees,
                 FleetCount: fleet.length || 0,
                 FlightCount: flights.length || 0,
                 FlightHours: flightHours,
-            }
+            };
+
+            x = _detail;
 
         } else {
-            detail = await this.bot.OnAir.getVADetail();
+            detail = await this.bot.OnAir.getVADetail() as OnAirVirtualAirline| undefined;
             fleet = await this.bot.OnAir.getVAFleet();
             flights = await this.bot.OnAir.getVAFlights();
             members = await this.bot.OnAir.getVAMembers();
@@ -109,20 +112,47 @@ export class DetailRefresher extends BaseRefresher<OnAirCompany|OnAirVirtualAirl
                 return a;
             }, 0);
 
-            x = {
-                ...detail,
+            const dbVA: VirtualAirline = await this.sync(detail as OnAirVirtualAirline);
+
+            this.log.debug(`${this.constructor.name} ${this.refreshKey} sync completed for VA ${dbVA.Id}`);
+
+            const _detail: OnAirVirtualAirlineDetail = {
+                ...(detail as OnAirVirtualAirline),
                 MemberCount: members.length,
                 Members: members,
                 FleetCount: fleet.length || 0,
                 FlightCount: flights.length || 0,
                 FlightHours: flightHours,
             }
+
+            x = _detail;
         }
 
         this.data = x;
 
         // Execute immediately
         await this.updateStatusChannel();
+    }
+
+    public async sync(input: OnAirVirtualAirline): Promise<VirtualAirline> {
+        const newEntity: VirtualAirline = new VirtualAirline(input);
+
+        // upsert the VA
+        const va: VirtualAirline = await this.bot.DB.VirtualAirlineRepo.upsert({
+            where: {
+                Id: input.Id
+            },
+            update: {
+                ...newEntity,
+                LastRefresh: new Date(),
+            },
+            create: {
+                ...newEntity,
+                LastRefresh: new Date(),
+            },
+        });
+
+        return Promise.resolve(va);
     }
 
     // update the status channel
